@@ -302,6 +302,8 @@ void Reader::syncAppearanceControls(bool pickingFont) {
     fontButton->setFace(settings->fontFace());
     for (auto *button : hyphenButtons)
         button->setChecked(button->property("hyphenation").toString() == settings->hyphenation());
+    for (auto *button : hangingPunctuationButtons)
+        button->setChecked(button->property("hanging_punctuation").toBool() == settings->hangingPunctuation());
     for (auto *button : alignmentButtons)
         button->setChecked(button->property("alignment").toString() == settings->alignment());
 }

@@ -79,6 +79,15 @@ AppearancePanel::AppearancePanel(const AppearanceLayout &layout, const Appearanc
         button->setCheckable(true);
         hyphenButtons.append(button);
     }
+    kobalt::ui::SegmentedRow hanging(typography, typeRows, "rrHangingPunctuation",
+                                      QStringLiteral("Hanging punctuation"));
+    for (const bool enabled : {false, true}) {
+        auto *button = hanging.add(enabled ? "rrHangingOn" : "rrHangingOff",
+                                   strings::get(enabled ? "common.on" : "common.off"));
+        button->setProperty("hanging_punctuation", enabled);
+        button->setCheckable(true);
+        hangingPunctuationButtons.append(button);
+    }
     if (!inputs.systemRotation) {
         kobalt::ui::SegmentedRow rotation(pageLayout, pageRows, "rrRotation", strings::get("reader.rotation"));
         const QStringList rotationNames = {strings::get("reader.portrait"), strings::get("reader.landscape"),

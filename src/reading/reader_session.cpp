@@ -724,6 +724,15 @@ bool ReaderSession::setHyphenation(const QString &mode) {
     }
     return true;
 }
+bool ReaderSession::setHangingPunctuation(bool enabled) {
+    if (temporaryTypography())
+        return false;
+    if (enabled != hangingPunctuation()) {
+        desired["hanging_punctuation"] = enabled;
+        request(true);
+    }
+    return true;
+}
 bool ReaderSession::canTurn() const {
     return !retiring && !preview_ && openingResult_.ready() && lease_ && !lease_->revoked() && pages() > 0 &&
            (!running || turning);

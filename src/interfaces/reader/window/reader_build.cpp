@@ -585,6 +585,7 @@ void Reader::buildAppearance(const kobalt::reader::AppearanceLayout &layout) {
     verticalMarginSlider = appearance.verticalMarginSlider;
     alignmentButtons = appearance.alignmentButtons;
     hyphenButtons = appearance.hyphenButtons;
+    hangingPunctuationButtons = appearance.hangingPunctuationButtons;
     rotationButtons = appearance.rotationButtons;
     autoRotateOption = appearance.autoRotateOption;
     clockOption = appearance.clockOption;
@@ -648,6 +649,13 @@ void Reader::buildAppearance(const kobalt::reader::AppearanceLayout &layout) {
         const QString value = button->property("hyphenation").toString();
         connect(button, &QPushButton::clicked, this, [this, value] {
             this->appearanceEdit.preview()->setHyphenation(value);
+            refresh();
+        });
+    }
+    for (auto *button : hangingPunctuationButtons) {
+        const bool enabled = button->property("hanging_punctuation").toBool();
+        connect(button, &QPushButton::clicked, this, [this, enabled] {
+            this->appearanceEdit.preview()->setHangingPunctuation(enabled);
             refresh();
         });
     }

@@ -22,7 +22,7 @@ public:
     ui::SettingSlider *opticalSizeSlider = nullptr, *sizeSlider = nullptr, *weightSlider = nullptr,
                       *variableWeightSlider = nullptr, *spacingSlider = nullptr, *marginSlider = nullptr,
                       *verticalMarginSlider = nullptr;
-    QVector<QPushButton *> alignmentButtons, hyphenButtons, rotationButtons;
+    QVector<QPushButton *> alignmentButtons, hyphenButtons, hangingPunctuationButtons, rotationButtons;
     QPushButton *autoRotateOption = nullptr, *clockOption = nullptr, *clockHideOption = nullptr;
     ui::DropdownButton *headerTextSize = nullptr, *footerTextSize = nullptr;
 };

@@ -95,6 +95,7 @@ public:
     bool setThickness(int steps);
     void setDarkMode(bool enabled);
     bool setHyphenation(const QString &mode);
+    bool setHangingPunctuation(bool enabled);
     // Keep at most one turn behind the current turn. The latest direction wins.
     bool turn(int direction);
     bool canTurn() const;
@@ -200,6 +201,9 @@ public:
     }
     QString hyphenation() const {
         return desired.value("hyphenation").toString("off");
+    }
+    bool hangingPunctuation() const {
+        return desired.value("hanging_punctuation").toBool(true);
     }
     QString alignment() const {
         return desired.value("text_alignment").toString();

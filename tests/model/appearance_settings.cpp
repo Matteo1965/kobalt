@@ -9,7 +9,7 @@ using namespace kobalt;
 int main() {
     // Appearance settings decide the layout. The list must stay complete, because a
     // missing key would let a retained layout survive a changed setting.
-    require(appearance::keys.size() == 15, "The appearance keys changed without this check");
+    require(appearance::keys.size() == 16, "The appearance keys changed without this check");
 
     const auto from = qt::object({{"font_pixels", 40},
                                   {"line_spacing", QJsonValue(QJsonValue::Null)},
@@ -106,7 +106,7 @@ int main() {
                 defaults.value("font_weight").toInt() == 450 && defaults.value("hyphenation").toString() == "on",
             "Typography defaults changed");
     require(!defaults.contains("dark_mode") && !defaults.contains("smooth_images") &&
-                !defaults.contains("bionic_reading") && defaults.size() == 11,
+                !defaults.contains("bionic_reading") && defaults.size() == 12,
             "Restoring typography must not change display choices");
     readingPpi.store(212);
     require(appearance::typographyDefaults().value("font_pixels").toInt() == defaultFontPixels(),

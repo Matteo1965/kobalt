@@ -16,10 +16,10 @@ QJsonObject readerPreferences(const QJsonObject &global, const QJsonObject &book
 QJsonObject globalPreferences(QJsonObject preferences);
 // The saved settings that decide how the book is laid out and drawn. A
 // retained layout is reused only when all of them match.
-inline constexpr std::array<const char *, 15> keys{
+inline constexpr std::array<const char *, 16> keys{
     "font_pixels",       "line_spacing",         "font_face",      "default_font_face", "margin_pixels",
     "top_margin_pixels", "bottom_margin_pixels", "text_alignment", "bionic_reading",    "weight_steps",
-    "font_weight",       "font_optical_size",    "hyphenation",    "dark_mode",         "smooth_images"};
+    "font_weight",       "font_optical_size",    "hyphenation",    "hanging_punctuation", "dark_mode", "smooth_images"};
 // Copies every appearance key from `from` into `to`. A key that `from` does
 // not have is removed from `to`, so the engine uses its own default for it.
 void copy(QJsonObject &to, const QJsonObject &from);

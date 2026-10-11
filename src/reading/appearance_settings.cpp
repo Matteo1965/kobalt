@@ -62,6 +62,7 @@ QJsonObject typographyDefaults() {
                        {"weight_steps", 1},
                        {"font_weight", defaultVariableFontWeight},
                        {"font_optical_size", 0},
-                       {"hyphenation", QStringLiteral("on")}});
+                       {"hyphenation", QStringLiteral("on")},
+                       {"hanging_punctuation", true}});
 }
 }
