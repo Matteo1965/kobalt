@@ -24,6 +24,7 @@ FALLBACK_FONTS = ('NotoSerif-Regular.ttf', 'NotoSansMath-Regular.ttf', 'NotoSeri
 # engine's algorithmic hyphenation.
 HYPHENATION = (
     'Dutch.pattern', 'English_GB.pattern', 'English_US.pattern', 'French.pattern', 'German.pattern',
+    'Hungarian.pattern',
     'Italian.pattern', 'Portuguese.pattern', 'Portuguese_BR.pattern', 'Spanish.pattern',
 )
 # Installed asset folders that the reader accepts.
