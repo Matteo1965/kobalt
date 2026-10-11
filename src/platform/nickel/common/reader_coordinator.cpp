@@ -534,17 +534,6 @@ void ReaderCoordinator::load() {
     if (!run.model)
         run.model = std::make_unique<kobalt::ReaderSession>(environment_.fonts(), environment_.placeholderFamily());
     run.sourceLease = std::make_shared<kobalt::SourceLease>();
-    // Apply the Hungarian Edition reading profile only to genuinely new books.
-    // Previously saved book-specific typography and chrome remain untouched.
-    if (saved.isEmpty()) {
-        const auto defaults = kobalt::appearance::typographyDefaults();
-        for (auto it = defaults.begin(); it != defaults.end(); ++it)
-            saved[it.key()] = it.value();
-        saved["show_header"] = false;
-        saved["show_footer"] = true;
-        saved["footer_text_size"] = QStringLiteral("small");
-        saved["show_clock"] = false;
-    }
     const auto originalAppearance = saved;
     const auto temporaryAppearance =
         benchmarkTypographyEnabled ? kobalt::appearance::benchmarkTypography(run.identity) : QJsonObject();
