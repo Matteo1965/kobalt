@@ -99,11 +99,11 @@ int main() {
     require(defaults.value("font_face").toString() == defaultFontFace &&
                 defaults.value("font_pixels").toInt() == defaultFontPixels() &&
                 defaults.value("line_spacing").toInt() == defaultLineSpacing &&
-                defaults.value("margin_pixels").toInt() == defaultMarginPixels() &&
-                defaults.value("top_margin_pixels").toInt() == 24 &&
-                defaults.value("bottom_margin_pixels").toInt() == 24 &&
-                defaults.value("text_alignment").toString() == "left" && defaults.value("weight_steps").toInt() == 0 &&
-                defaults.value("font_weight").toInt() == 450 && defaults.value("hyphenation").toString() == "off",
+                defaults.value("margin_pixels").toInt() == 40 &&
+                defaults.value("top_margin_pixels").toInt() == 20 &&
+                defaults.value("bottom_margin_pixels").toInt() == 10 &&
+                defaults.value("text_alignment").toString() == "justify" && defaults.value("weight_steps").toInt() == 1 &&
+                defaults.value("font_weight").toInt() == 450 && defaults.value("hyphenation").toString() == "on",
             "Typography defaults changed");
     require(!defaults.contains("dark_mode") && !defaults.contains("smooth_images") &&
                 !defaults.contains("bionic_reading") && defaults.size() == 11,

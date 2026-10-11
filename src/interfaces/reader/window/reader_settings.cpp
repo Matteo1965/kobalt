@@ -130,7 +130,7 @@ void Reader::applySettings() {
         next["native_hide_device_options"] = hideDeviceOptionsOption->isChecked();
     }
     if (restoringDefaults) {
-        next["show_header"] = true;
+        next["show_header"] = false;
         next["show_footer"] = true;
         next["header_text_size"] = QStringLiteral("small");
         next["footer_text_size"] = QStringLiteral("small");

@@ -55,13 +55,13 @@ QJsonObject typographyDefaults() {
     return qt::object({{"font_face", QString::fromLatin1(defaultFontFace)},
                        {"font_pixels", defaultFontPixels()},
                        {"line_spacing", defaultLineSpacing},
-                       {"margin_pixels", defaultMarginPixels()},
-                       {"top_margin_pixels", defaultVerticalMarginPixels(defaultMarginPixels())},
-                       {"bottom_margin_pixels", defaultVerticalMarginPixels(defaultMarginPixels())},
-                       {"text_alignment", QStringLiteral("left")},
-                       {"weight_steps", 0},
+                       {"margin_pixels", readingPixels(40)},
+                       {"top_margin_pixels", readingPixels(20)},
+                       {"bottom_margin_pixels", readingPixels(10)},
+                       {"text_alignment", QStringLiteral("justify")},
+                       {"weight_steps", 1},
                        {"font_weight", defaultVariableFontWeight},
                        {"font_optical_size", 0},
-                       {"hyphenation", QStringLiteral("off")}});
+                       {"hyphenation", QStringLiteral("on")}});
 }
 }

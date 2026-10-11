@@ -4,7 +4,7 @@
 #include <array>
 
 namespace kobalt {
-inline constexpr auto defaultFontFace = "Libron";
+inline constexpr auto defaultFontFace = "NV Bitter";
 inline constexpr int defaultLineSpacing = 122;
 inline constexpr int defaultVariableFontWeight = 450;
 
