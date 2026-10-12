@@ -235,7 +235,10 @@ bool ReaderModel::supportedArchive(const QByteArray &bytes, QString *error) {
     if (bytes.size() < 22 || bytes.size() > maxBook)
         return fail(strings::get("error.unsupported_publication_size"));
     // Inspect the central directory before giving the archive to the engine.
-    // Reject ZIP encryption, font obfuscation and ZIP64 rather than guessing.
+    // Reject ZIP encryption and ZIP64 rather than guessing.
+    Publication publication;
+    if (!publication.inspect(bytes, error))
+        return false;
     auto u16 = [&bytes](int p) {
         return qFromLittleEndian<quint16>(reinterpret_cast<const uchar *>(bytes.constData() + p));
     };
@@ -266,8 +269,6 @@ bool ReaderModel::supportedArchive(const QByteArray &bytes, QString *error) {
         if (next > quint64(end) || (u16(at + 8) & 0x41) || u32(at + 20) == 0xffffffffU)
             return fail(strings::get("error.encrypted_or_unsupported_epub"));
         const QByteArray name = bytes.mid(at + 46, nameSize);
-        if (name == "META-INF/encryption.xml")
-            return fail(strings::get("error.encrypted_or_obfuscated_books_stay_in_nickel"));
         if (name == "META-INF/container.xml")
             container = true;
         expanded += u32(at + 24);
@@ -398,7 +399,18 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
     // A cached book was saved with these markers and its styles. Marking it
     // again would discard the cached pages.
     if (!openedFromCache_) {
-        markBodyAlignment(engine_->getDocument());
+        auto *document = engine_->getDocument();
+        auto *root = document->getRootNode();
+        if (root->getStyle().isNull()) {
+            // Structural CSS selectors can invalidate styles after parsing.
+            // Publisher alignment and leading-image margins need them before
+            // Kobalt adds its layout markers, without paginating the document.
+            auto *stylesheet = document->getStyleSheet();
+            stylesheet->push();
+            root->initNodeStyleRecursive(nullptr);
+            stylesheet->pop();
+        }
+        markBodyAlignment(document);
         markChapterLeadingImages(engine_.get());
         markKoboLinkDecorations();
         // Loading computed styles before the body markers existed, including in previews.
@@ -440,7 +452,10 @@ bool ReaderModel::openPreview(ReaderModel &source, QSize size, QString *error) {
     if (!fragment)
         return fail(strings::get("error.could_not_locate_the_current_section"));
     const auto section = qstring(fragment->getAttributeValue("Source"));
-    auto container = document->getContainer();
+    // The document container already decodes obfuscated fonts. Loading it as
+    // another EPUB would apply that transformation twice. Previews must start
+    // from the original resource container, like the main document.
+    auto container = source.source_ ? source.source_->container : LVContainerRef();
     if (container.isNull())
         return fail(strings::get("error.the_section_resources_are_unavailable"));
     bool resourceError = false;

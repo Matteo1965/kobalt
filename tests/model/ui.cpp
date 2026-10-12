@@ -46,9 +46,11 @@
 #include <QtMath>
 #include <QKeyEvent>
 #include <QProgressBar>
+#include <QRawFont>
 #include <cstdio>
 #include <cstdlib>
 #include "check.h"
+#include "ui_private_text.h"
 
 // Geometry checks run without the device refresh backend.
 namespace kobalt::platform {
@@ -128,6 +130,7 @@ int main(int argc, char **argv) {
                 QFontInfo(kobalt::ui::chromeFont()).family() == "Kobalt UI Mono" &&
                 QFontInfo(kobalt::ui::brandFont(32)).family() == "Kobalt UI Serif",
             "Component font substitution");
+    checkPrivateInterfaceText(kobalt::test::readerAssets());
     {
         QWidget host;
         host.resize(1264, 1680);
@@ -1422,12 +1425,15 @@ int main(int argc, char **argv) {
     }
     // Compare visible mixed-case ink across the bundled families, independent
     // of their claimed font metrics. Use the same sample sizing as the picker.
-    for (const auto &file : QDir(kobalt::test::readerAssets().file("fonts/ebook-core")).entryList({"*.ttf"}))
-        require(QFontDatabase::addApplicationFont(kobalt::test::readerFontCopies().file(
-                    "ebook-core/" + file, kobalt::test::readerAssets().fontData("ebook-core/" + file))) >= 0,
-                "Core font could not be registered for optical check");
-    for (const auto *face : {"Libron", "Sourcerer", "NV Ancizar Serif", "NV Charis", "NV Garamond", "NV Jost",
-                             "NV Bitter", "NV Legible Next", "NV Literata", "NV Palatium"}) {
+    QStringList readingFamilies;
+    for (const auto &file : QDir(kobalt::test::readerAssets().file("fonts/ebook-core")).entryList({"*.ttf"})) {
+        const auto id = QFontDatabase::addApplicationFont(kobalt::test::readerFontCopies().file(
+            "ebook-core/" + file, kobalt::test::readerAssets().fontData("ebook-core/" + file)));
+        require(id >= 0, "Core font could not be registered for optical check");
+        readingFamilies.append(QFontDatabase::applicationFontFamilies(id));
+    }
+    readingFamilies.removeDuplicates();
+    for (const auto &face : readingFamilies) {
         const auto font = kobalt::ui::fontSample(face);
         require(QFontInfo(font).family() == face, "Optical font check used a fallback");
         QImage image(200, 100, QImage::Format_RGB32);
@@ -2929,6 +2935,44 @@ int main(int argc, char **argv) {
     slide(QEvent::MouseButtonPress, 25);
     slide(QEvent::MouseButtonRelease, 275);
     require(commits == 1 && slider.value() == 0, "Single-page slider emitted a jump");
+    slider.setRange(100, 300);
+    const QVector<int> spacingStops{100, 110, 120, 130, 140, 150, 175, 200, 250, 300};
+    slider.setMarkers(spacingStops, kobalt::ui::SettingSlider::MarkerMode::Stops);
+    const int inset = kobalt::ui::metrics::control::sliderInset;
+    slider.resize(360 + 2 * inset, 72);
+    for (int index = 0; index < spacingStops.size(); ++index) {
+        const int x = inset + 40 * index;
+        slide(QEvent::MouseButtonPress, x + (index == spacingStops.size() - 1 ? -12 : 12));
+        require(slider.value() == spacingStops[index], "Pointer did not snap to equally spaced line-height stops");
+        slide(QEvent::MouseButtonRelease, x);
+        slider.nudge(1);
+        require(slider.value() == qMin(300, spacingStops[index] + 1), "Plus skipped a granular line-height value");
+        slider.nudge(-1);
+        require(slider.value() == (index == spacingStops.size() - 1 ? 299 : spacingStops[index]),
+                "Minus snapped instead of changing line height by one percent");
+    }
+    for (const bool dark : {false, true}) {
+        QPalette colors = originalPalette;
+        colors.setColor(QPalette::Window, dark ? Qt::black : Qt::white);
+        colors.setColor(QPalette::WindowText, dark ? Qt::white : Qt::black);
+        slider.setPalette(colors);
+        slider.setValue(151);
+        const auto image = slider.grab().toImage();
+        const int markerY =
+            kobalt::ui::metrics::control::sliderMarkerTop + kobalt::ui::metrics::control::sliderMarkerHeight / 2;
+        for (int index = 0; index < spacingStops.size(); ++index) {
+            require(qGray(image.pixel(inset + 40 * index, markerY)) == (dark ? 255 : 0),
+                    "Nonlinear slider marks were not equally spaced");
+        }
+        require(qGray(image.pixel(inset + 20, markerY)) == (dark ? 0 : 255),
+                "Nonlinear slider drew a marker between its stops");
+    }
+    slider.setValue(151);
+    const int beforeSnap = commits;
+    slide(QEvent::MouseButtonPress, inset + 240);
+    QApplication::sendEvent(&slider, &cancel);
+    slide(QEvent::MouseButtonRelease, inset + 240);
+    require(slider.value() == 151 && commits == beforeSnap, "Cancelling a snapped gesture lost the granular value");
     kobalt::ui::FontButton font(&panel);
     font.ensurePolished();
     font.resize(500, kobalt::ui::metrics::choices::fontButtonHeight);

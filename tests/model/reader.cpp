@@ -6,6 +6,7 @@
 #include <QTemporaryDir>
 #include <QDir>
 #include "engine/crengine/reader_model.h"
+#include "engine/crengine/document_cache.h"
 #include "engine/crengine/page_pixels.h"
 #include "publication/publication.h"
 #include "support/strings.h"
@@ -26,6 +27,7 @@
 #include <QTemporaryFile>
 #include <QtEndian>
 #include <QtMath>
+#include <zlib.h>
 #include <QGuiApplication>
 #include <algorithm>
 #include <cstdio>
@@ -51,7 +53,8 @@ static QByteArray storedEpub(const QList<QPair<QByteArray, QByteArray>> &members
         u16(bytes, 0);
         u16(bytes, 0);
         u32(bytes, 0);
-        u32(bytes, 0);
+        const auto crc = crc32(0, reinterpret_cast<const Bytef *>(member.second.constData()), member.second.size());
+        u32(bytes, crc);
         u32(bytes, member.second.size());
         u32(bytes, member.second.size());
         u16(bytes, member.first.size());
@@ -63,7 +66,7 @@ static QByteArray storedEpub(const QList<QPair<QByteArray, QByteArray>> &members
         u16(directory, 0);
         u16(directory, 0);
         u32(directory, 0);
-        u32(directory, 0);
+        u32(directory, crc);
         u32(directory, member.second.size());
         u32(directory, member.second.size());
         u16(directory, member.first.size());
@@ -287,8 +290,92 @@ static void checkCssDensity() {
     require(sizesAt212[4] == sizesAt300[4] && qAbs(sizesAt300[4].width() - 200) <= 1,
             "Percentage image width changed with CSS density");
 }
+static void checkIdpfFonts() {
+    QFile font(kobalt::test::readerAssets().file("fonts/InstrumentSerif-Regular.ttf"));
+    require(font.open(QIODevice::ReadOnly), "open synthetic embedded font fixture");
+    const auto original = font.readAll();
+    auto obfuscated = original;
+    const auto key = QCryptographicHash::hash("test-identifier", QCryptographicHash::Sha1);
+    for (int i = 0; i < qMin(1040, int(obfuscated.size())); ++i)
+        obfuscated[i] = char(uchar(obfuscated[i]) ^ uchar(key[i % key.size()]));
+    auto book = [&](const QByteArray &fontBytes, bool encoded, const QByteArray &identifier) {
+        QList<QPair<QByteArray, QByteArray>> members = {
+            {"mimetype", "application/epub+zip"},
+            {"META-INF/container.xml",
+             "<container xmlns='urn:oasis:names:tc:opendocument:xmlns:container'><rootfiles><rootfile full-path='book.opf' media-type='application/oebps-package+xml'/></rootfiles></container>"},
+            {"book.opf",
+             "<package xmlns='http://www.idpf.org/2007/opf' version='3.0' unique-identifier='book-id'><metadata xmlns:dc='http://purl.org/dc/elements/1.1/'><dc:identifier id='book-id'>" +
+                 identifier +
+                 "</dc:identifier></metadata><manifest><item id='font' href='font.ttf' media-type='font/ttf'/><item id='chapter' href='chapter.xhtml' media-type='application/xhtml+xml'/></manifest><spine><itemref idref='chapter'/></spine></package>"},
+            {"chapter.xhtml",
+             "<html xmlns='http://www.w3.org/1999/xhtml'><head><style>@font-face {font-family: Embedded; src: url(font.ttf);} body {font-family: Embedded;}</style></head><body><p>Embedded font glyphs should match the unobfuscated original.</p></body></html>"},
+            {"font.ttf", fontBytes}};
+        if (encoded)
+            members.append(QPair<QByteArray, QByteArray>{
+                "META-INF/encryption.xml",
+                "<encryption xmlns='urn:oasis:names:tc:opendocument:xmlns:container' xmlns:enc='http://www.w3.org/2001/04/xmlenc#'><enc:EncryptedData><enc:EncryptionMethod Algorithm='http://www.idpf.org/2008/embedding'/><enc:CipherData><enc:CipherReference URI='font.ttf'/></enc:CipherData></enc:EncryptedData></encryption>"});
+        return storedEpub(members);
+    };
+    QString error;
+    QByteArray expected, expectedPreview;
+    {
+        kobalt::ReaderModel plain(kobalt::test::readerFonts());
+        require(plain.open(book(original, false, "test-identifier"), QSize(800, 1000), {}, &error), qPrintable(error));
+        require(plain.embeddedFontCount() == 1 && plain.style(32, 120, "", 36), "load original publisher font");
+        expected = hash(plain.image(0));
+        kobalt::ReaderModel preview(kobalt::test::readerFonts());
+        require(preview.openPreview(plain, QSize(800, 1000), &error), qPrintable(error));
+        expectedPreview = hash(preview.image(0));
+    }
+    for (const auto &identifier : {QByteArray("test-identifier"), QByteArray(" test-\tiden\n tifier\r ")}) {
+        kobalt::ReaderModel decoded(kobalt::test::readerFonts());
+        require(decoded.open(book(obfuscated, true, identifier), QSize(800, 1000), {}, &error), qPrintable(error));
+        require(decoded.embeddedFontCount() == 1 && decoded.style(32, 120, "", 36), "load IDPF publisher font");
+        require(hash(decoded.image(0)) == expected, "IDPF font glyphs differ from the original font");
+        kobalt::ReaderModel preview(kobalt::test::readerFonts());
+        require(preview.openPreview(decoded, QSize(800, 1000), &error), qPrintable(error));
+        require(preview.embeddedFontCount() == 1 && hash(preview.image(0)) == expectedPreview,
+                "IDPF font preview changed publisher glyphs");
+    }
+}
+static void checkDeferredPublisherStyles() {
+    const QByteArray prefix =
+        "<html xmlns='http://www.w3.org/1999/xhtml'><head><style>body{margin:0}p{margin:0;text-indent:0}";
+    auto book = [&](bool deferred) {
+        const QByteArray css = deferred ? "img:only-of-type{margin-top:48px}p.caption:nth-of-type(1){text-align:center}"
+                                        : "img{margin-top:48px}p.caption{text-align:center}";
+        return storedEpub(
+            {{"mimetype", "application/epub+zip"},
+             {"META-INF/container.xml",
+              "<container xmlns='urn:oasis:names:tc:opendocument:xmlns:container'><rootfiles><rootfile full-path='book.opf' media-type='application/oebps-package+xml'/></rootfiles></container>"},
+             {"book.opf",
+              "<package xmlns='http://www.idpf.org/2007/opf' version='2.0'><metadata/><manifest><item id='chapter' href='chapter.xhtml' media-type='application/xhtml+xml'/><item id='image' href='image.svg' media-type='image/svg+xml'/></manifest><spine><itemref idref='chapter'/></spine></package>"},
+             {"chapter.xhtml",
+              prefix + css +
+                  "</style></head><body><img src='image.svg' width='160' height='80'/><p class='caption'>Centered caption</p><p>Ordinary prose remains left aligned.</p></body></html>"},
+             {"image.svg",
+              "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='80'><rect width='160' height='80' fill='black'/></svg>"}});
+    };
+    QString error;
+    QByteArray page, preview;
+    for (bool deferred : {false, true}) {
+        kobalt::ReaderModel model(kobalt::test::readerFonts());
+        require(model.open(book(deferred), QSize(800, 1000), {}, &error), qPrintable(error));
+        kobalt::ReaderModel section(kobalt::test::readerFonts());
+        require(section.openPreview(model, QSize(800, 1000), &error), qPrintable(error));
+        if (!deferred) {
+            page = hash(model.image(0));
+            preview = hash(section.image(0));
+        } else {
+            require(hash(model.image(0)) == page, "Deferred publisher styles changed image spacing or centering");
+            require(hash(section.image(0)) == preview, "Deferred publisher styles changed the section preview");
+        }
+    }
+}
 int main(int argc, char **argv) {
     QGuiApplication app(argc, argv);
+    checkDeferredPublisherStyles();
+    checkIdpfFonts();
     const auto positions = kobalt::nickel::positionCodec();
     const QVector<kobalt::ReadingFont> axisFixture{
         {"Variable fixture", {}, kobalt::FontOrigin::Sideloaded, false, {300, 650, 450}, {6.25, 72.75, 14}}};
@@ -413,7 +500,11 @@ int main(int argc, char **argv) {
                         "Sideloaded source was misclassified");
             }
         }
-        require(core == 10 + variableCore && sideloaded == 1 &&
+        QFile collection(kobalt::test::readerAssets().file("fonts/ebook-core.json"));
+        require(collection.open(QIODevice::ReadOnly), "Cannot read core font collection");
+        const auto coreFiles = QJsonDocument::fromJson(collection.readAll()).object().value("files").toArray();
+        require(!coreFiles.isEmpty() && coreFiles.size() % 4 == 0, "Core collection lost a style");
+        require(core == coreFiles.size() / 4 + variableCore && sideloaded == 1 &&
                     interface == 1 + int(kobalt::scriptFallbackFontFiles.size()) && arabicFallback == 1 &&
                     hebrewFallback == 1,
                 "Core collection or font catalog incomplete");
@@ -570,10 +661,12 @@ int main(int argc, char **argv) {
     require(central >= 0, "Missing test ZIP directory");
     corrupt[central + 8] = char(corrupt[central + 8] | 1);
     require(!kobalt::ReaderModel::supportedArchive(corrupt, &error), "Encrypted ZIP accepted");
-    // Use a bundled comparison face on both firmware versions.
+    // Use current line-height units and a bundled comparison face on both firmware versions.
+    // The boolean hyphenation value still exercises the legacy setting.
     const QJsonObject legacySettings = kobalt::qt::object({{"font_face", "NV Bitter"},
                                                            {"font_pixels", 32},
                                                            {"line_spacing", 120},
+                                                           {"line_spacing_version", 1},
                                                            {"margin_pixels", 36},
                                                            {"hyphenation", true}});
     for (int cycle = 0; cycle < 2; ++cycle) {
@@ -620,7 +713,7 @@ int main(int argc, char **argv) {
     std::fflush(stdout);
     require(text && pagination, "Missing parsing or pagination progress");
     const auto progressCount = progress.size();
-    require(defaults.fontFace() == "Libron" && defaults.fontSize() == 46 && defaults.spacing() == 122 &&
+    require(defaults.fontFace() == "Libron" && defaults.fontSize() == 46 && defaults.spacing() == 150 &&
                 defaults.margin() == 48 && defaults.alignment() == "left" &&
                 defaults.state().value("hyphenation").toString() == "off",
             "New books do not use the bundled typography defaults");
@@ -980,6 +1073,44 @@ int main(int argc, char **argv) {
     for (const auto &name : names)
         if (name.endsWith("c2.xhtml"))
             chapter2 = name;
+    {
+        // CREngine normalizes heading whitespace. Native text-offset mapping
+        // rejects that change even at offset zero, but the EPUB TOC still works.
+        for (const auto &heading : {QByteArray("Chapter One"), QByteArray("Chapter\n   One")}) {
+            const auto book = storedEpub(
+                {{"mimetype", "application/epub+zip"},
+                 {"META-INF/container.xml",
+                  "<container xmlns='urn:oasis:names:tc:opendocument:xmlns:container' version='1.0'><rootfiles><rootfile full-path='book.opf' media-type='application/oebps-package+xml'/></rootfiles></container>"},
+                 {"book.opf",
+                  "<package xmlns='http://www.idpf.org/2007/opf' version='2.0'><metadata/><manifest><item id='c' href='c.xhtml' media-type='application/xhtml+xml'/><item id='toc' href='toc.ncx' media-type='application/x-dtbncx+xml'/></manifest><spine toc='toc'><itemref idref='c'/></spine></package>"},
+                 {"toc.ncx",
+                  "<ncx xmlns='http://www.daisy.org/z3986/2005/ncx/' version='2005-1'><head/><docTitle><text>Book</text></docTitle><navMap><navPoint id='n1' playOrder='1'><navLabel><text>EPUB chapter</text></navLabel><content src='c.xhtml#heading'/></navPoint></navMap></ncx>"},
+                 {"c.xhtml",
+                  "<html xmlns='http://www.w3.org/1999/xhtml'><head><title>Test</title></head><body><h1 id='heading'>" +
+                      heading + "</h1><p>Body text.</p></body></html>"}});
+            kobalt::ReaderModel fallback(kobalt::test::readerFonts());
+            require(fallback.open(book, QSize(1072, 1328), {}, &error), qPrintable(error));
+            const auto original = fallback.chapters();
+            require(original.size() == 1 && !original[0].position.isEmpty(), "Missing EPUB TOC destination");
+            const auto anchor = fallback.position();
+            for (const auto &location : {QString("c.xhtml#heading"), QString("c.xhtml#heading:0")}) {
+                auto resolved = kobalt::resolveChapterTargets(fallback, positions, {{"Native chapter", location}}, {});
+                const bool normalized = heading.contains('\n');
+                require(resolved.contents.size() == 1 && resolved.contents[0].position.isEmpty() == normalized,
+                        "Heading whitespace did not reproduce the native destination failure");
+                const QVector<kobalt::ChapterLink> graph{{"Native graph", original[0].position, -1, 0, 123}};
+                fallback.setChapters(std::move(resolved.contents), graph);
+                const auto chapters = fallback.chapters();
+                require(chapters.size() == 1 && chapters[0].title == (normalized ? "EPUB chapter" : "Native chapter") &&
+                            !chapters[0].position.isEmpty() && chapters[0].page >= 0 && fallback.position() == anchor,
+                        "Unresolved native chapters did not fall back without moving the reader");
+                require(fallback.chapterGraph().size() == 1 && fallback.chapterGraph()[0].words == 123,
+                        "TOC fallback replaced native word counts");
+                require(fallback.goTo(chapters[0].position), "Cannot navigate to the selected chapter destination");
+                require(fallback.goTo(anchor), "Cannot restore the position after chapter navigation");
+            }
+        }
+    }
     kobalt::ReaderModel native(kobalt::test::readerFonts());
     require(native.open(bytes, QSize(1072, 1328), legacySettings, &error), qPrintable(error));
     require(native.goToPlatform(positions, chapter2 + "#kobo.8.1:7", &error), qPrintable(error));
@@ -1027,6 +1158,8 @@ int main(int argc, char **argv) {
         auto mapped = kobalt::resolveChapterTargets(native, positions, targets, targets);
         native.setChapters(std::move(mapped.contents), std::move(mapped.graph));
         auto links = native.chapterGraph();
+        require(native.chapters().size() == targets.size() && native.chapters().last().position.isEmpty(),
+                "A partially resolved native chapter list was replaced by the publication TOC");
         require(native.position() == comparisonAnchor && native.page() == beforePage && native.pages() == beforePages,
                 "Mapping chapters changed the reading position or layout");
         require(links.size() == 5 && links[0].position == links[1].position && links[0].words == 300 &&
@@ -1187,9 +1320,14 @@ int main(int argc, char **argv) {
         require(cacheRoot.isValid(), "Cannot create a document cache directory");
         const auto cacheDirectory = cacheRoot.path() + "/.cache";
         const QByteArray fingerprint(64, 'a'), policy("document-cache-test");
+        require(kobalt::documentCacheChecksum(policy, 1, "v1.0-beta.1") !=
+                    kobalt::documentCacheChecksum(policy, 1, "v1.0-beta.2"),
+                "A different Kobalt version reused the document cache identity");
+        require(kobalt::documentCacheChecksum(policy, 1) == kobalt::documentCacheChecksum(policy, 1, KOBALT_VERSION),
+                "The document cache identity omitted the compiled Kobalt version");
         // CREngine leaves books under 30 kB out of its cache.
         const qint64 cachedBytes = 1024 * 1024;
-        const auto settings = kobalt::qt::object({{"text_alignment", "left"}});
+        const auto settings = kobalt::qt::object({{"text_alignment", "left"}, {"bionic_reading", "off"}});
         const auto opened = [&](kobalt::ReaderModel &target, const QByteArray &key, const QByteArray &rules,
                                 const QJsonObject &saved) {
             target.setDocumentCache(cacheDirectory, key, rules, cachedBytes);
@@ -1236,8 +1374,8 @@ int main(int argc, char **argv) {
         require(emphasizedAgain.applyAppearance(settings) && emphasizedAgain.saveDocumentCache(),
                 "Cannot cache a book after disabling Bionic reading");
         opened(plainAgain, fingerprint, policy, settings);
-        require(plainAgain.openedFromCache() && hash(plainAgain.image(0)) == hash(parsed.image(0)),
-                "A mode change saved the wrong document cache identity");
+        require(plainAgain.openedFromCache(), "A mode change saved the wrong document cache identity");
+        require(hash(plainAgain.image(0)) == hash(parsed.image(0)), "A mode change saved different cached pages");
         // A different typography reuses the parsed book but lays it out again.
         const auto larger = kobalt::qt::object({{"text_alignment", "left"}, {"font_pixels", 44}});
         kobalt::ReaderModel parsedLarger(model.fontInputs()), restoredLarger(model.fontInputs());
@@ -1251,10 +1389,32 @@ int main(int argc, char **argv) {
                         hash(parsedLarger.image(i)) == hash(restoredLarger.image(i)),
                     "A cached book drew different pages with new typography");
         kobalt::ReaderModel otherPolicy(model.fontInputs()), otherBook(model.fontInputs());
-        opened(otherPolicy, fingerprint, "changed-policy", settings);
-        require(!otherPolicy.openedFromCache(), "A changed cache policy reused a parsed book");
         opened(otherBook, QByteArray(64, 'b'), policy, settings);
         require(!otherBook.openedFromCache(), "Another fingerprint reused a parsed book");
+        require(otherBook.saveDocumentCache(), "Cannot cache another book");
+        const auto oldEntries = QDir(cacheDirectory).entryList({"*.cr3"}, QDir::Files);
+        require(oldEntries.size() == 2, "Cache retained superseded reading modes");
+        {
+            kobalt::DocumentCacheScope cache(cacheDirectory);
+            require(cache.enabled(), "Cannot initialize cache cleanup check");
+            require(!ldomDocCache::removeObsolete(
+                        Utf8ToUnicode(lString8(fingerprint.constData())),
+                        Utf8ToUnicode(
+                            lString8((cacheDirectory + "/" + oldEntries.first() + ".missing").toUtf8().constData()))),
+                    "Cache cleanup accepted a missing replacement");
+        }
+        require(QDir(cacheDirectory).entryList({"*.cr3"}, QDir::Files) == oldEntries,
+                "A missing replacement removed old caches");
+        opened(otherPolicy, fingerprint, "changed-policy", settings);
+        require(!otherPolicy.openedFromCache(), "A changed cache policy reused a parsed book");
+        require(otherPolicy.saveDocumentCache(), "Cannot save the changed cache policy");
+        const auto newEntries = QDir(cacheDirectory).entryList({"*.cr3"}, QDir::Files);
+        require(newEntries.size() == 2 && newEntries != oldEntries,
+                "Saving a new cache retained the old policy or removed another book");
+        opened(otherPolicy, fingerprint, "changed-policy", settings);
+        opened(otherBook, QByteArray(64, 'b'), policy, settings);
+        require(otherPolicy.openedFromCache() && otherBook.openedFromCache(),
+                "Cache cleanup lost the replacement, another book or their index entries");
     }
     {
         kobalt::ReaderModel recycling(model.fontInputs()), fresh(model.fontInputs());
@@ -1448,6 +1608,70 @@ int main(int argc, char **argv) {
         require(spaced.append(name, content, &error), qPrintable(error));
     }
     const auto spacedBytes = spaced.finish(&error);
+    // Identical glyphs on forced lines expose the actual rendered line pitch.
+    // Measure pixels so applying the percentage twice cannot pass this check.
+    kobalt::Publication lineHeightFixture;
+    require(lineHeightFixture.inspect(bytes, &error), qPrintable(error));
+    for (const auto &name : lineHeightFixture.names()) {
+        auto resource = source->OpenStream(Utf8ToUnicode(name.toUtf8().constData()).c_str(), LVOM_READ);
+        QByteArray content(int(resource->GetSize()), '\0');
+        lvsize_t read = 0;
+        require(resource->Read(content.data(), content.size(), &read) == LVERR_OK && read == lvsize_t(content.size()),
+                "Cannot read line-height fixture resource");
+        if (name.endsWith(".xhtml")) {
+            content = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Line height</title>"
+                      "<style>p { margin:0; text-indent:0; }</style></head>"
+                      "<body><p>H<br/>H<br/>H<br/>H</p></body></html>";
+        }
+        require(lineHeightFixture.append(name, content, &error), qPrintable(error));
+    }
+    const auto lineHeightBytes = lineHeightFixture.finish(&error);
+    auto linePitch = [](const QImage &image) {
+        QVector<int> starts;
+        bool previousInk = false;
+        for (int y = 0; y < image.height(); ++y) {
+            bool ink = false;
+            for (int x = 0; x < image.width(); ++x) {
+                ink |= qGray(image.pixel(x, y)) < 128;
+            }
+            if (ink && !previousInk) {
+                starts.append(y);
+            }
+            previousInk = ink;
+        }
+        require(starts.size() >= 4, "Line-height fixture did not render four lines");
+        const int pitch = starts[1] - starts[0];
+        require(starts[2] - starts[1] == pitch && starts[3] - starts[2] == pitch,
+                "Line-height fixture has inconsistent pitch");
+        return pitch;
+    };
+    {
+        kobalt::ReaderModel height(kobalt::test::readerFonts());
+        auto settings = kobalt::qt::object({{"font_pixels", 40},
+                                            {"line_spacing", 150},
+                                            {"line_spacing_version", 1},
+                                            {"margin_pixels", 0},
+                                            {"top_margin_pixels", 0},
+                                            {"bottom_margin_pixels", 0}});
+        require(height.open(lineHeightBytes, QSize(320, 720), settings, &error), qPrintable(error));
+        require(linePitch(height.image(0)) == 60, "150% did not render at 1.5 times the font size");
+        for (const int spacing : {100, 200, 300}) {
+            require(height.style(40, spacing), "Cannot change line height");
+            require(linePitch(height.image(0)) == 40 * spacing / 100, "Relayout multiplied line height twice");
+        }
+        require(!height.style(40, 301), "Spacing above 300% was accepted");
+        settings.remove("line_spacing_version");
+        settings["line_spacing"] = 122;
+        require(height.open(lineHeightBytes, QSize(320, 720), settings, &error) && height.spacing() == 150,
+                "Opening did not migrate saved 122% to 150%");
+        const auto migrated = height.state();
+        require(height.open(lineHeightBytes, QSize(320, 720), migrated, &error) && height.spacing() == 150 &&
+                    linePitch(height.image(0)) == 60,
+                "Reopening migrated spacing applied the conversion again");
+        kobalt::ReaderModel preview(kobalt::test::readerFonts());
+        require(preview.openPreview(height, height.viewport(), &error) && linePitch(preview.image(0)) == 60,
+                "Preview multiplied or migrated line height again");
+    }
     auto checkSpaces = [](const QImage &image) {
         QVector<QVector<int>> lines;
         QVector<bool> columns(image.width(), false);
@@ -1848,7 +2072,7 @@ int main(int argc, char **argv) {
     }
     kobalt::ReaderModel inlineHeading(css.fontInputs());
     require(inlineHeading.open(inlineBook.finish(&error), QSize(1072, 1328), {}, &error), qPrintable(error));
-    for (const auto &face : {QStringLiteral("Libron"), QStringLiteral("NV Legible Next")}) {
+    for (const auto &face : {QStringLiteral("Libron"), kobalt::test::headingReadingFace()}) {
         require(inlineHeading.applyAppearance(kobalt::qt::object({{"font_face", face}, {"bionic_reading", "off"}})),
                 "Cannot select the inline-heading regression font");
         int normalHeight = 0;
