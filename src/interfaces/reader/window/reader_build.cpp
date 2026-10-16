@@ -693,6 +693,14 @@ void Reader::buildAppearance(const kobalt::reader::AppearanceLayout &layout) {
                 });
         });
     }
+    for (auto *button : paragraphSpacingButtons) {
+        const QString value = button->property("paragraph_spacing").toString();
+        connect(button, &QPushButton::clicked, this, [this, value] {
+            const auto *settings = appearanceEdit.edited() && appearanceEdit.ready() ? appearanceEdit.preview() : model;
+            if (appearanceEdit.queued() || value != settings->paragraphSpacing())
+                mutateAppearance([value](ReaderSession &preview) { preview.setParagraphSpacing(value); });
+        });
+    }
     for (auto *button : rotationButtons) {
         const int value = button->property("orientation").toInt();
         connect(button, &QPushButton::clicked, this, [this, value] {
