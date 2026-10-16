@@ -82,6 +82,7 @@ void Reader::openSettings() {
     darkOption->setChecked(model->state().value("dark_mode").toBool(false));
     smoothOption->setChecked(model->state().value("smooth_images").toBool(true));
     hideNonlinearOption->setChecked(model->state().value("hide_nonlinear_fragments").toBool(false));
+    opticalMarginOption->setChecked(model->state().value("hanging_punctuation").toBool(false));
     progressOption->setChecked(page->showProgress);
     animationOption->setChecked(preferences.value("page_animations").toBool(false));
     bionicOption->setChecked(model->state().value("bold_reading").toString("off") == "bold");
@@ -136,6 +137,7 @@ void Reader::applySettings() {
     next["dark_mode"] = darkOption->isChecked();
     next["smooth_images"] = smoothOption->isChecked();
     next["hide_nonlinear_fragments"] = hideNonlinearOption->isChecked();
+    next["hanging_punctuation"] = opticalMarginOption->isChecked();
     next["show_progress_bar"] = progressOption->isChecked();
     next["page_animations"] = animationOption->isChecked();
     next["show_link_indicator"] = linkIndicatorOption->isChecked();
@@ -186,6 +188,7 @@ void Reader::applySettings() {
     settings["dark_mode"] = darkOption->isChecked();
     settings["smooth_images"] = smoothOption->isChecked();
     settings["hide_nonlinear_fragments"] = hideNonlinearOption->isChecked();
+    settings["hanging_punctuation"] = opticalMarginOption->isChecked();
     settings["bold_reading"] = bionicOption->isChecked() ? QStringLiteral("bold") : QStringLiteral("off");
     if (restoringDefaults) {
         const auto defaults = kobalt::appearance::typographyDefaults();
