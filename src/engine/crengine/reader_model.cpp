@@ -399,6 +399,9 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     hyphenation_ = hyphenation.isBool() ? (hyphenation.toBool() ? "auto" : "off") : hyphenation.toString("off");
     if (hyphenation_ != "auto" && hyphenation_ != "on" && hyphenation_ != "off")
         hyphenation_ = "off";
+    paragraphSpacing_ = saved.value("paragraph_spacing").toString("publisher");
+    if (paragraphSpacing_ != "none" && paragraphSpacing_ != "half" && paragraphSpacing_ != "full")
+        paragraphSpacing_ = "publisher";
     weight_ = qBound(0, saved.value("weight_steps").toInt(0), 12);
     bionic_ = saved.value("bold_reading").toString("off");
     // Preserve enabled Bionic reading from the retired thickness mode.
@@ -606,6 +609,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const bool axisChanged = axis.available() && axisWeight != axisWeight_;
     const auto alignment = settings.value("text_alignment").toString(alignment_);
     const auto hyphenation = settings.value("hyphenation").toString(hyphenation_);
+    const auto paragraphSpacing = settings.value("paragraph_spacing").toString(paragraphSpacing_);
     const bool dark = settings.value("dark_mode").toBool(darkMode_);
     const bool smooth = settings.value("smooth_images").toBool(smoothImages_);
     const bool hideNonlinear = settings.value("hide_nonlinear_fragments").toBool(hideNonlinearFragments_);
@@ -615,6 +619,8 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
         topMargin > maximumMarginPixels() || bottomMargin < 0 || bottomMargin > maximumMarginPixels() || weight < 0 ||
         weight > 12 || !validAlignment(alignment) ||
         (hyphenation != "auto" && hyphenation != "on" && hyphenation != "off") ||
+        (paragraphSpacing != "publisher" && paragraphSpacing != "none" && paragraphSpacing != "half" &&
+         paragraphSpacing != "full") ||
         (bionic != "off" && bionic != "bold") || (!face.isEmpty() && !fontFaces().contains(face)) ||
         !fontFaces().contains(defaultFace))
         return false;
@@ -626,7 +632,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const bool styled = bionicChanged || axisChanged || opticalChanged || pixels != pixels_ || spacing != spacing_ ||
                         face != face_ || defaultFace != defaultFace_ || margin != margin_ || topMargin != topMargin_ ||
                         bottomMargin != bottomMargin_ || alignment != alignment_ || hyphenation != hyphenation_ ||
-                        hangingPunctuation != hangingPunctuation_;
+                        hangingPunctuation != hangingPunctuation_ || paragraphSpacing != paragraphSpacing_;
     const bool resized = size != size_;
     if (!styled && !resized && weight == weight_ && dark == darkMode_ && smooth == smoothImages_ &&
         hideNonlinear == hideNonlinearFragments_)
@@ -643,6 +649,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     alignment_ = alignment;
     hyphenation_ = hyphenation;
     hangingPunctuation_ = hangingPunctuation;
+    paragraphSpacing_ = paragraphSpacing;
     weight_ = weight;
     axisWeight_ = axisWeight;
     opticalSize_ = opticalSize;
@@ -731,6 +738,10 @@ void ReaderModel::applyStyleSheet() {
     const double boundaryCssPixels = qCeil(256.0 * 96 / readingPpi.load()) / 256.0;
     overrides += QString("body[data-kobalt-leading-image=\"1\"] { padding-top:%1px !important; }\n")
                      .arg(boundaryCssPixels, 0, 'f', 6);
+    if (paragraphSpacing_ != "publisher") {
+        const char *amount = paragraphSpacing_ == "half" ? "0.5em" : paragraphSpacing_ == "full" ? "1em" : "0";
+        overrides += QString("p { margin-top:0 !important; margin-bottom:%1 !important; }\n").arg(amount);
+    }
     if (hyphenation_ != "auto")
         overrides += QString("* { hyphens:%1 !important; }\n").arg(hyphenation_ == "on" ? "auto" : "none");
     if (!face_.isEmpty()) {
@@ -1128,6 +1139,7 @@ QJsonObject ReaderModel::state() const {
                                {"font_optical_size", opticalSize_},
                                {"bold_reading", bionic_},
                                {"hyphenation", hyphenation_},
+                               {"paragraph_spacing", paragraphSpacing_},
                                {"hanging_punctuation", hangingPunctuation_},
                                {"dark_mode", darkMode_},
                                {"smooth_images", smoothImages_},
