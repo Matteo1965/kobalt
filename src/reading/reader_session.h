@@ -102,6 +102,7 @@ public:
     bool setThickness(int steps);
     void setDarkMode(bool enabled);
     bool setHyphenation(const QString &mode);
+    bool setParagraphSpacing(const QString &mode);
     // Keep at most one turn behind the current turn. The latest direction wins.
     bool turn(int direction);
     bool canTurn() const;
@@ -216,6 +217,9 @@ public:
     }
     QString fontFace() const {
         return desired.value("font_face").toString();
+    }
+    QString paragraphSpacing() const {
+        return desired.value("paragraph_spacing").toString("publisher");
     }
     QString hyphenation() const {
         return desired.value("hyphenation").toString("off");
