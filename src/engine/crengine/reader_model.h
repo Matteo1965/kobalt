@@ -254,6 +254,7 @@ private:
     // The engine DOM version that parses this book and writes its positions.
     int domVersion_ = 0;
     QString hyphenation_ = "off";
+    bool hangingPunctuation_ = false;
     bool darkMode_ = false;
     bool smoothImages_ = true, hideNonlinearFragments_ = false;
     QMap<int, QImage> cache_;
