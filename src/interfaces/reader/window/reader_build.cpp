@@ -873,6 +873,7 @@ void Reader::buildSettings() {
     heavierTextOption = settings->heavierTextOption;
     linkIndicatorOption = settings->linkIndicatorOption;
     hideNonlinearOption = settings->hideNonlinearOption;
+    opticalMarginOption = settings->opticalMarginOption;
     bionicOption = settings->bionicOption;
     refreshButton = settings->refreshButton;
     resetDefaults = settings->resetDefaults;
@@ -902,6 +903,7 @@ void Reader::buildSettings() {
         progressOption->setChecked(true);
         animationOption->setChecked(false);
         bionicOption->setChecked(false);
+        opticalMarginOption->setChecked(false);
         screenRefreshMode = kobalt::ScreenRefresh::Smart;
         showScreenRefresh();
         resetDefaults->setText(strings::get("reader.defaults_selected"));
