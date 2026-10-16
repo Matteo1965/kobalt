@@ -79,6 +79,7 @@ void Reader::openSettings() {
     choices->hide();
     settingsError->clear();
     settingsError->hide();
+    clockOption->setChecked(preferences.value("show_clock").toBool(true));
     darkOption->setChecked(model->state().value("dark_mode").toBool(false));
     smoothOption->setChecked(model->state().value("smooth_images").toBool(true));
     hideNonlinearOption->setChecked(model->state().value("hide_nonlinear_fragments").toBool(false));
