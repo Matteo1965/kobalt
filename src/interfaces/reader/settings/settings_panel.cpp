@@ -135,7 +135,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
               strings::get("settings.hide_nonlinear_fragments_description"));
     advancedRows->addWidget(hideNonlinearOption);
     opticalMarginOption = check(advancedPage, "rrOpticalMargin", QStringLiteral("Optical margin"),
-                                QStringLiteral("Allow punctuation to extend into the right margin."));
+                                QString());
     advancedRows->addWidget(opticalMarginOption);
     clockOption = check(advancedPage, "rrShowClock", strings::get("reader.clock"), QString());
     advancedRows->addWidget(clockOption);
@@ -328,12 +328,16 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     for (auto *option : options) {
         auto presentation = option->presentation();
         presentation.indicator = ui::DescribedOption::Indicator::Square;
-        presentation.dividers = Qt::BottomEdge;
+        presentation.dividers = (option == smoothOption || option == linkIndicatorOption ||
+                                 option == hideNonlinearOption || option == opticalMarginOption ||
+                                 option == clockOption || option == edgeLightOption ||
+                                 option == heavierTextOption) ? Qt::Edges() : Qt::BottomEdge;
         presentation.horizontalInset = c::inset;
         presentation.labelPixels = c::labelText;
         presentation.descriptionPixels = c::descriptionText;
         presentation.indicatorSize = {c::checkSize, c::checkSize};
-        presentation.minimumRowHeight = option == smoothOption ? c::listActionHeight : c::optionHeight;
+        presentation.minimumRowHeight = (option == opticalMarginOption || option == clockOption)
+                                             ? ui::px(72) : option == smoothOption ? c::listActionHeight : c::optionHeight;
         option->setPresentation(presentation);
     }
     generalOptions->setContentsMargins(0, 0, 0, 0);
@@ -343,7 +347,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     resetRow->setStretch(1, 1);
     resetRow->setStretch(2, 0);
     for (auto *button : {resetDefaults, refreshButton}) {
-        button->setRule(Qt::BottomEdge);
+        button->setRule(button == resetDefaults ? Qt::Edges() : Qt::BottomEdge);
         // The refresh row's caption shows its current choice, set when Settings opens.
         if (button == resetDefaults)
             button->setCaption(strings::get("settings.asks_first"));
