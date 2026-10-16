@@ -601,8 +601,7 @@ void Reader::buildAppearance(const kobalt::reader::AppearanceLayout &layout) {
     hyphenButtons = appearance.hyphenButtons;
     rotationButtons = appearance.rotationButtons;
     autoRotateOption = appearance.autoRotateOption;
-    clockOption = appearance.clockOption;
-    clockHideOption = appearance.clockHideOption;
+    paragraphSpacingButtons = appearance.paragraphSpacingButtons;
     connect(fontButton, &QPushButton::clicked, this, [this] {
         if (choices->isVisible() && choosingTypography) {
             choices->hide();
@@ -874,6 +873,7 @@ void Reader::buildSettings() {
     linkIndicatorOption = settings->linkIndicatorOption;
     hideNonlinearOption = settings->hideNonlinearOption;
     opticalMarginOption = settings->opticalMarginOption;
+    clockOption = settings->clockOption;
     bionicOption = settings->bionicOption;
     refreshButton = settings->refreshButton;
     resetDefaults = settings->resetDefaults;
