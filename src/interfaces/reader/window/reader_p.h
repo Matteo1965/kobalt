@@ -143,7 +143,8 @@ private:
     kobalt::LightPanel *lightPopup = nullptr;
     QCheckBox *darkOption, *smoothOption, *progressOption, *animationOption, *edgeLightOption, *denseGraphOption,
         *pinStatsOption, *heavierTextOption;
-    QPushButton *autoRotateOption, *clockOption, *clockHideOption;
+    QPushButton *autoRotateOption;
+    QCheckBox *clockOption;
     QCheckBox *hideStatusOption = nullptr, *hideDeviceOptionsOption = nullptr;
     bool hideNativeStatus() const;
     QJsonObject preferences;
@@ -169,7 +170,8 @@ private:
     QVector<QPushButton *> rotationButtons;
     bool restoringDefaults = false, themeReady = false, darkTheme = false;
     kobalt::ui::FontButton *fontButton;
-    QVector<QPushButton *> alignmentButtons, hyphenButtons, headerSizeButtons, footerSizeButtons;
+    QVector<QPushButton *> alignmentButtons, hyphenButtons, headerSizeButtons, footerSizeButtons,
+                           paragraphSpacingButtons;
     void syncChromeSizeButtons();
     kobalt::ui::SettingSlider *sizeSlider, *opticalSizeSlider, *weightSlider, *variableWeightSlider, *spacingSlider,
         *marginSlider, *verticalMarginSlider, *bookSlider;
