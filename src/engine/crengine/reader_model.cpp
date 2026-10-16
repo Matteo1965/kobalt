@@ -387,6 +387,7 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     darkMode_ = saved.value("dark_mode").toBool(false);
     smoothImages_ = saved.value("smooth_images").toBool(true);
     hideNonlinearFragments_ = saved.value("hide_nonlinear_fragments").toBool(false);
+    hangingPunctuation_ = saved.value("hanging_punctuation").toBool(false);
     pixels_ = qBound(minimumFontPixels(), saved.value("font_pixels").toInt(defaultFontPixels()), maximumFontPixels());
     spacing_ = qBound(100, saved.value("line_spacing").toInt(defaultLineSpacing), maximumLineSpacing);
     margin_ = qBound(0, saved.value("margin_pixels").toInt(defaultMarginPixels()), maximumMarginPixels());
@@ -433,7 +434,7 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     // spaces to shrink to half width, including in left-aligned paragraphs.
     auto properties = LVCreatePropsContainer();
     properties->setInt(PROP_FORMAT_MIN_SPACE_CONDENSING_PERCENT, 100);
-    properties->setInt(PROP_FLOATING_PUNCTUATION, 0);
+    properties->setInt(PROP_FLOATING_PUNCTUATION, hangingPunctuation_ ? 1 : 0);
     // CSS already sizes images against the reading font. The engine's legacy
     // zoom would enlarge them a second time, including inline equations.
     properties->setInt(PROP_IMG_SCALING_ZOOMIN_INLINE_MODE, 0);
@@ -608,6 +609,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const bool dark = settings.value("dark_mode").toBool(darkMode_);
     const bool smooth = settings.value("smooth_images").toBool(smoothImages_);
     const bool hideNonlinear = settings.value("hide_nonlinear_fragments").toBool(hideNonlinearFragments_);
+    const bool hangingPunctuation = settings.value("hanging_punctuation").toBool(hangingPunctuation_);
     if (!engine_ || pixels < minimumFontPixels() || pixels > maximumFontPixels() || spacing < 100 ||
         spacing > maximumLineSpacing || margin < 0 || margin > maximumMarginPixels() || topMargin < 0 ||
         topMargin > maximumMarginPixels() || bottomMargin < 0 || bottomMargin > maximumMarginPixels() || weight < 0 ||
@@ -623,7 +625,8 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const bool thicknessChanged = weight != weight_;
     const bool styled = bionicChanged || axisChanged || opticalChanged || pixels != pixels_ || spacing != spacing_ ||
                         face != face_ || defaultFace != defaultFace_ || margin != margin_ || topMargin != topMargin_ ||
-                        bottomMargin != bottomMargin_ || alignment != alignment_ || hyphenation != hyphenation_;
+                        bottomMargin != bottomMargin_ || alignment != alignment_ || hyphenation != hyphenation_ ||
+                        hangingPunctuation != hangingPunctuation_;
     const bool resized = size != size_;
     if (!styled && !resized && weight == weight_ && dark == darkMode_ && smooth == smoothImages_ &&
         hideNonlinear == hideNonlinearFragments_)
@@ -639,6 +642,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     bottomMargin_ = bottomMargin;
     alignment_ = alignment;
     hyphenation_ = hyphenation;
+    hangingPunctuation_ = hangingPunctuation;
     weight_ = weight;
     axisWeight_ = axisWeight;
     opticalSize_ = opticalSize;
@@ -651,6 +655,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
         setExtraFontWeight(0);
         auto properties = LVCreatePropsContainer();
         properties->setInt(PROP_FONT_BASE_WEIGHT, LVRendGetBaseFontWeight());
+        properties->setInt(PROP_FLOATING_PUNCTUATION, hangingPunctuation_ ? 1 : 0);
         engine_->propsApply(properties);
         engine_->requestRender();
         applyPublisherFontFallbacks();
@@ -1123,6 +1128,7 @@ QJsonObject ReaderModel::state() const {
                                {"font_optical_size", opticalSize_},
                                {"bold_reading", bionic_},
                                {"hyphenation", hyphenation_},
+                               {"hanging_punctuation", hangingPunctuation_},
                                {"dark_mode", darkMode_},
                                {"smooth_images", smoothImages_},
                                {"hide_nonlinear_fragments", hideNonlinearFragments_},
