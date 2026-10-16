@@ -769,6 +769,15 @@ bool ReaderSession::setHyphenation(const QString &mode) {
     }
     return true;
 }
+bool ReaderSession::setParagraphSpacing(const QString &mode) {
+    if (temporaryTypography() || (mode != "none" && mode != "half" && mode != "full" && mode != "publisher"))
+        return false;
+    if (mode != paragraphSpacing()) {
+        desired["paragraph_spacing"] = mode;
+        request(true);
+    }
+    return true;
+}
 bool ReaderSession::canTurn() const {
     return !retiring && !preview_ && openingResult_.ready() && lease_ && !lease_->revoked() && pages() > 0 &&
            (!running || turning);
