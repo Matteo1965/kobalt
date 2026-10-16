@@ -134,6 +134,9 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         check(advancedPage, "rrHideNonlinearFragments", strings::get("reader.hide_nonlinear_fragments"),
               strings::get("settings.hide_nonlinear_fragments_description"));
     advancedRows->addWidget(hideNonlinearOption);
+    opticalMarginOption = check(advancedPage, "rrOpticalMargin", QStringLiteral("Optical margin"),
+                                QStringLiteral("Allow punctuation to extend into the right margin."));
+    advancedRows->addWidget(opticalMarginOption);
     const bool lightSupported = inputs.lightSupported;
     edgeLightOption = check(advancedPage, "rrEdgeLight", strings::get("reader.edge_light"),
                             !lightSupported          ? strings::get("settings.unsupported_description")
