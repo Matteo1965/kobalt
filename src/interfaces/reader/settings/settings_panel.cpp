@@ -320,7 +320,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     settingsTabButtons.first()->setChecked(true);
     QVector<ui::DescribedOption *> options = {hideNonlinearOption, linkIndicatorOption, darkOption,    progressOption,
                                               bionicOption,        animationOption,     smoothOption,  edgeLightOption,
-                                              heavierTextOption,   denseGraphOption,    pinStatsOption};
+                                              heavierTextOption,   denseGraphOption,    pinStatsOption, opticalMarginOption};
     if (inputs.desktopUi)
         options << hideStatusOption << hideDeviceOptionsOption;
     for (auto *option : options) {
