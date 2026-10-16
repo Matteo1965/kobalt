@@ -137,6 +137,8 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     opticalMarginOption = check(advancedPage, "rrOpticalMargin", QStringLiteral("Optical margin"),
                                 QStringLiteral("Allow punctuation to extend into the right margin."));
     advancedRows->addWidget(opticalMarginOption);
+    clockOption = check(advancedPage, "rrShowClock", strings::get("reader.clock"), QString());
+    advancedRows->addWidget(clockOption);
     const bool lightSupported = inputs.lightSupported;
     edgeLightOption = check(advancedPage, "rrEdgeLight", strings::get("reader.edge_light"),
                             !lightSupported          ? strings::get("settings.unsupported_description")
@@ -320,7 +322,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     settingsTabButtons.first()->setChecked(true);
     QVector<ui::DescribedOption *> options = {hideNonlinearOption, linkIndicatorOption, darkOption,    progressOption,
                                               bionicOption,        animationOption,     smoothOption,  edgeLightOption,
-                                              heavierTextOption,   denseGraphOption,    pinStatsOption, opticalMarginOption};
+                                              heavierTextOption,   denseGraphOption,    pinStatsOption, opticalMarginOption, clockOption};
     if (inputs.desktopUi)
         options << hideStatusOption << hideDeviceOptionsOption;
     for (auto *option : options) {
