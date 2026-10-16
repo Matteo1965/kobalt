@@ -205,9 +205,16 @@ AppearancePanel::AppearancePanel(const AppearanceLayout &layout, const Appearanc
     };
     chromeSizeRow(false);
     chromeSizeRow(true);
-    kobalt::ui::SegmentedRow clock(pageLayout, pageRows, "rrClock", strings::get("reader.clock"));
-    clockOption = clock.add("rrShowClock", strings::get("common.on"));
-    clockHideOption = clock.add("rrHideClock", strings::get("common.off"));
-    (inputs.showClock ? clockOption : clockHideOption)->setChecked(true);
+    kobalt::ui::SegmentedRow paragraphs(pageLayout, pageRows, "rrParagraphSpacing",
+                                        QStringLiteral("Paragraph spacing"));
+    for (const auto *mode : {"none", "half", "full", "publisher"}) {
+        const QString value = QString::fromLatin1(mode);
+        const QString label = value == "none" ? QStringLiteral("Off") : value == "half" ? QStringLiteral("S")
+                              : value == "full" ? QStringLiteral("M") : QStringLiteral("P");
+        auto *button = paragraphs.add("rrParagraphSpacing_" + value, label);
+        button->setProperty("paragraph_spacing", value);
+        button->setCheckable(true);
+        paragraphSpacingButtons.append(button);
+    }
 }
 }
