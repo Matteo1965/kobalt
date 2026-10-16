@@ -331,7 +331,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         presentation.dividers = (option == smoothOption || option == linkIndicatorOption ||
                                  option == hideNonlinearOption || option == opticalMarginOption ||
                                  option == clockOption || option == edgeLightOption ||
-                                 option == heavierTextOption) ? Qt::Edges{} : Qt::BottomEdge;
+                                 option == heavierTextOption) ? ui::Edges{} : Qt::BottomEdge;
         presentation.horizontalInset = c::inset;
         presentation.labelPixels = c::labelText;
         presentation.descriptionPixels = c::descriptionText;
@@ -347,7 +347,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     resetRow->setStretch(1, 1);
     resetRow->setStretch(2, 0);
     for (auto *button : {resetDefaults, refreshButton}) {
-        button->setRule(button == resetDefaults ? Qt::Edges{} : Qt::BottomEdge);
+        button->setRule(button == resetDefaults ? ui::Edges{} : Qt::BottomEdge);
         // The refresh row's caption shows its current choice, set when Settings opens.
         if (button == resetDefaults)
             button->setCaption(strings::get("settings.asks_first"));
