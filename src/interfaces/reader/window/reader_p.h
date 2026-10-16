@@ -213,7 +213,7 @@ private:
     QLabel *linkDiscoveryIcon = nullptr, *linkDiscoveryHint = nullptr;
     QPushButton *linkDiscoveryToggle = nullptr;
     QLabel *linkDiscoveryExit = nullptr;
-    QCheckBox *linkIndicatorOption = nullptr, *hideNonlinearOption = nullptr;
+    QCheckBox *linkIndicatorOption = nullptr, *hideNonlinearOption = nullptr, *opticalMarginOption = nullptr;
     bool revealingLinks = false;
     QString revealedPosition;
     void syncLinkDiscovery();
