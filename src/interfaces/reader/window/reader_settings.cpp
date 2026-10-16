@@ -515,7 +515,7 @@ void Reader::finishPreview() {
         // A failed preview has no settings to apply. Dismiss it without
         // trapping the reader now that panels have no Cancel action.
         orientation->configure(preferences);
-        (page->showClock ? clockOption : clockHideOption)->setChecked(true);
+        clockOption->setChecked(page->showClock);
         appearanceEdit.resetPreview();
         appearanceEdit.setPanelOpen(false);
         appearanceEdit.cancelDeferredApply();
