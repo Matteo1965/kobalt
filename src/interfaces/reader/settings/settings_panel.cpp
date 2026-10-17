@@ -107,8 +107,10 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     animationOption->setEnabled(animationsSupported);
     bionicOption = check(displayPage, "rrBionicReading", strings::get("reader.bold_reading"),
                          strings::get("reader.bionic_description"));
+    clockOption = check(displayPage, "rrShowClock", strings::get("reader.clock"),
+                        QStringLiteral("Show the clock while reading."));
     int optionIndex = 0;
-    for (auto *option : {darkOption, progressOption, bionicOption, animationOption}) {
+    for (auto *option : {darkOption, progressOption, bionicOption, animationOption, clockOption}) {
         option->setMinimumHeight(m::settings::displayOptionHeight);
         generalOptions->addWidget(option, optionIndex++, 0);
     }
@@ -135,10 +137,8 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
               strings::get("settings.hide_nonlinear_fragments_description"));
     advancedRows->addWidget(hideNonlinearOption);
     opticalMarginOption = check(advancedPage, "rrOpticalMargin", QStringLiteral("Optical margin"),
-                                QString());
+                                QStringLiteral("Hang punctuation into the margin."));
     advancedRows->addWidget(opticalMarginOption);
-    clockOption = check(advancedPage, "rrShowClock", strings::get("reader.clock"), QString());
-    advancedRows->addWidget(clockOption);
     const bool lightSupported = inputs.lightSupported;
     edgeLightOption = check(advancedPage, "rrEdgeLight", strings::get("reader.edge_light"),
                             !lightSupported          ? strings::get("settings.unsupported_description")
@@ -328,16 +328,12 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     for (auto *option : options) {
         auto presentation = option->presentation();
         presentation.indicator = ui::DescribedOption::Indicator::Square;
-        presentation.dividers = (option == smoothOption || option == linkIndicatorOption ||
-                                 option == hideNonlinearOption || option == opticalMarginOption ||
-                                 option == clockOption || option == edgeLightOption ||
-                                 option == heavierTextOption) ? ui::Edges{} : Qt::BottomEdge;
+        presentation.dividers = Qt::BottomEdge;
         presentation.horizontalInset = c::inset;
         presentation.labelPixels = c::labelText;
         presentation.descriptionPixels = c::descriptionText;
         presentation.indicatorSize = {c::checkSize, c::checkSize};
-        presentation.minimumRowHeight = (option == opticalMarginOption || option == clockOption)
-                                             ? ui::px(72) : option == smoothOption ? c::listActionHeight : c::optionHeight;
+        presentation.minimumRowHeight = option == smoothOption ? c::listActionHeight : c::optionHeight;
         option->setPresentation(presentation);
     }
     generalOptions->setContentsMargins(0, 0, 0, 0);
@@ -347,7 +343,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     resetRow->setStretch(1, 1);
     resetRow->setStretch(2, 0);
     for (auto *button : {resetDefaults, refreshButton}) {
-        button->setRule(button == resetDefaults ? ui::Edges{} : Qt::BottomEdge);
+        button->setRule(Qt::BottomEdge);
         // The refresh row's caption shows its current choice, set when Settings opens.
         if (button == resetDefaults)
             button->setCaption(strings::get("settings.asks_first"));
