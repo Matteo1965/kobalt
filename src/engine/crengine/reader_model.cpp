@@ -403,12 +403,8 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     if (paragraphSpacing_ != "none" && paragraphSpacing_ != "half" && paragraphSpacing_ != "full")
         paragraphSpacing_ = "publisher";
     weight_ = qBound(0, saved.value("weight_steps").toInt(0), 12);
-    bionic_ = saved.value("bold_reading").toString("off");
-    // Preserve enabled Bionic reading from the retired thickness mode.
-    if (bionic_ == "synthetic")
-        bionic_ = "bold";
-    if (bionic_ != "bold")
-        bionic_ = "off";
+    // Do not restore retired Bold/Bionic reading from per-book settings.
+    bionic_ = "off";
     face_ = saved.value("font_face").toString(defaultFontFace);
     if (face_ == "KF Libron")
         face_ = defaultFontFace;
