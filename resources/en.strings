@@ -596,3 +596,9 @@
 
 "reader.hide_nonlinear_fragments" = "Hide non-linear fragments";
 "settings.hide_nonlinear_fragments_description" = "Skip non-linear sections when turning pages. Links, Chapters and page numbers can still open them.";
+
+/* Hungarian Edition menu labels */
+"settings.clock_description" = "Show the clock while reading.";
+"settings.optical_margin" = "Optical margin";
+"settings.optical_margin_description" = "Hang punctuation into the margin.";
+"reader.paragraph_space" = "Paragraph space";
