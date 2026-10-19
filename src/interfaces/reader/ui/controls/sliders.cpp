@@ -169,7 +169,7 @@ SettingSlider *sliderRow(QWidget *parent, QVBoxLayout *rows, const char *name, c
     caption->setFixedWidth(m::control::captionWidth);
     line->addWidget(caption);
     auto *captionRows = new QHBoxLayout(caption);
-    captionRows->setContentsMargins(0, 0, px(24), 0);
+    captionRows->setContentsMargins(0, 0, px(10), 0);
     captionRows->setSpacing(px(6));
     auto *title = new QLabel(label.section(':', 0, 0).trimmed() + ":", caption);
     title->setObjectName(QString::fromLatin1(name) + "Caption");
