@@ -178,8 +178,9 @@ SettingSlider *sliderRow(QWidget *parent, QVBoxLayout *rows, const char *name, c
     captionRows->addWidget(title);
     auto *value = new QLabel(caption);
     value->setObjectName(labelName);
-    const auto secondary = styles::font(m::control::captionValueText) + "color:palette(placeholder-text);";
-    readerStyle(value, secondary);
+    // Keep numeric values as legible as parameter names in both light and dark themes.
+    const auto valueStyle = styles::font(m::control::captionValueText) + "color:palette(window-text);";
+    readerStyle(value, valueStyle);
     captionRows->addWidget(value);
     captionRows->addStretch(1);
     auto *less = new StepButton(ControlIcon::Minus, parent);
