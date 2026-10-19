@@ -326,7 +326,7 @@ void ChapterGraph::refreshCells() {
         : words >= 0 ? strings::get("stats.words").arg(QLocale(QLocale::Hungarian, QLocale::Hungary).toString(words))
                      : QString();
     bookCell->set(QString::number(remaining), pagesLeft(remaining), bookDetail,
-                  strings::get("common.percent").arg(bookValue / 10),
+                  (p.pages > 0 ? QString::number(bookValue / 10.0, 'f', 1).replace('.', ',') + " %" : QString()),
                   bookTime >= 0 ? duration(bookTime, true) : QString());
     bookCell->percent->setAccessibleName(strings::get("chapter_graph.book_progress").arg(bookValue / 10));
     sessionCell->set(QString::number(qMax(0, minutes)), strings::get("stats.minutes"),
