@@ -333,7 +333,7 @@ void ReaderModel::setDocumentCache(QString directory, QByteArray fingerprint, QB
     // policies must not survive these renderer changes. The density is fixed by the host
     // before any model opens and is shared by the main reader and previews.
     cachePolicy_ =
-        std::move(policy) + ":css-density-leading-v1:line-height-v2:" + QByteArray::number(readingPpi.load());
+        std::move(policy) + ":css-density-leading-v1:line-height-v2:center-indent-v1:" + QByteArray::number(readingPpi.load());
     cacheBytes_ = bytes;
 }
 bool ReaderModel::saveDocumentCache() {
@@ -723,6 +723,10 @@ void ReaderModel::applyStyleSheet() {
     overrides +=
         QString("body,p,div,section,article,blockquote,li,dt,dd,h1,h2,h3,h4,h5,h6 { line-height:%1% !important; }")
             .arg(spacing_);
+    // Centered headings and other centered blocks should not inherit a general
+    // paragraph first-line indent (for example p { text-indent: 1.2em }).
+    // Apply this only to blocks marked from their computed publisher alignment.
+    overrides += "[data-kobalt-centered=\"1\"] { text-indent: 0 !important; }\n";
     // Only marked text blocks override publisher alignment; decorative blocks keep it.
     if (alignment_ != "publisher")
         overrides +=
