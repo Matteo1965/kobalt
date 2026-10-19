@@ -602,3 +602,10 @@
 "settings.optical_margin" = "Optical margin";
 "settings.optical_margin_description" = "Hang punctuation into the margin.";
 "reader.paragraph_space" = "Paragraph space";
+
+/* Short toolbar captions */
+"reader.toolbar_chapter" = "Chapter";
+"reader.toolbar_text" = "Text";
+"reader.toolbar_layout" = "Layout";
+"reader.toolbar_light" = "Light";
+"reader.toolbar_search" = "Search";
