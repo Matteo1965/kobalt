@@ -1088,7 +1088,9 @@ void Reader::syncNavigation() {
              topControls->isVisible() && !searchPanel->isVisible() && !acknowledgments->isVisible(),
              !model->busy() && !appearanceEdit.applying(), services.lightAvailable(), active,
              linkReturnAvailable ? strings::get("reader.return_page").arg(linkHistory.last().page + 1) : QString(),
-             strings::get("navigation.page_count").arg(model->page() + 1).arg(model->pages()), topActions, general,
+             (model->pages() > 0
+                   ? QString::number(100.0 * (model->page() + 1) / model->pages(), 'f', 1).replace('.', ',') + " %"
+                   : QString()), topActions, general,
              lightPopup, pinned,
              linkHistory.isEmpty() || linkHistory.last().chapter.isEmpty()
                  ? QString()
