@@ -105,12 +105,10 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                             animationsSupported ? strings::get("settings.animations_description")
                                                 : strings::get("settings.unsupported_description"));
     animationOption->setEnabled(animationsSupported);
-    bionicOption = check(displayPage, "rrBionicReading", strings::get("reader.bold_reading"),
-                         strings::get("reader.bionic_description"));
     clockOption = check(displayPage, "rrShowClock", strings::get("reader.clock"),
                         QStringLiteral("Show the clock while reading."));
     int optionIndex = 0;
-    for (auto *option : {darkOption, progressOption, bionicOption, animationOption, clockOption}) {
+    for (auto *option : {darkOption, progressOption, animationOption, clockOption}) {
         option->setMinimumHeight(m::settings::displayOptionHeight);
         generalOptions->addWidget(option, optionIndex++, 0);
     }
@@ -320,8 +318,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         settingsTabButtons[index == NativeUiSettings ? 5 : index]->setChecked(true);
     });
     settingsTabButtons.first()->setChecked(true);
-    QVector<ui::DescribedOption *> options = {hideNonlinearOption, linkIndicatorOption, darkOption,    progressOption,
-                                              bionicOption,        animationOption,     smoothOption,  edgeLightOption,
+    QVector<ui::DescribedOption *> options = {hideNonlinearOption, linkIndicatorOption, darkOption,    progressOption, animationOption,     smoothOption,  edgeLightOption,
                                               heavierTextOption,   denseGraphOption,    pinStatsOption, opticalMarginOption, clockOption};
     if (inputs.desktopUi)
         options << hideStatusOption << hideDeviceOptionsOption;
@@ -333,7 +330,9 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         presentation.labelPixels = c::labelText;
         presentation.descriptionPixels = c::descriptionText;
         presentation.indicatorSize = {c::checkSize, c::checkSize};
-        presentation.minimumRowHeight = option == smoothOption ? c::listActionHeight : c::optionHeight;
+        // Use compact height for single-line descriptions in both tabs.
+        // Wrapped descriptions are expanded in DescribedOption::heightForWidth.
+        presentation.minimumRowHeight = c::listActionHeight;
         option->setPresentation(presentation);
     }
     generalOptions->setContentsMargins(0, 0, 0, 0);
