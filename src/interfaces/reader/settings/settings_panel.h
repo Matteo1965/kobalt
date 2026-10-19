@@ -43,7 +43,6 @@ public:
                         *heavierTextOption = nullptr;
     ui::DescribedOption *linkIndicatorOption = nullptr, *hideNonlinearOption = nullptr, *opticalMarginOption = nullptr,
                         *clockOption = nullptr;
-    ui::DescribedOption *bionicOption = nullptr;
     ui::CaptionButton *refreshButton = nullptr, *resetDefaults = nullptr;
     QPushButton *keepDefaults = nullptr, *confirmDefaults = nullptr;
     QPushButton *openAcknowledgments = nullptr, *debugProgress = nullptr;
