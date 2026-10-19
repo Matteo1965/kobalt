@@ -316,10 +316,10 @@ void ChapterGraph::refreshCells() {
                      p.chapterPages > 0 ? strings::get("common.percent").arg(chapterValue / 10) : QString(),
                      chapterTime >= 0 ? duration(chapterTime, true) : QString());
     chapterCell->percent->setAccessibleName(strings::get("chapter_graph.chapter_progress").arg(chapterValue / 10));
-    // The catalog is English, so group digits the English way on every device.
+    // Use Hungarian digit grouping in the Hungarian Edition statistics panel.
     const QString bookDetail =
         bookTime >= 0 ? duration(bookTime)
-        : words >= 0 ? strings::get("stats.words").arg(QLocale(QLocale::English, QLocale::UnitedStates).toString(words))
+        : words >= 0 ? strings::get("stats.words").arg(QLocale(QLocale::Hungarian, QLocale::Hungary).toString(words))
                      : QString();
     bookCell->set(QString::number(remaining), pagesLeft(remaining), bookDetail,
                   strings::get("common.percent").arg(bookValue / 10),
