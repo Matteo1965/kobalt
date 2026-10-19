@@ -68,7 +68,7 @@ int DescribedOption::heightForWidth(int width) const {
     // Two or more rendered lines receive the regular taller row height.
     if (appearance.minimumRowHeight == m::chrome::listActionHeight &&
         bounds.height() > QFontMetrics(descriptionFont).lineSpacing() + 2)
-        return qMax(m::chrome::optionHeight,
+        return qMax(int(m::chrome::optionHeight),
                     m::settings::descriptionTop + bounds.height() + m::settings::descriptionBottom);
     return qMax(appearance.minimumRowHeight,
                 m::settings::descriptionTop + bounds.height() + m::settings::descriptionBottom);
