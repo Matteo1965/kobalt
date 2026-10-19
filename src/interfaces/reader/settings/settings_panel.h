@@ -39,8 +39,7 @@ public:
     QVector<QPushButton *> settingsTabButtons;
     ui::DescribedOption *darkOption = nullptr, *smoothOption = nullptr, *progressOption = nullptr,
                         *animationOption = nullptr;
-    ui::DescribedOption *edgeLightOption = nullptr, *denseGraphOption = nullptr, *pinStatsOption = nullptr,
-                        *heavierTextOption = nullptr;
+    ui::DescribedOption *edgeLightOption = nullptr, *denseGraphOption = nullptr, *pinStatsOption = nullptr;
     ui::DescribedOption *linkIndicatorOption = nullptr, *hideNonlinearOption = nullptr, *opticalMarginOption = nullptr,
                         *clockOption = nullptr;
     ui::CaptionButton *refreshButton = nullptr, *resetDefaults = nullptr;
