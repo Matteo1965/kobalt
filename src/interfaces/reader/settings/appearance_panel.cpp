@@ -206,7 +206,7 @@ AppearancePanel::AppearancePanel(const AppearanceLayout &layout, const Appearanc
     chromeSizeRow(false);
     chromeSizeRow(true);
     kobalt::ui::SegmentedRow paragraphs(pageLayout, pageRows, "rrParagraphSpacing",
-                                        QStringLiteral("Paragraph space"));
+                                        strings::get("reader.paragraph_space"));
     for (const auto *mode : {"none", "half", "full", "publisher"}) {
         const QString value = QString::fromLatin1(mode);
         const QString label = value == "none" ? QStringLiteral("Off") : value == "half" ? QStringLiteral("S")
