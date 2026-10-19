@@ -110,3 +110,11 @@
 /* Arguments: %1, %2 */
 "reader.menu_page_of" = "%1 / %2. OLDAL";
 "reader.font_thickness" = "Vastagság: ";
+
+/* Search panel */
+"search_panel.find_a_word_or_phrase" = "Szó vagy kifejezés keresése";
+"search_panel.search_hint" = "A keresés nem különbözteti meg a kis- és nagybetűket. Az indításhoz érintsd meg a billentyűzet Keresés gombját.";
+"search_panel.search_this_book" = "Keresés ebben a könyvben";
+"search_panel.search" = "Keresés";
+"search_panel.clear_search" = "Keresés törlése";
+"search_panel.no_matches_hint" = "Ellenőrizd a helyesírást, vagy próbálj rövidebb kifejezést.";
