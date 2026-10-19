@@ -34,7 +34,7 @@
 "reader.landscape" = "Fekvő";
 "reader.line_spacing" = "Sorköz: ";
 "reader.link_indicator_description" = "Jelölés a hivatkozásokat tartalmazó oldalakon. Érintéssel felfedhetők a hivatkozások.";
-"reader.margins" = "Oldalmargók: ";
+"reader.margins" = "Oldalmargó: ";
 "reader.optical_size" = "Optikai méret";
 "reader.page_layout" = "Oldalelrendezés";
 "reader.pin_stats" = "Statisztika állandó megjelenítése";
@@ -79,7 +79,7 @@
 "settings.clock_description" = "Óra megjelenítése olvasás közben.";
 "settings.optical_margin" = "Optikai margó";
 "settings.optical_margin_description" = "Az írásjelek túlnyúlhatnak a margón.";
-"reader.paragraph_space" = "Bekezdéstérköz";
+"reader.paragraph_space" = "Bekezdésköz";
 
 /* Short toolbar captions */
 "reader.toolbar_chapter" = "Fejezet";
