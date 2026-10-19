@@ -360,7 +360,9 @@ void Reader::syncReadingControls() {
         progressLabel->setText(!model->error().isEmpty() ? model->error()
                                : !model->imageWarning().isEmpty()
                                    ? model->imageWarning()
-                                   : strings::get("reader.menu_page_of").arg(model->page() + 1).arg(model->pages()));
+                                   : model->pages() > 0
+                                       ? QString::number(100.0 * (model->page() + 1) / model->pages(), 'f', 1).replace('.', ',') + " %"
+                                       : QString());
     }
     bookSlider->setEnabled(!model->busy() && model->pages() > 1);
     const auto chapter = model->chapterTitle().isEmpty() ? strings::get("reader.contents") : model->chapterTitle();
