@@ -118,3 +118,14 @@
 "search_panel.search" = "Keresés";
 "search_panel.clear_search" = "Keresés törlése";
 "search_panel.no_matches_hint" = "Ellenőrizd a helyesírást, vagy próbálj rövidebb kifejezést.";
+
+/* Statistics panel */
+"stats.chapter" = "Fejezet";
+"stats.book" = "Könyv";
+"stats.session" = "Olvasási idő";
+"stats.since_opening" = "Megnyitás óta";
+"stats.minutes" = "perc";
+"stats.last_chapter" = "Utolsó fejezet";
+"stats.counting" = "Szavak számlálása…";
+/* Arguments: %1, %2 */
+"chapter_graph.next_chapter" = "Következő fejezet: %1 %2";
