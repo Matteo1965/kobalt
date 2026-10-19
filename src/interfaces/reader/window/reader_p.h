@@ -142,7 +142,7 @@ private:
     std::unique_ptr<kobalt::LightControls> light;
     kobalt::LightPanel *lightPopup = nullptr;
     QCheckBox *darkOption, *smoothOption, *progressOption, *animationOption, *edgeLightOption, *denseGraphOption,
-        *pinStatsOption, *heavierTextOption;
+        *pinStatsOption;
     QPushButton *autoRotateOption;
     QCheckBox *clockOption;
     QCheckBox *hideStatusOption = nullptr, *hideDeviceOptionsOption = nullptr;
@@ -256,7 +256,6 @@ private:
     void openSettings();
     void applyEdgeLight();
     void applyDarkMode(bool enabled);
-    void applyHeavierText(bool enabled);
     void applySettings();
     bool writePreferences(const QJsonObject &next);
     void showSettingsWriteError();
