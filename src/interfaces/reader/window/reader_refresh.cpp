@@ -227,7 +227,9 @@ void Reader::paintTurn() {
     page->progress = !model->error().isEmpty() ? model->error()
                      : !model->imageWarning().isEmpty()
                          ? model->imageWarning()
-                         : strings::get("common.page_fraction").arg(model->page() + 1).arg(model->pages());
+                         : model->pages() > 0
+                           ? QString::number(100.0 * (model->page() + 1) / model->pages(), 'f', 1).replace('.', ',') + " %"
+                           : QString();
     page->progressFraction =
         model->pages() > 0 ? qBound(qreal(0), qreal(model->page() + 1) / model->pages(), qreal(1)) : 0;
     page->preparedDamage = model->damage();
