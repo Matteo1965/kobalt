@@ -159,7 +159,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                                               restoreDialog->raise();
                                               restoreDialog->setFocus();
                                           });
-    readerStyle(resetDefaults, styles::textAction());
+    readerStyle(resetDefaults, styles::font(c::labelText));
     resetDefaults->setFixedHeight(m::about::actionHeight);
     resetRow->addStretch(1);
     advancedRows->addStretch(1);
@@ -351,7 +351,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         button->setRule(Qt::BottomEdge);
         // The refresh row's caption shows its current choice, set when Settings opens.
         if (button == resetDefaults)
-            button->setCaption(strings::get("settings.asks_first"));
+            button->setCaption(strings::get("settings.restore_confirmation_caption"));
         ui::readerStyle(
             button,
             QString(
