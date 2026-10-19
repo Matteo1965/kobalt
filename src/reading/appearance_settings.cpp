@@ -8,6 +8,8 @@ QJsonObject readerPreferences(const QJsonObject &global, const QJsonObject &book
         result["bold_reading"] = result.value("bionic_reading");
     }
     result.remove("bionic_reading");
+    // Retired option: ignore previously saved Bold/Bionic reading.
+    result["bold_reading"] = QStringLiteral("off");
     for (const auto *key : layoutKeys)
         if (book.contains(key))
             result[key] = book.value(key);
