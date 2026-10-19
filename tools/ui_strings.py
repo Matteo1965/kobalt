@@ -7,6 +7,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / 'resources/en.strings'
+HUNGARIAN = ROOT / 'resources/hu.strings'
 TOKEN = re.compile(r'\s+|/\*[\s\S]*?\*/|//[^\n]*|"(?:\\[\s\S]|[^"\\])*"|[=;]')
 SLOTS = re.compile(r'%[1-9][0-9]?')
 SOURCE_KEYS = re.compile(
@@ -117,6 +118,16 @@ def main():
     args = parser.parse_args()
     catalog = read()
     validate_keys(catalog)
+    # Hungarian Edition uses translated values where available, with English
+    # fallback for the remaining keys. Validate substitution arguments too.
+    translations = read(HUNGARIAN)
+    unknown = translations.keys() - catalog.keys()
+    if unknown:
+        raise ValueError('Unknown Hungarian translation keys: ' + ', '.join(sorted(unknown)))
+    for key, value in translations.items():
+        if set(SLOTS.findall(value)) != set(SLOTS.findall(catalog[key])):
+            raise ValueError(f'{key}: Hungarian formatting arguments differ from English')
+    catalog.update(translations)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         data = ''.join('    {' + json.dumps(k) + ', ' + json.dumps(v, ensure_ascii=False) + '},\n'
