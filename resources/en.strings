@@ -609,3 +609,5 @@
 "reader.toolbar_layout" = "Layout";
 "reader.toolbar_light" = "Light";
 "reader.toolbar_search" = "Search";
+
+"settings.restore_confirmation_caption" = "Confirmation required before restoring defaults.";
