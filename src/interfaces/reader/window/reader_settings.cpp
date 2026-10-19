@@ -90,7 +90,6 @@ void Reader::openSettings() {
     edgeLightOption->setChecked(preferences.value("edge_light_gestures").toBool(true));
     denseGraphOption->setChecked(preferences.value("dense_stats_chart").toBool(false));
     pinStatsOption->setChecked(preferences.value("pin_stats").toBool(false));
-    heavierTextOption->setChecked(preferences.value("heavier_interface_text").toBool(true));
     screenRefreshMode = kobalt::screenRefresh(preferences.value("screen_refresh").toString());
     showScreenRefresh();
     fitSettings();
@@ -144,7 +143,7 @@ void Reader::applySettings() {
     next["edge_light_gestures"] = edgeLightOption->isChecked();
     next["dense_stats_chart"] = denseGraphOption->isChecked();
     next["pin_stats"] = pinStatsOption->isChecked();
-    next["heavier_interface_text"] = heavierTextOption->isChecked();
+    next["heavier_interface_text"] = true;
     next["screen_refresh"] = kobalt::screenRefreshValue(screenRefreshMode);
     if (services.desktopUi) {
         next["native_hide_status_bar"] = hideStatusOption->isChecked();
@@ -229,29 +228,7 @@ void Reader::applyDarkMode(bool enabled) {
 
 // Like dark mode, the text weight changes as soon as it is chosen, so the
 // two weights can be compared with Settings open.
-void Reader::applyHeavierText(bool enabled) {
-    if (model->temporaryTypography())
-        return;
-    auto next = preferences;
-    next["heavier_interface_text"] = enabled;
-    if (!writePreferences(next)) {
-        heavierTextOption->setChecked(preferences.value("heavier_interface_text").toBool(true));
-        settingsError->setText(strings::get("reader.could_not_save_reader_settings"));
-        settingsError->show();
-        return;
-    }
-    preferences = next;
-    settingsError->clear();
-    settingsError->hide();
-    QElapsedTimer timer;
-    timer.start();
-    if (kobalt::ui::setInterfaceWeight(kobalt::ui::interfaceWeightSteps(preferences))) {
-        kobalt::ui::refreshInterfaceText(this);
-        kobalt::diagnostic("ui-weight",
-                           {{"steps", kobalt::ui::interfaceWeight()}, {"elapsed_ms", double(timer.elapsed())}}, false);
-    }
-    refresh();
-}
+
 
 void Reader::applyTheme(bool dark) {
     if (themeReady && darkTheme == dark)
