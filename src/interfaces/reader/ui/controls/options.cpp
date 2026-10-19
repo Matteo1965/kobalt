@@ -64,6 +64,12 @@ int DescribedOption::heightForWidth(int width) const {
                                             appearance.indicatorSize.width() - m::settings::toggleGap),
                                 0),
                           Qt::TextWordWrap, description);
+    // In Settings a one-line description uses the compact Smooth images height.
+    // Two or more rendered lines receive the regular taller row height.
+    if (appearance.minimumRowHeight == m::chrome::listActionHeight &&
+        bounds.height() > QFontMetrics(descriptionFont).lineSpacing() + 2)
+        return qMax(m::chrome::optionHeight,
+                    m::settings::descriptionTop + bounds.height() + m::settings::descriptionBottom);
     return qMax(appearance.minimumRowHeight,
                 m::settings::descriptionTop + bounds.height() + m::settings::descriptionBottom);
 }
