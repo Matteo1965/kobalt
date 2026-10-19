@@ -43,7 +43,7 @@
 "reader.reader_settings" = "Olvasási beállítások";
 "reader.reading" = "Olvasás";
 "reader.refresh_the_screen" = "Képernyő frissítése";
-"reader.restore_appearance_defaults" = "Megjelenési alapbeállítások visszaállítása";
+"reader.restore_appearance_defaults" = "Alapbeállítások visszaállítása";
 "reader.restore_appearance_defaults_prompt" = "Visszaállítod a megjelenés alapbeállításait?";
 "reader.rotation" = "Forgatás";
 "reader.search_book" = "Keresés a könyvben";
