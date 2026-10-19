@@ -80,3 +80,10 @@
 "settings.optical_margin" = "Optikai margó";
 "settings.optical_margin_description" = "Az írásjelek túlnyúlhatnak a margón.";
 "reader.paragraph_space" = "Bekezdéstérköz";
+
+/* Short toolbar captions */
+"reader.toolbar_chapter" = "Fejezet";
+"reader.toolbar_text" = "Szöveg";
+"reader.toolbar_layout" = "Rendezés";
+"reader.toolbar_light" = "Világítás";
+"reader.toolbar_search" = "Keresés";
