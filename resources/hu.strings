@@ -88,4 +88,4 @@
 "reader.toolbar_light" = "Világítás";
 "reader.toolbar_search" = "Keresés";
 
-"settings.restore_confirmation_caption" = "Visszaállítás előtt megerősítést kér.";
+"settings.restore_confirmation_caption" = "Megerősítés szükséges.";
