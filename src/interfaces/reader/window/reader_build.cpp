@@ -443,7 +443,9 @@ void Reader::buildBottomControls() {
     bookSlider->setAccessibleName(strings::get("reader.book_position"));
     pageNavigationRow->addWidget(bookSlider, 1);
     connect(bookSlider, &QSlider::valueChanged, this, [this](int value) {
-        progressLabel->setText(strings::get("reader.menu_page_of").arg(value + 1).arg(this->model->pages()));
+        progressLabel->setText(this->model->pages() > 0
+                                   ? QString::number(100.0 * (value + 1) / this->model->pages(), 'f', 1).replace('.', ',') + " %"
+                                   : QString());
     });
     bookSlider->committed = [this](int value) {
         if (!this->model->busy())
