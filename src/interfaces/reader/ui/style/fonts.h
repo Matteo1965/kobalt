@@ -33,7 +33,8 @@ inline QString interfaceFontFamily() {
 // setting. Settings > Advanced adds three steps: IBM Plex Medium is too heavy.
 inline constexpr int heavierTextSteps = 3;
 inline int interfaceWeightSteps(const QJsonObject &preferences) {
-    return preferences.value("heavier_interface_text").toBool(true) ? heavierTextSteps : 0;
+    Q_UNUSED(preferences);
+    return heavierTextSteps;
 }
 // Replaces the registered faces with faces of this weight. Text drawn
 // afterwards uses them; call refreshInterfaceText() for widgets already
