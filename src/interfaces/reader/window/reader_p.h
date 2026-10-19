@@ -256,7 +256,6 @@ private:
     void openSettings();
     void applyEdgeLight();
     void applyDarkMode(bool enabled);
-    void applyBoldReading(bool enabled);
     void applyHeavierText(bool enabled);
     void applySettings();
     bool writePreferences(const QJsonObject &next);
@@ -291,7 +290,6 @@ private:
     // Turns since the last flash, for the Refresh the screen setting.
     int pagesSinceFlash = 0;
     kobalt::ScreenRefresh screenRefreshMode = kobalt::ScreenRefresh::Smart;
-    ui::DescribedOption *bionicOption = nullptr;
     kobalt::ui::CaptionButton *refreshButton = nullptr;
     QPointer<kobalt::ui::ModalOverlay> refreshPopup;
     static QString refreshExplanation(kobalt::ScreenRefresh mode);
