@@ -164,9 +164,9 @@ private:
         caption->setGeometry(c::inset, m::cellPadding, inner, captionMetrics.height());
         percent->setGeometry(c::inset, m::cellPadding, inner, captionMetrics.height());
         // Fit the entire figure into its third-width cell instead of clipping its rightmost digits.
-        int figureSize = qMin(int(m::figureText), 48);
+        int figureSize = qMin(int(m::figureText), 36);
         QFontMetrics figureMetrics(ui::brandFont(figureSize));
-        while (figureSize > 20 &&
+        while (figureSize > 18 &&
                kobalt::qt::textWidth(figureMetrics, figure->text()) + m::unitGap +
                        kobalt::qt::textWidth(unitMetrics, unitValue) + 2 > inner) {
             figureSize -= 2;
