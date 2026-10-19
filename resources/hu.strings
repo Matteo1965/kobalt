@@ -89,3 +89,9 @@
 "reader.toolbar_search" = "Keresés";
 
 "settings.restore_confirmation_caption" = "Megerősítés szükséges.";
+
+/* Light panel */
+"light_panel.brightness" = "Fényerő";
+"light_panel.warmth" = "Színhőmérséklet";
+"light_panel.automatic_brightness" = "Automatikus fényerő";
+"light_panel.automatic_brightness_description" = "A környezeti fényhez igazodik. Kézi állításkor kikapcsol."; 
