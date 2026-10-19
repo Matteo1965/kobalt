@@ -132,3 +132,11 @@
 
 /* Arguments: %1 */
 "stats.words" = "%1 szó";
+
+/* Bottom navigation – visible tab captions */
+"navigation.chapters" = "FEJEZET";
+"navigation.text" = "SZÖVEG";
+"navigation.layout" = "RENDEZÉS";
+"navigation.light" = "VILÁGÍTÁS";
+"navigation.stats" = "STATISZTIKA";
+"navigation.search" = "KERESÉS";
