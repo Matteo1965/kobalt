@@ -206,6 +206,12 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     version->setAlignment(Qt::AlignCenter);
     readerStyle(version, styles::font(m::text::secondary));
     build->addWidget(version);
+    // Fork-specific identity, independent of the upstream Kobalt release.
+    auto *edition = new QLabel(QStringLiteral("Hungarian Edition 0.1.0"), aboutPage);
+    edition->setObjectName("rrAboutHungarianEdition");
+    edition->setAlignment(Qt::AlignCenter);
+    readerStyle(edition, styles::font(m::text::secondary));
+    build->addWidget(edition);
     auto *commit = new QLabel(inputs.commit, aboutPage);
     commit->setObjectName("rrAboutCommit");
     commit->setAlignment(Qt::AlignCenter);
