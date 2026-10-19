@@ -46,6 +46,7 @@ void markBodyAlignment(ldomDocument *document) {
     if (!document || !document->getRootNode())
         return;
     const auto attribute = document->getAttrNameIndex("data-kobalt-prose");
+    const auto centeredAttribute = document->getAttrNameIndex("data-kobalt-centered");
     static const QSet<QString> blocks{"p", "li", "dt", "dd", "blockquote", "div", "section", "article"};
     std::vector<Frame> stack{{document->getRootNode()}};
     while (!stack.empty()) {
@@ -54,6 +55,15 @@ void markBodyAlignment(ldomDocument *document) {
         if (!frame.child && node->isElement()) {
             const auto name = text(node->getNodeName());
             frame.block = blocks.contains(name);
+            // Centered publisher headings can carry a first-line indent. Mark
+            // computed center alignment, including CSS classes and inheritance.
+            const auto style = node->getStyle();
+            static const QSet<QString> centeredBlocks{
+                "p", "li", "dt", "dd", "blockquote", "div", "section", "article",
+                "h1", "h2", "h3", "h4", "h5", "h6", "header", "figcaption", "caption"
+            };
+            if (centeredBlocks.contains(name) && !style.isNull() && style->text_align == css_ta_center)
+                node->setAttributeValue(0, centeredAttribute, U"1");
             frame.blocked = frame.blocked || preserve(node, name);
             if (node->hasAttribute(attribute))
                 node->setAttributeValue(0, attribute, U"");
