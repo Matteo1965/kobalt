@@ -169,20 +169,21 @@ SettingSlider *sliderRow(QWidget *parent, QVBoxLayout *rows, const char *name, c
     caption->setFixedWidth(m::control::captionWidth);
     line->addWidget(caption);
     auto *captionRows = new QHBoxLayout(caption);
-    captionRows->setContentsMargins(0, 0, m::control::captionRight, 0);
+    captionRows->setContentsMargins(0, 0, px(24), 0);
     captionRows->setSpacing(px(6));
     auto *title = new QLabel(label.section(':', 0, 0).trimmed() + ":", caption);
     title->setObjectName(QString::fromLatin1(name) + "Caption");
     title->setWordWrap(true);
     readerStyle(title, styles::font(m::text::secondary));
     captionRows->addWidget(title);
+    captionRows->addStretch(1);
     auto *value = new QLabel(caption);
     value->setObjectName(labelName);
     // Keep numeric values as legible as parameter names in both light and dark themes.
     const auto valueStyle = styles::font(m::control::captionValueText) + "color:palette(window-text);";
     readerStyle(value, valueStyle);
-    captionRows->addWidget(value);
-    captionRows->addStretch(1);
+    value->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    captionRows->addWidget(value, 0, Qt::AlignRight | Qt::AlignVCenter);
     auto *less = new StepButton(ControlIcon::Minus, parent);
     less->setObjectName(lessName);
     less->setAccessibleName(strings::get("controls.decrease").arg(label.section(':', 0, 0).toLower()));
