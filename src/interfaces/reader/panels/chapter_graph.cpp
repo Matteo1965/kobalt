@@ -159,10 +159,17 @@ private:
     QString unitValue, detailValue, shortValue;
     void arrange() {
         const int inner = qMax(1, width() - 2 * c::inset);
-        const QFontMetrics captionMetrics(ui::captionFont()), figureMetrics(ui::brandFont(m::figureText)),
-            unitMetrics(ui::interfaceFont(m::unitText));
+        const QFontMetrics captionMetrics(ui::captionFont()), unitMetrics(ui::interfaceFont(m::unitText));
         caption->setGeometry(c::inset, m::cellPadding, inner, captionMetrics.height());
         percent->setGeometry(c::inset, m::cellPadding, inner, captionMetrics.height());
+        // Fit the entire figure into its third-width cell instead of clipping its rightmost digits.
+        int figureSize = qMin(int(m::figureText), 48);
+        QFontMetrics figureMetrics(ui::brandFont(figureSize));
+        while (figureSize > 20 && kobalt::qt::textWidth(figureMetrics, figure->text()) + 2 > inner) {
+            figureSize -= 2;
+            figureMetrics = QFontMetrics(ui::brandFont(figureSize));
+        }
+        ui::readerStyle(figure, ui::styles::brand(figureSize) + "background:transparent;");
         const int figureWidth = qMin(inner, kobalt::qt::textWidth(figureMetrics, figure->text()) + 2);
         figure->setGeometry(c::inset, m::figureBaseline - figureMetrics.ascent(), figureWidth, figureMetrics.height());
         const int unitLeft = c::inset + figureWidth + m::unitGap;
