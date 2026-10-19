@@ -879,7 +879,6 @@ void Reader::buildSettings() {
     edgeLightOption = settings->edgeLightOption;
     denseGraphOption = settings->denseGraphOption;
     pinStatsOption = settings->pinStatsOption;
-    heavierTextOption = settings->heavierTextOption;
     linkIndicatorOption = settings->linkIndicatorOption;
     hideNonlinearOption = settings->hideNonlinearOption;
     opticalMarginOption = settings->opticalMarginOption;
@@ -889,9 +888,6 @@ void Reader::buildSettings() {
     settingsError = settings->settingsError;
     connect(darkOption, &QCheckBox::clicked, this, [this](bool enabled) {
         applyDarkMode(enabled);
-    });
-    connect(heavierTextOption, &QCheckBox::clicked, this, [this](bool enabled) {
-        applyHeavierText(enabled);
     });
     connect(refreshButton, &QPushButton::clicked, this, [this] {
         openScreenRefresh();
