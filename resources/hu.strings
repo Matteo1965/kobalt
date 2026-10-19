@@ -87,3 +87,5 @@
 "reader.toolbar_layout" = "Rendezés";
 "reader.toolbar_light" = "Világítás";
 "reader.toolbar_search" = "Keresés";
+
+"settings.restore_confirmation_caption" = "Visszaállítás előtt megerősítést kér.";
