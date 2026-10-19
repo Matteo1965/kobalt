@@ -72,3 +72,9 @@
 "settings.stats" = "Statisztika";
 "settings.ui" = "Felület";
 "settings.unsupported_description" = "Ezt a funkciót az eszköz nem támogatja.";
+
+/* Hungarian Edition menu labels */
+"settings.clock_description" = "Óra megjelenítése olvasás közben.";
+"settings.optical_margin" = "Optikai margó";
+"settings.optical_margin_description" = "Az írásjelek túlnyúlhatnak a margón.";
+"reader.paragraph_space" = "Bekezdéstérköz";
