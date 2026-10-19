@@ -59,7 +59,11 @@ void markBodyAlignment(ldomDocument *document) {
             // alignment is centered, including inherited and class-based styles.
             // The ordinary prose alignment override remains separate.
             const auto style = node->getStyle();
-            // Headings are protected from prose alignment changes but still\n            // need the centered-title indent exception.\n            static const QSet<QString> centeredBlocks{ "p", "li", "dt", "dd", "blockquote", "div", "section", "article",\n                                                       "h1", "h2", "h3", "h4", "h5", "h6", "header", "figcaption", "caption" };\n            if (centeredBlocks.contains(name) && !style.isNull() && style->text_align == css_ta_center)
+            // Headings are protected from prose alignment changes but still
+            // need the centered-title indent exception.
+            static const QSet<QString> centeredBlocks{ "p", "li", "dt", "dd", "blockquote", "div", "section", "article",
+                                                       "h1", "h2", "h3", "h4", "h5", "h6", "header", "figcaption", "caption" };
+            if (centeredBlocks.contains(name) && !style.isNull() && style->text_align == css_ta_center)
                 node->setAttributeValue(0, centeredAttribute, U"1");
             frame.blocked = frame.blocked || preserve(node, name);
             if (node->hasAttribute(attribute))
