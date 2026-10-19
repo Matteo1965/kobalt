@@ -129,3 +129,6 @@
 "stats.counting" = "Szavak számlálása…";
 /* Arguments: %1, %2 */
 "chapter_graph.next_chapter" = "Következő fejezet: %1 %2";
+
+/* Arguments: %1 */
+"stats.words" = "%1 szó";
