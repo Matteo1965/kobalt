@@ -106,7 +106,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                                                 : strings::get("settings.unsupported_description"));
     animationOption->setEnabled(animationsSupported);
     clockOption = check(displayPage, "rrShowClock", strings::get("reader.clock"),
-                        QStringLiteral("Show the clock while reading."));
+                        strings::get("settings.clock_description"));
     int optionIndex = 0;
     for (auto *option : {darkOption, progressOption, animationOption, clockOption}) {
         option->setMinimumHeight(m::settings::displayOptionHeight);
@@ -134,8 +134,8 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         check(advancedPage, "rrHideNonlinearFragments", strings::get("reader.hide_nonlinear_fragments"),
               strings::get("settings.hide_nonlinear_fragments_description"));
     advancedRows->addWidget(hideNonlinearOption);
-    opticalMarginOption = check(advancedPage, "rrOpticalMargin", QStringLiteral("Optical margin"),
-                                QStringLiteral("Hang punctuation into the margin."));
+    opticalMarginOption = check(advancedPage, "rrOpticalMargin", strings::get("settings.optical_margin"),
+                                strings::get("settings.optical_margin_description"));
     advancedRows->addWidget(opticalMarginOption);
     const bool lightSupported = inputs.lightSupported;
     edgeLightOption = check(advancedPage, "rrEdgeLight", strings::get("reader.edge_light"),
