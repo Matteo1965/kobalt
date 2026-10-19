@@ -289,7 +289,8 @@ void CaptionButton::paintEvent(QPaintEvent *) {
         painter.fillRect(rect(), palette().color(isDown() ? QPalette::Midlight : QPalette::Window));
         paintEdges(painter, rect(), rule, dividerColor(this));
         painter.setPen(palette().color(QPalette::WindowText));
-        QFont label = font();
+        const bool resetAction = objectName() == QStringLiteral("rrRestoreDefaults");
+        QFont label = resetAction ? interfaceFont(c::labelText) : font();
         painter.setFont(label);
         const bool actionIcon = iconVisible;
         const int left = c::inset + (actionIcon ? c::cellIcon + px(20) : 0);
@@ -308,7 +309,8 @@ void CaptionButton::paintEvent(QPaintEvent *) {
             painter.drawLine(x + px(2), y, x - px(8), y + px(10));
         }
         if (!note.isEmpty()) {
-            painter.setFont(captionFont());
+            // The restore hint is ordinary sentence-case text, not a caption in capitals.
+            painter.setFont(resetAction ? interfaceFont(c::descriptionText) : captionFont());
             painter.setPen(noteColor(this));
             painter.drawText(QRect(c::inset, height() / 2 + px(10), textWidth, px(30)),
                              Qt::AlignLeft | Qt::AlignVCenter,
