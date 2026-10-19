@@ -132,6 +132,7 @@ public:
         detail->setObjectName(prefix + "Detail");
         for (auto *label : {figure, unit, detail})
             label->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+        detail->setWordWrap(true);
         for (auto *label : {unit, detail}) {
             label->setTextFormat(Qt::PlainText);
             ui::readerStyle(label,
@@ -165,7 +166,9 @@ private:
         // Fit the entire figure into its third-width cell instead of clipping its rightmost digits.
         int figureSize = qMin(int(m::figureText), 48);
         QFontMetrics figureMetrics(ui::brandFont(figureSize));
-        while (figureSize > 20 && kobalt::qt::textWidth(figureMetrics, figure->text()) + 2 > inner) {
+        while (figureSize > 20 &&
+               kobalt::qt::textWidth(figureMetrics, figure->text()) + m::unitGap +
+                       kobalt::qt::textWidth(unitMetrics, unitValue) + 2 > inner) {
             figureSize -= 2;
             figureMetrics = QFontMetrics(ui::brandFont(figureSize));
         }
