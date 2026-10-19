@@ -264,9 +264,10 @@ void ChapterGraph::setProgress(const QString &title, int chapterPage, int chapte
     progressWeight = ui::interfaceWeight();
     progress = {chapterPage, chapterPages, nextChapterPages, page, pages};
     chapterTitle->setAccessibleName(strings::get("chapter_graph.current_chapter").arg(title));
+    // Show full-book progress above the chapter graph, not chapter-local page counts.
     this->chapterPage->setText(
-        chapterPages > 0 ? strings::get("stats.page_of").arg(qBound(1, chapterPage, chapterPages)).arg(chapterPages)
-                         : QString());
+        pages > 0 ? QString::number(100.0 * qBound(1, page, pages) / pages, 'f', 1).replace('.', ',') + " %"
+                  : QString());
     refreshCells();
     arrange();
 }
