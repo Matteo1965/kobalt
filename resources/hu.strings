@@ -1,5 +1,6 @@
 /* Kobalt Hungarian Edition: translated keys; unspecified keys fall back to English. */
 "about.description" = "Kísérleti EPUB-olvasó – Hungarian Edition.";
+/* Arguments: %1, %2 */
 "about.version" = "Verzió: %1 (Qt%2)";
 "common.auto" = "Automatikus";
 "common.back" = "Vissza";
@@ -65,6 +66,7 @@
 "settings.pin_stats_description" = "A Statisztika panel az olvasómenü megnyitásakor mindig látható.";
 "settings.progress_description" = "Olvasási folyamatjelző az alsó szélen.";
 "settings.refresh_every_chapter" = "Minden fejezetnél";
+/* Arguments: %1 */
 "settings.refresh_every_pages" = "%1 oldalanként";
 "settings.refresh_manually" = "Kézzel";
 "settings.refresh_smart" = "Intelligens";
