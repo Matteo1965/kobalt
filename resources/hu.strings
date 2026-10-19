@@ -54,7 +54,7 @@
 "reader.vertical_margins" = "Függőleges: ";
 "settings.about" = "Névjegy";
 "settings.advanced" = "Haladó";
-"settings.animations_description" = "Lapozási animáció a támogatott eszközökön. A képek utána frissülnek.";
+"settings.animations_description" = "Lapozási animáció a támogatott eszközökön.";
 "settings.dark_description" = "Világos szöveg sötét háttéren.";
 "settings.dense_graph_description" = "A Statisztika fülön egyszerre több fejezet látható. Kapcsold ki a szélesebb oszlopokhoz.";
 "settings.dictionaries" = "Szótárak";
