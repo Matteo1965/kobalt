@@ -61,7 +61,7 @@
 "settings.display" = "Kijelző";
 "settings.edge_brightness_description" = "Húzd az ujjad fel vagy le a bal szélen a fényerő állításához.";
 "settings.edge_light_description" = "A bal szélen a fényerő, a jobb szélen a színhőmérséklet állítható.";
-"settings.heavier_interface_text_description" = "Kissé vastagabb menüszöveg. A könyv betűvastagsága nem változik.";
+"settings.heavier_interface_text_description" = "Kissé vastagabb menüszöveg.";
 "settings.hide_nonlinear_fragments_description" = "Lapozáskor kihagyja a nem lineáris részeket. Hivatkozásból továbbra is megnyithatók.";
 "settings.pin_stats_description" = "A Statisztika panel az olvasómenü megnyitásakor mindig látható.";
 "settings.progress_description" = "Olvasási folyamatjelző az alsó szélen.";
