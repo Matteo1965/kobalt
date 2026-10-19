@@ -882,15 +882,11 @@ void Reader::buildSettings() {
     hideNonlinearOption = settings->hideNonlinearOption;
     opticalMarginOption = settings->opticalMarginOption;
     clockOption = settings->clockOption;
-    bionicOption = settings->bionicOption;
     refreshButton = settings->refreshButton;
     resetDefaults = settings->resetDefaults;
     settingsError = settings->settingsError;
     connect(darkOption, &QCheckBox::clicked, this, [this](bool enabled) {
         applyDarkMode(enabled);
-    });
-    connect(bionicOption, &QCheckBox::clicked, this, [this](bool enabled) {
-        applyBoldReading(enabled);
     });
     connect(heavierTextOption, &QCheckBox::clicked, this, [this](bool enabled) {
         applyHeavierText(enabled);
@@ -910,7 +906,6 @@ void Reader::buildSettings() {
         smoothOption->setChecked(true);
         progressOption->setChecked(true);
         animationOption->setChecked(false);
-        bionicOption->setChecked(false);
         opticalMarginOption->setChecked(false);
         screenRefreshMode = kobalt::ScreenRefresh::Smart;
         showScreenRefresh();
