@@ -341,7 +341,7 @@ void Reader::buildToolbar() {
     readerStyle(back, "QPushButton#rrReturn{" + styles::brand(m::about::exitText) + "}");
     back->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
     top->addStretch(1);
-    auto *lightButton = iconButton(topControls, top, "rrLight", strings::get("reader.brightness_and_warmth"),
+    auto *lightButton = iconButton(topControls, top, "rrLight", strings::get("reader.toolbar_light"),
                                    ControlIcon::Light, [this] {
                                        toggleLight();
                                    });
@@ -362,16 +362,16 @@ void Reader::buildToolbar() {
     lightPopup->placement = [this](int h) {
         return panelBounds(h);
     };
-    auto *typeButton = iconButton(topControls, top, "rrTypography", strings::get("reader.typography"),
+    auto *typeButton = iconButton(topControls, top, "rrTypography", strings::get("reader.toolbar_text"),
                                   ControlIcon::Typography, [this] {
                                       selectPanel(0);
                                   });
     typeButton->setFixedWidth(m::control::typographyButtonWidth);
-    typeButton->setAccessibleName(strings::get("reader.typography"));
-    typeButton->setToolTip(strings::get("reader.typography"));
+    typeButton->setAccessibleName(strings::get("reader.toolbar_text"));
+    typeButton->setToolTip(strings::get("reader.toolbar_text"));
     readerStyle(typeButton, styles::font(m::text::typography));
     typeButton->setCheckable(true);
-    iconButton(topControls, top, "rrLayout", strings::get("reader.page_layout"), ControlIcon::Layout, [this] {
+    iconButton(topControls, top, "rrLayout", strings::get("reader.toolbar_layout"), ControlIcon::Layout, [this] {
         selectPanel(1);
     })->setCheckable(true);
     iconButton(topControls, top, "rrGraph", strings::get("reader.chapter_lengths"), ControlIcon::Graph, [this] {
@@ -456,10 +456,10 @@ void Reader::buildBottomControls() {
                           });
     auto *footer = new QHBoxLayout;
     bottom->addLayout(footer);
-    auto *chapters = new kobalt::ui::ElidingButton(strings::get("reader.contents"), bottomControls);
+    auto *chapters = new kobalt::ui::ElidingButton(strings::get("reader.toolbar_chapter"), bottomControls);
     chapters->setObjectName("rrChapters");
     footer->addWidget(chapters, 1);
-    iconButton(bottomControls, footer, "rrSearchOpen", strings::get("reader.search_book"), ControlIcon::Search, [this] {
+    iconButton(bottomControls, footer, "rrSearchOpen", strings::get("reader.toolbar_search"), ControlIcon::Search, [this] {
         openSearch();
     });
     connect(chapters, &QPushButton::clicked, this, [this] {
