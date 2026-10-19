@@ -95,3 +95,18 @@
 "light_panel.warmth" = "Melegség";
 "light_panel.automatic_brightness" = "Automatikus fényerő";
 "light_panel.automatic_brightness_description" = "A környezeti fényhez igazodik. Kézi állításkor kikapcsol."; 
+"acknowledgments.acknowledgments" = "Köszönetnyilvánítás";
+"acknowledgments.kobalt_is_distributed_under_the_gnu_agpl_v3_without_any_warranty" = "A Kobalt GNU AGPL v3 licenc alatt, mindenféle garancia nélkül kerül terjesztésre.";
+"acknowledgments.thanks_to_the_open_source_projects_that_make_this_reader_possible" = "Köszönet a nyílt forráskódú projekteknek, amelyek lehetővé teszik az olvasó működését. Válassz egy projektet a jogi tudnivalók és licencek megtekintéséhez.";
+/* Arguments: %1 */
+"acknowledgments.projects" = "%1 projekt";
+"common.page" = "oldal";
+"common.pages" = "oldal";
+"chapter_contents.page" = "Oldal";
+/* Arguments: %1, %2 */
+"stats.page_of" = "%1 / %2. oldal";
+"stats.pages_left" = "oldal van hátra";
+"stats.page_left" = "oldal van hátra";
+/* Arguments: %1, %2 */
+"reader.menu_page_of" = "%1 / %2. OLDAL";
+"reader.font_thickness" = "Vastagság: ";
