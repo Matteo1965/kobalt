@@ -156,3 +156,5 @@
 /* Arguments: %1, %2 */
 "navigation.page_count" = "%1 / %2";
 "opening.may_take_a_while" = "HUNGARIAN EDITION";
+"reader.recommended_fonts" = "Ajánlott betűtípusok";
+"reader.set_default_font" = "Alapértelmezett betűtípus beállítása";
