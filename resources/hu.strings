@@ -150,3 +150,6 @@
 "chapter_contents.summary_one" = "Tartalom · 1 fejezet";
 /* Arguments: %1, %2 */
 "stats.contents_position" = "Tartalom · %1 / %2";
+"bookmarks.title" = "Könyvjelzők";
+/* Arguments: %1 */
+"bookmarks.summary" = "Könyvjelzők · %1";
