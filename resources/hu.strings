@@ -140,3 +140,6 @@
 "navigation.light" = "VILÁGÍTÁS";
 "navigation.stats" = "STATISZTIKA";
 "navigation.search" = "KERESÉS";
+
+/* Arguments: %1 */
+"reader.session_minutes" = "Már %1 perce olvasol.";
