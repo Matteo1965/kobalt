@@ -158,3 +158,8 @@
 "opening.may_take_a_while" = "HUNGARIAN EDITION";
 "reader.recommended_fonts" = "Ajánlott betűtípusok";
 "reader.set_default_font" = "Alapértelmezett betűtípus beállítása";
+"common.size_small" = "Kicsi";
+"common.size_medium" = "Közepes";
+"common.size_large" = "Nagy";
+"reader.both" = "Mindkettő";
+"reader.paragraph_publisher" = "Eredeti";
