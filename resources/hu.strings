@@ -148,3 +148,5 @@
 /* Arguments: %1 */
 "chapter_contents.summary" = "Tartalom · %1 fejezet";
 "chapter_contents.summary_one" = "Tartalom · 1 fejezet";
+/* Arguments: %1, %2 */
+"stats.contents_position" = "Tartalom · %1 / %2";
