@@ -1,5 +1,7 @@
 #pragma once
 #include <QMargins>
+#include <QGuiApplication>
+#include <QScreen>
 #include <QtGlobal>
 
 namespace kobalt::ui {
@@ -7,6 +9,15 @@ namespace kobalt::ui {
 // Clara and Libra. Every size scales to the device's density, so a control has
 // the same physical size on every screen.
 inline constexpr int designPpi = 300;
+// Kobo Libra 2 (1680 x 1264) uses the same 300 ppi as Clara BW (1448 x 1072).
+// Give interface text more room on the physically larger screen.
+inline bool largeReaderDisplay() {
+    const auto *screen = QGuiApplication::primaryScreen();
+    return screen && qMax(screen->size().width(), screen->size().height()) >= 1600;
+}
+inline int readableTextPixels(int pixels) {
+    return pixels + (largeReaderDisplay() ? qMax(2, qRound(pixels * 0.12)) : 0);
+}
 namespace detail {
 inline int ppi = designPpi;
 }
