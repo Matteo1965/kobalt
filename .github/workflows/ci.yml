@@ -2,7 +2,7 @@ name: Build and release
 
 on:
   push:
-    branches: [main, kobalt-beta3-hanging-punctuation]
+    branches: [main, kobalt-beta3-hanging-punctuation, hungarian-edition-localization]
     tags: ['v*']
   workflow_dispatch:
 
