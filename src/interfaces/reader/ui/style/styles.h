@@ -6,7 +6,7 @@
 namespace kobalt::ui::styles {
 // QSS dimensions use the same measurements as widget and painter geometry.
 inline QString font(int size, bool bold = false) {
-    return QString("font-size:%1px;").arg(size) + (bold ? "font-weight:bold;" : "");
+    return QString("font-size:%1px;").arg(readableTextPixels(size)) + (bold ? "font-weight:bold;" : "");
 }
 inline QString brand(int pixels, bool italic = false) {
     const auto face = brandFont(pixels, italic);
@@ -29,7 +29,7 @@ inline QString reader() {
                "QFrame#rrControlsTop,QFrame#rrControlsBottom,QFrame#rrMenu,QFrame#rrGeneralSettings{border:none;} "
                "QPushButton#rrReturn,QPushButton#rrChapters{font-weight:bold;} "
                "QPushButton#rrLight:checked,QPushButton#rrTypography:checked,QPushButton#rrLayout:checked,QPushButton#rrSettings:checked,QPushButton#rrGraph:checked{background:palette(window-text);color:palette(window);}")
-        .arg(metrics::text::body)
+        .arg(readableTextPixels(metrics::text::body))
         .arg(metrics::control::minimumHeight)
         .arg(metrics::control::padding)
         .arg(interfaceFontFamily());
