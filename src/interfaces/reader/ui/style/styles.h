@@ -12,7 +12,7 @@ inline QString brand(int pixels, bool italic = false) {
     const auto face = brandFont(pixels, italic);
     return QString("font-family:'%1';font-size:%2px;font-weight:400;font-style:%3;")
         .arg(face.family())
-        .arg(pixels)
+        .arg(readableTextPixels(pixels))
         .arg(italic ? "italic" : "normal");
 }
 // Caption labels also need captionFont() for their spacing and capitals.
@@ -20,7 +20,7 @@ inline QString caption(int pixels = metrics::chrome::captionText) {
     return QString(
                "font-family:'%1';font-size:%2px;font-weight:400;background:transparent;border:none;color:palette(placeholder-text);")
         .arg(chromeFont().family())
-        .arg(pixels);
+        .arg(readableTextPixels(pixels));
 }
 inline QString reader() {
     return QString(
@@ -82,7 +82,7 @@ inline QString popup() {
                "QPushButton{background:palette(window);color:palette(window-text);font-size:%1px;padding:%2px %6px;min-height:%3px;border:%4px solid palette(dark);} "
                "QPushButton:pressed{background:palette(midlight);} QPushButton:disabled{color:palette(mid);} "
                "QProgressBar{background:palette(window);border:%4px solid palette(window-text);height:%5px;min-height:%5px;max-height:%5px;} QProgressBar::chunk{background:palette(window-text);}")
-        .arg(metrics::chrome::labelText)
+        .arg(readableTextPixels(metrics::chrome::labelText))
         .arg(metrics::control::outlinedVerticalPadding)
         .arg(metrics::control::outlinedHeight)
         .arg(metrics::control::border)
