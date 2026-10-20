@@ -330,8 +330,8 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         presentation.indicator = ui::DescribedOption::Indicator::Square;
         presentation.dividers = Qt::BottomEdge;
         presentation.horizontalInset = c::inset;
-        presentation.labelPixels = c::labelText;
-        presentation.descriptionPixels = c::descriptionText;
+        presentation.labelPixels = c::labelText + (ui::largeReaderDisplay() ? ui::px(4) : 0);
+        presentation.descriptionPixels = c::descriptionText + (ui::largeReaderDisplay() ? ui::px(3) : 0);
         presentation.indicatorSize = {c::checkSize, c::checkSize};
         // Use compact height for single-line descriptions in both tabs.
         // Wrapped descriptions are expanded in DescribedOption::heightForWidth.
@@ -367,7 +367,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
             button,
             QString(
                 "QPushButton{font-size:%1px;min-height:%2px;max-height:%2px;border:0;border-bottom:%5px solid %3;border-right:%5px solid palette(window-text);border-radius:0;text-align:left;padding:0 %4px;background:palette(window);color:palette(window-text);} QPushButton:checked{background:palette(window-text);color:palette(window);}")
-                .arg(c::railText)
+                .arg(c::railText + (ui::largeReaderDisplay() ? ui::px(3) : 0))
                 .arg(c::railRowHeight)
                 .arg(c::dividerLight)
                 .arg(c::railInset)
