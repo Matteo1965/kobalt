@@ -396,7 +396,7 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     bottomMargin_ = qBound(0, saved.value("bottom_margin_pixels").toInt(defaultVerticalMarginPixels(margin_)),
                            maximumMarginPixels());
     const auto hyphenation = saved.value("hyphenation");
-    hyphenation_ = hyphenation.isBool() ? (hyphenation.toBool() ? "auto" : "off") : hyphenation.toString("off");
+    hyphenation_ = hyphenation.isBool() ? (hyphenation.toBool() ? "auto" : "off") : hyphenation.toString("on");
     if (hyphenation_ != "auto" && hyphenation_ != "on" && hyphenation_ != "off")
         hyphenation_ = "off";
     paragraphSpacing_ = saved.value("paragraph_spacing").toString("publisher");
@@ -408,7 +408,7 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     face_ = saved.value("font_face").toString(defaultFontFace);
     if (face_ == "KF Libron")
         face_ = defaultFontFace;
-    alignment_ = saved.value("text_alignment").toString("left");
+    alignment_ = saved.value("text_alignment").toString("justify");
     if (!validAlignment(alignment_))
         alignment_ = "publisher";
     const auto faces = fontFaces();
