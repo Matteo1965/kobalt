@@ -54,7 +54,7 @@ QJsonObject benchmarkTypography(const QString &identity) {
                        {"font_weight", 400},
                        {"font_optical_size", 0},
                        {"bold_reading", "off"},
-                       {"hyphenation", QStringLiteral("off")},
+                       {"hyphenation", QStringLiteral("on")},
                        {"paragraph_spacing", QStringLiteral("publisher")},
                        {"dark_mode", false},
                        {"smooth_images", true}});
@@ -67,7 +67,7 @@ QJsonObject typographyDefaults() {
                        {"margin_pixels", defaultMarginPixels()},
                        {"top_margin_pixels", defaultVerticalMarginPixels(defaultMarginPixels())},
                        {"bottom_margin_pixels", defaultVerticalMarginPixels(defaultMarginPixels())},
-                       {"text_alignment", QStringLiteral("left")},
+                       {"text_alignment", QStringLiteral("justify")},
                        {"weight_steps", 0},
                        {"font_weight", defaultVariableFontWeight},
                        {"font_optical_size", 0},
