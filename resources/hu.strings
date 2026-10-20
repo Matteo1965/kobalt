@@ -155,3 +155,4 @@
 "bookmarks.summary" = "Könyvjelzők · %1";
 /* Arguments: %1, %2 */
 "navigation.page_count" = "%1 / %2";
+"opening.may_take_a_while" = "HUNGARIAN EDITION";
