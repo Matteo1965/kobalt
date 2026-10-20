@@ -145,3 +145,6 @@
 "reader.session_minutes" = "Már %1 perce olvasol.";
 "opening.loading" = "Könyv megnyitása…";
 "chapter_contents.chapters" = "Fejezetek";
+/* Arguments: %1 */
+"chapter_contents.summary" = "Tartalom · %1 fejezet";
+"chapter_contents.summary_one" = "Tartalom · 1 fejezet";
