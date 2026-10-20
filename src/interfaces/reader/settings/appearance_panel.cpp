@@ -209,12 +209,22 @@ AppearancePanel::AppearancePanel(const AppearanceLayout &layout, const Appearanc
                                         strings::get("reader.paragraph_space"));
     for (const auto *mode : {"none", "half", "full", "publisher"}) {
         const QString value = QString::fromLatin1(mode);
-        const QString label = value == "none" ? QStringLiteral("Off") : value == "half" ? QStringLiteral("S")
-                              : value == "full" ? QStringLiteral("M") : QStringLiteral("P");
+        const QString label = value == "none" ? strings::get("common.off")
+                              : value == "half" ? strings::get("common.size_small")
+                              : value == "full" ? strings::get("common.size_medium")
+                                                : strings::get("reader.paragraph_publisher");
+        const QString compact = value == "none" ? strings::get("common.off")
+                                : value == "half" ? QStringLiteral("S")
+                                : value == "full" ? QStringLiteral("M") : QStringLiteral("P");
         auto *button = paragraphs.add("rrParagraphSpacing_" + value, label);
         button->setProperty("paragraph_spacing", value);
+        button->setProperty("full_label", label);
+        button->setProperty("compact_label", compact);
+        button->setAccessibleName(label);
+        button->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
         button->setCheckable(true);
         paragraphSpacingButtons.append(button);
     }
+    new ChoiceLabels(paragraphSpacingButtons.first()->parentWidget(), paragraphSpacingButtons);
 }
 }
