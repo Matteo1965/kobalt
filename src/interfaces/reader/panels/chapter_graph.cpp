@@ -173,7 +173,8 @@ private:
             figureMetrics = QFontMetrics(ui::brandFont(figureSize));
         }
         ui::readerStyle(figure, ui::styles::brand(figureSize) + "background:transparent;");
-        const int figureWidth = qMin(inner, kobalt::qt::textWidth(figureMetrics, figure->text()) + 2);
+        // The registered display font may be wider than brandFont's metrics: reserve a safety margin.
+        const int figureWidth = qMin(inner, kobalt::qt::textWidth(QFontMetrics(figure->font()), figure->text()) + ui::px(12));
         figure->setGeometry(c::inset, m::figureBaseline - figureMetrics.ascent(), figureWidth, figureMetrics.height());
         const int unitLeft = c::inset + figureWidth + m::unitGap;
         // A large figure keeps every digit; its unit shortens instead.
