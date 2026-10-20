@@ -16,7 +16,7 @@ inline bool largeReaderDisplay() {
     return screen && qMax(screen->size().width(), screen->size().height()) >= 1600;
 }
 inline int readableTextPixels(int pixels) {
-    return pixels + (largeReaderDisplay() ? qMax(2, qRound(pixels * 0.12)) : 0);
+    return pixels + (largeReaderDisplay() ? qMax(2, qRound(pixels * 0.15)) : 0);
 }
 namespace detail {
 inline int ppi = designPpi;
