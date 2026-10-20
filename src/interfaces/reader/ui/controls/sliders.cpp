@@ -175,7 +175,7 @@ SettingSlider *sliderRow(QWidget *parent, QVBoxLayout *rows, const char *name, c
     auto *title = new QLabel(titleText + (QString::fromLatin1(name) == QStringLiteral("rrTextSize") ? "" : ":"), caption);
     title->setObjectName(QString::fromLatin1(name) + "Caption");
     title->setWordWrap(true);
-    readerStyle(title, styles::font(m::text::secondary));
+    readerStyle(title, QString("font-size:%1px;").arg(int(m::text::secondary)));
     captionRows->addWidget(title);
     captionRows->addStretch(1);
     auto *value = new QLabel(caption);
