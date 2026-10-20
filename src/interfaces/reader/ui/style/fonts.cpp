@@ -255,10 +255,10 @@ void refreshInterfaceText(QWidget *root) {
     }
 }
 QFont interfaceFont(int pixels) {
-    return sizedFont(family(Sans), pixels);
+    return sizedFont(family(Sans), readableTextPixels(pixels));
 }
 QFont chromeFont(int pixels) {
-    return sizedFont(family(Mono), pixels);
+    return sizedFont(family(Mono), readableTextPixels(pixels));
 }
 QFont captionFont(int pixels) {
     QFont font = chromeFont(pixels);
