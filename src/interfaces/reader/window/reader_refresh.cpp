@@ -190,9 +190,10 @@ void Reader::showChapterText() {
     page->clockText = services.clock();
     page->chapterTitle =
         (model->chapterTitle().isEmpty() ? strings::get("reader.reading") : model->chapterTitle()).toUpper();
+    // The reading header always shows full-book progress rather than chapter-local pages.
     page->chapterProgress =
-        model->chapterPages() > 0
-            ? strings::get("common.page_fraction").arg(model->chapterPage()).arg(model->chapterPages())
+        model->pages() > 0
+            ? QString::number(100.0 * (model->page() + 1) / model->pages(), 'f', 1).replace('.', ',') + " %"
             : QString();
     header->setText(page->chapterProgress.isEmpty()
                         ? page->chapterTitle
