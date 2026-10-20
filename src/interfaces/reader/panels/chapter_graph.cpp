@@ -165,17 +165,19 @@ private:
         percent->setGeometry(c::inset, m::cellPadding, inner, captionMetrics.height());
         // Fit the entire figure into its third-width cell instead of clipping its rightmost digits.
         int figureSize = qMin(int(m::figureText), 36);
-        QFontMetrics figureMetrics(ui::brandFont(figureSize));
+        QFontMetrics figureMetrics(ui::brandFont(ui::readableTextPixels(figureSize)));
         while (figureSize > 18 &&
                kobalt::qt::textWidth(figureMetrics, figure->text()) + m::unitGap +
                        kobalt::qt::textWidth(unitMetrics, unitValue) + 2 > inner) {
             figureSize -= 2;
-            figureMetrics = QFontMetrics(ui::brandFont(figureSize));
+            figureMetrics = QFontMetrics(ui::brandFont(ui::readableTextPixels(figureSize)));
         }
         ui::readerStyle(figure, ui::styles::brand(figureSize) + "background:transparent;");
-        // The registered display font may be wider than brandFont's metrics: reserve a safety margin.
-        const int figureWidth = qMin(inner, kobalt::qt::textWidth(QFontMetrics(figure->font()), figure->text()) + ui::px(12));
-        figure->setGeometry(c::inset, m::figureBaseline - figureMetrics.ascent(), figureWidth, figureMetrics.height());
+        // Use the actual styled font for width and baseline, so large-screen scaling cannot lower the digits.
+        const QFontMetrics renderedFigureMetrics(figure->font());
+        const int figureWidth = qMin(inner, kobalt::qt::textWidth(renderedFigureMetrics, figure->text()) + ui::px(12));
+        figure->setGeometry(c::inset, m::figureBaseline - renderedFigureMetrics.ascent(), figureWidth,
+                            renderedFigureMetrics.height());
         const int unitLeft = c::inset + figureWidth + m::unitGap;
         // A large figure keeps every digit; its unit shortens instead.
         const int unitWidth = qMax(1, width() - c::inset - unitLeft);
