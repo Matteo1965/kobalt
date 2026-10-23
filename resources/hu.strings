@@ -26,6 +26,7 @@
 "reader.exit" = "Kilépés";
 "reader.font" = "Betűtípus";
 "reader.applying_appearance_changes" = "Megjelenési beállítások alkalmazása...";
+"reader.updating_page_layout" = "Oldalelrendezés frissítése...";
 "reader.one_embedded_font" = "1 beágyazott betűtípus";
 "reader.embedded_fonts" = "%1 beágyazott betűtípus";
 "reader.no_embedded_fonts" = "Nincs beágyazott betűtípus";
