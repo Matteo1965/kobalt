@@ -25,6 +25,14 @@
 "reader.enable_page_animations" = "Lapozási animáció";
 "reader.exit" = "Kilépés";
 "reader.font" = "Betűtípus";
+"reader.applying_appearance_changes" = "Megjelenési beállítások alkalmazása...";
+"reader.one_embedded_font" = "1 beágyazott betűtípus";
+"reader.embedded_fonts" = "%1 beágyazott betűtípus";
+"reader.no_embedded_fonts" = "Nincs beágyazott betűtípus";
+"stats.time_left" = "%1";
+"stats.duration_minutes" = "%1 perc van hátra";
+"stats.duration_hours" = "%1 óra %2 perc";
+"stats.duration_clock" = "%1:%2";
 "reader.footer" = "Lábléc";
 "reader.header" = "Fejléc";
 "reader.heavier_interface_text" = "Olvashatóbb menüszöveg";
