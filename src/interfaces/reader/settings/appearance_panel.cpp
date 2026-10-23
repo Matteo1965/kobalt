@@ -39,9 +39,10 @@ protected:
             }
             // The Clara BW should always use short labels for the indentation control,
             // regardless of whether the full translated words happen to fit.
-            const bool compact = (frame->objectName() == QStringLiteral("rrParagraphIndent") &&
-                                  !ui::largeReaderDisplay()) ||
-                                 frame->width() / buttons.size() < required;
+            const bool forceCompact = !buttons.isEmpty() &&
+                                      buttons.first()->property("force_compact_on_small_display").toBool() &&
+                                      !ui::largeReaderDisplay();
+            const bool compact = forceCompact || frame->width() / buttons.size() < required;
             for (auto *button : buttons) {
                 const auto label = button->property("full_label").isValid() ? button->property("full_label").toString()
                                                                             : button->accessibleName();
@@ -239,6 +240,7 @@ AppearancePanel::AppearancePanel(const AppearanceLayout &layout, const Appearanc
                                                 : strings::get("reader.paragraph_publisher");
         auto *button = indent.add("rrParagraphIndent_" + value, label);
         button->setProperty("paragraph_indent", value);
+        button->setProperty("force_compact_on_small_display", true);
         button->setProperty("full_label", label);
         button->setProperty("compact_label", value == "none" ? strings::get("common.off") : value == "first" ? QStringLiteral("S") : value == "full" ? QStringLiteral("M") : QStringLiteral("P"));
         button->setAccessibleName(label);
