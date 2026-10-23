@@ -299,8 +299,6 @@ QHBoxLayout *labeledRow(QWidget *parent, QVBoxLayout *rows, const QString &label
 }
 SegmentedRow::SegmentedRow(QWidget *parent, QVBoxLayout *rows, const char *name, const QString &label) {
     auto *line = labeledRow(parent, rows, label);
-    // Keep the lower border clear of the background painted by the next control row.
-    rows->addSpacing(4);
     // Match the unscaled slider captions for these two reading controls.
     if (QString::fromLatin1(name) == QStringLiteral("rrAlignment") ||
         QString::fromLatin1(name) == QStringLiteral("rrHyphenation")) {
