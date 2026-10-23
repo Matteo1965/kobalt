@@ -387,7 +387,7 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     darkMode_ = saved.value("dark_mode").toBool(false);
     smoothImages_ = saved.value("smooth_images").toBool(true);
     hideNonlinearFragments_ = saved.value("hide_nonlinear_fragments").toBool(false);
-    hangingPunctuation_ = saved.value("hanging_punctuation").toBool(false);
+    hangingPunctuation_ = saved.value("hanging_punctuation").toBool(true);
     pixels_ = qBound(minimumFontPixels(), saved.value("font_pixels").toInt(defaultFontPixels()), maximumFontPixels());
     spacing_ = qBound(100, saved.value("line_spacing").toInt(defaultLineSpacing), maximumLineSpacing);
     margin_ = qBound(0, saved.value("margin_pixels").toInt(defaultMarginPixels()), maximumMarginPixels());
