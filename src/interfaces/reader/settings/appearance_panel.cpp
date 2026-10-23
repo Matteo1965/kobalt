@@ -226,5 +226,22 @@ AppearancePanel::AppearancePanel(const AppearanceLayout &layout, const Appearanc
         paragraphSpacingButtons.append(button);
     }
     new ChoiceLabels(paragraphSpacingButtons.first()->parentWidget(), paragraphSpacingButtons);
+    kobalt::ui::SegmentedRow indent(pageLayout, pageRows, "rrParagraphIndent", strings::get("reader.paragraph_indent"));
+    for (const auto *mode : {"none", "first", "full", "publisher"}) {
+        const QString value = QString::fromLatin1(mode);
+        const QString label = value == "none" ? strings::get("common.off")
+                              : value == "first" ? strings::get("common.size_small")
+                              : value == "full" ? strings::get("reader.paragraph_normal")
+                                                : strings::get("reader.paragraph_publisher");
+        auto *button = indent.add("rrParagraphIndent_" + value, label);
+        button->setProperty("paragraph_indent", value);
+        button->setProperty("full_label", label);
+        button->setProperty("compact_label", value == "none" ? QStringLiteral("KI") : value == "first" ? QStringLiteral("K") : value == "full" ? QStringLiteral("N") : QStringLiteral("E"));
+        button->setAccessibleName(label);
+        button->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+        button->setCheckable(true);
+        paragraphIndentButtons.append(button);
+    }
+    new ChoiceLabels(paragraphIndentButtons.first()->parentWidget(), paragraphIndentButtons);
 }
 }
