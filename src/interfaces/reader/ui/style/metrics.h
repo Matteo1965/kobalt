@@ -30,7 +30,10 @@ inline constexpr auto lightOutline = "#666666", darkOutline = "#bbbbbb";
 inline constexpr Px minimumHeight{60}, padding{4};
 inline constexpr Px captionValueText{24}, captionWidth{280}, valueWidth{84}, captionGap{8}, captionRight{12};
 inline constexpr Px rowGap{16}, sectionGap{8}, itemGap{16}, fontPickerGap{16};
-inline constexpr Px segmentHeight{48}, segmentVerticalPadding{12}, segmentHorizontalPadding{16};
+// QSS adds top/bottom padding and borders to min-height: 40 + 24 + 4 = 68px.
+// The previous 48px content height created a 76px button inside a 72px row,
+// clipping the lower outline and descenders against the following row.
+inline constexpr Px segmentHeight{40}, segmentVerticalPadding{12}, segmentHorizontalPadding{16};
 inline constexpr Px stepSize{72}, stepIconInset{10};
 inline constexpr Px sliderHeight{72}, sliderInset{25}, sliderRadius{23}, sliderInnerRadius{16};
 inline constexpr Px sliderFillHeight{4};
