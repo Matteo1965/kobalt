@@ -13,7 +13,7 @@ class ReadingPage : public QWidget {
 public:
     QImage image;
     int animationDirection = 0;
-    QString progress, chapterTitle, chapterProgress, clockText;
+    QString progress, chapterTitle, chapterProgress, clockText, bookTitle;
     bool showHeader = true, showFooter = true, showClock = true, showProgress = true;
     qreal progressFraction = 0;
     QString headerSize = "small", footerSize = "small";
@@ -70,7 +70,7 @@ private:
     std::function<void()> cancelAnimation;
     // The last field is the interface text weight: a change draws the strips again.
     using HeaderState = std::tuple<QString, QString, QString, bool, bool, bool, int, int, qint64, int>;
-    using FooterState = std::tuple<QString, bool, bool, qreal, int, int, qint64, int>;
+    using FooterState = std::tuple<QString, QString, bool, bool, qreal, int, int, qint64, int>;
     bool panelBelowHeader = false;
     HeaderState headerState;
     FooterState footerState;
