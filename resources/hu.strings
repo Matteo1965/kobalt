@@ -94,6 +94,7 @@
 "settings.optical_margin" = "Optikai margó";
 "settings.optical_margin_description" = "Az írásjelek túlnyúlhatnak a margón.";
 "reader.paragraph_space" = "Bekezdésköz";
+"reader.paragraph_indent" = "Behúzás";
 
 /* Short toolbar captions */
 "reader.toolbar_chapter" = "Fejezet";
