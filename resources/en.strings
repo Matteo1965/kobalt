@@ -602,6 +602,7 @@
 "settings.optical_margin" = "Optical margin";
 "settings.optical_margin_description" = "Hang punctuation into the margin.";
 "reader.paragraph_space" = "Paragraph space";
+"reader.paragraph_indent" = "Indentation";
 "reader.paragraph_publisher" = "Publisher";
 
 /* Short toolbar captions */
