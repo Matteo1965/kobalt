@@ -28,11 +28,16 @@
 "reader.applying_appearance_changes" = "Megjelenési beállítások alkalmazása...";
 "reader.updating_page_layout" = "Oldalelrendezés frissítése...";
 "reader.one_embedded_font" = "1 beágyazott betűtípus";
+/* Arguments: %1 */
 "reader.embedded_fonts" = "%1 beágyazott betűtípus";
 "reader.no_embedded_fonts" = "Nincs beágyazott betűtípus";
+/* Arguments: %1 */
 "stats.time_left" = "%1";
+/* Arguments: %1 */
 "stats.duration_minutes" = "%1 perc van hátra";
+/* Arguments: %1, %2 */
 "stats.duration_hours" = "%1 óra %2 perc";
+/* Arguments: %1, %2 */
 "stats.duration_clock" = "%1:%2";
 "reader.footer" = "Lábléc";
 "reader.header" = "Fejléc";
@@ -197,12 +202,14 @@
 "search_panel.searching" = "Keresés…";
 "search_panel.no_matches_found" = "Nincs találat";
 "search_panel.edit" = "Keresés módosítása";
+/* Arguments: %1, %2 */
 "search_panel.result_range" = "Találatok: %1–%2";
 "bookmarks.previous" = "Előző könyvjelzők";
 "bookmarks.next" = "Következő könyvjelzők";
 "finish.prompt" = "Befejezted a könyvet?";
 "finish.still_reading" = "Még olvasom";
 "finish.mark_finished" = "Megjelölés befejezettként";
+/* Arguments: %1, %2 */
 "dictionaries.downloading" = "Letöltés · %1 / %2";
 "dictionaries.installing" = "Telepítés";
 "dictionaries.download_failed" = "Sikertelen letöltés. Próbáld újra.";
