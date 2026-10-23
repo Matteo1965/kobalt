@@ -258,7 +258,7 @@ QFont interfaceFont(int pixels) {
     return sizedFont(family(Sans), readableTextPixels(pixels));
 }
 QFont chromeFont(int pixels) {
-    return sizedFont(family(Mono), readableTextPixels(pixels));
+    return sizedFont(family(Sans), readableTextPixels(pixels));
 }
 QFont captionFont(int pixels) {
     QFont font = chromeFont(pixels);
