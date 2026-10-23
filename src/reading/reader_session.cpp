@@ -778,6 +778,15 @@ bool ReaderSession::setParagraphSpacing(const QString &mode) {
     }
     return true;
 }
+bool ReaderSession::setParagraphIndent(const QString &mode) {
+    if (temporaryTypography() || (mode != "none" && mode != "first" && mode != "full" && mode != "publisher"))
+        return false;
+    if (mode != paragraphIndent()) {
+        desired["paragraph_indent"] = mode;
+        request(true);
+    }
+    return true;
+}
 bool ReaderSession::canTurn() const {
     return !retiring && !preview_ && openingResult_.ready() && lease_ && !lease_->revoked() && pages() > 0 &&
            (!running || turning);
