@@ -188,6 +188,7 @@ bool Reader::syncFontPicker() {
 void Reader::showChapterText() {
     page->cleanRefresh(false);
     page->clockText = services.clock();
+    page->bookTitle = model->title();
     page->chapterTitle =
         (model->chapterTitle().isEmpty() ? strings::get("reader.reading") : model->chapterTitle()).toUpper();
     // The reading header always shows full-book progress rather than chapter-local pages.
