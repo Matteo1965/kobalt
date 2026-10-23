@@ -748,10 +748,12 @@ void ReaderModel::applyStyleSheet() {
     if (paragraphIndent_ == "none")
         overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n";
     else if (paragraphIndent_ == "first")
-        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n"
-                     "p:first-of-type, [data-kobalt-prose=\"1\"]:first-of-type { text-indent:0.8em !important; }\n";
+        // CRengine does not consistently apply :first-of-type to EPUB paragraph structures.
+        // Start each paragraph run indented, then suppress indentation on subsequent siblings.
+        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0.8em !important; }\n"
+                     "p + p, [data-kobalt-prose=\"1\"] + [data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n";
     else if (paragraphIndent_ == "full")
-        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:1.2em !important; }\n";
+        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:1.0em !important; }\n";
     if (hyphenation_ != "auto")
         overrides += QString("* { hyphens:%1 !important; }\n").arg(hyphenation_ == "on" ? "auto" : "none");
     if (!face_.isEmpty()) {
