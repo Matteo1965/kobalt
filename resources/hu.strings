@@ -49,7 +49,7 @@
 "reader.search_book" = "Keresés a könyvben";
 "reader.show_link_indicator" = "Hivatkozásjelző";
 "reader.smooth_images" = "Képek simítása";
-"reader.text_size" = "Betűméret: ";
+"reader.text_size" = "Méret: ";
 "reader.typography" = "Tipográfia";
 "reader.vertical_margins" = "Függőleges: ";
 "settings.about" = "Névjegy";
