@@ -128,7 +128,7 @@
 "stats.last_chapter" = "Utolsó fejezet";
 "stats.counting" = "Szavak számlálása…";
 /* Arguments: %1, %2 */
-"chapter_graph.next_chapter" = "Köv. fejezet: %1 %2";
+"chapter_graph.next_chapter" = "Következik %1 %2";
 
 /* Arguments: %1 */
 "stats.words" = "%1 szó";
