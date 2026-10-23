@@ -23,7 +23,7 @@ public:
                       *variableWeightSlider = nullptr, *spacingSlider = nullptr, *marginSlider = nullptr,
                       *verticalMarginSlider = nullptr;
     QVector<QPushButton *> alignmentButtons, hyphenButtons, rotationButtons, headerSizeButtons, footerSizeButtons,
-                           paragraphSpacingButtons;
+                           paragraphSpacingButtons, paragraphIndentButtons;
     QPushButton *autoRotateOption = nullptr, *clockOption = nullptr, *clockHideOption = nullptr;
 };
 }
