@@ -399,6 +399,9 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     hyphenation_ = hyphenation.isBool() ? (hyphenation.toBool() ? "auto" : "off") : hyphenation.toString("on");
     if (hyphenation_ != "auto" && hyphenation_ != "on" && hyphenation_ != "off")
         hyphenation_ = "off";
+    paragraphIndent_ = saved.value("paragraph_indent").toString("publisher");
+    if (paragraphIndent_ != "none" && paragraphIndent_ != "first" && paragraphIndent_ != "full")
+        paragraphIndent_ = "publisher";
     paragraphSpacing_ = saved.value("paragraph_spacing").toString("publisher");
     if (paragraphSpacing_ != "none" && paragraphSpacing_ != "half" && paragraphSpacing_ != "full")
         paragraphSpacing_ = "publisher";
@@ -606,6 +609,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const auto alignment = settings.value("text_alignment").toString(alignment_);
     const auto hyphenation = settings.value("hyphenation").toString(hyphenation_);
     const auto paragraphSpacing = settings.value("paragraph_spacing").toString(paragraphSpacing_);
+    const auto paragraphIndent = settings.value("paragraph_indent").toString(paragraphIndent_);
     const bool dark = settings.value("dark_mode").toBool(darkMode_);
     const bool smooth = settings.value("smooth_images").toBool(smoothImages_);
     const bool hideNonlinear = settings.value("hide_nonlinear_fragments").toBool(hideNonlinearFragments_);
@@ -617,6 +621,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
         (hyphenation != "auto" && hyphenation != "on" && hyphenation != "off") ||
         (paragraphSpacing != "publisher" && paragraphSpacing != "none" && paragraphSpacing != "half" &&
          paragraphSpacing != "full") ||
+        (paragraphIndent != "publisher" && paragraphIndent != "none" && paragraphIndent != "first" && paragraphIndent != "full") ||
         (bionic != "off" && bionic != "bold") || (!face.isEmpty() && !fontFaces().contains(face)) ||
         !fontFaces().contains(defaultFace))
         return false;
@@ -628,7 +633,8 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const bool styled = bionicChanged || axisChanged || opticalChanged || pixels != pixels_ || spacing != spacing_ ||
                         face != face_ || defaultFace != defaultFace_ || margin != margin_ || topMargin != topMargin_ ||
                         bottomMargin != bottomMargin_ || alignment != alignment_ || hyphenation != hyphenation_ ||
-                        hangingPunctuation != hangingPunctuation_ || paragraphSpacing != paragraphSpacing_;
+                        hangingPunctuation != hangingPunctuation_ || paragraphSpacing != paragraphSpacing_ ||
+                         paragraphIndent != paragraphIndent_;
     const bool resized = size != size_;
     if (!styled && !resized && weight == weight_ && dark == darkMode_ && smooth == smoothImages_ &&
         hideNonlinear == hideNonlinearFragments_)
@@ -646,6 +652,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     hyphenation_ = hyphenation;
     hangingPunctuation_ = hangingPunctuation;
     paragraphSpacing_ = paragraphSpacing;
+    paragraphIndent_ = paragraphIndent;
     weight_ = weight;
     axisWeight_ = axisWeight;
     opticalSize_ = opticalSize;
@@ -738,6 +745,13 @@ void ReaderModel::applyStyleSheet() {
         const char *amount = paragraphSpacing_ == "half" ? "0.5em" : paragraphSpacing_ == "full" ? "1em" : "0";
         overrides += QString("p { margin-top:0 !important; margin-bottom:%1 !important; }\n").arg(amount);
     }
+    if (paragraphIndent_ == "none")
+        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n";
+    else if (paragraphIndent_ == "first")
+        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n"
+                     "p:first-of-type, [data-kobalt-prose=\"1\"]:first-of-type { text-indent:0.8em !important; }\n";
+    else if (paragraphIndent_ == "full")
+        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:1.2em !important; }\n";
     if (hyphenation_ != "auto")
         overrides += QString("* { hyphens:%1 !important; }\n").arg(hyphenation_ == "on" ? "auto" : "none");
     if (!face_.isEmpty()) {
@@ -1139,6 +1153,7 @@ QJsonObject ReaderModel::state() const {
                                {"bold_reading", bionic_},
                                {"hyphenation", hyphenation_},
                                {"paragraph_spacing", paragraphSpacing_},
+                               {"paragraph_indent", paragraphIndent_},
                                {"hanging_punctuation", hangingPunctuation_},
                                {"dark_mode", darkMode_},
                                {"smooth_images", smoothImages_},
