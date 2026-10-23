@@ -37,7 +37,11 @@ protected:
                 const int iconWidth = button->icon().isNull() ? 0 : button->iconSize().width() + ui::px(20);
                 required = qMax(required, ui::interfaceTextWidth(label, button->font()) + iconWidth + ui::px(36));
             }
-            const bool compact = frame->width() / buttons.size() < required;
+            // The Clara BW should always use short labels for the indentation control,
+            // regardless of whether the full translated words happen to fit.
+            const bool compact = (frame->objectName() == QStringLiteral("rrParagraphIndent") &&
+                                  !ui::largeReaderDisplay()) ||
+                                 frame->width() / buttons.size() < required;
             for (auto *button : buttons) {
                 const auto label = button->property("full_label").isValid() ? button->property("full_label").toString()
                                                                             : button->accessibleName();
