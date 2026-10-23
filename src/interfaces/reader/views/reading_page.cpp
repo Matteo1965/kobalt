@@ -173,7 +173,7 @@ void ReadingPage::refreshContent(bool reading, bool now) {
     const int weight = kobalt::ui::interfaceWeight();
     const HeaderState nextHeader{chapterTitle,     chapterProgress, clockText,        showHeader,        clockVisible(),
                                  panelBelowHeader, width(),         headerTextPixels, colors.cacheKey(), weight};
-    const FooterState nextFooter{progress, showFooter,       showProgress,      progressFraction,
+    const FooterState nextFooter{progress, bookTitle, showFooter, showProgress, progressFraction,
                                  width(),  footerTextPixels, colors.cacheKey(), weight};
     kobalt::platform::pageRefresh(this, false,
                                   reading && !geometryChanged && renderedPalette == colors.cacheKey() &&
@@ -395,7 +395,9 @@ void ReadingPage::paintFooter(QPainter &painter) const {
         QFont font = painter.font();
         font.setPixelSize(footerTextPixels);
         painter.setFont(font);
-        paintProgress(painter, footerTextRect().translated(0, bottomHeight() - height()), progress, false);
+        const QRect bounds = footerTextRect().translated(0, bottomHeight() - height());
+        ui::drawInterfaceText(painter, bounds,
+                              ui::elideInterfaceText(bookTitle, painter.font(), bounds.width()), Qt::AlignCenter);
     }
     if (showProgress) {
         const auto ink = palette().color(QPalette::WindowText);
