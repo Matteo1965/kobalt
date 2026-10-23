@@ -255,6 +255,7 @@ private:
     int domVersion_ = 0;
     QString hyphenation_ = "off";
     QString paragraphSpacing_ = "publisher";
+    QString paragraphIndent_ = "publisher";
     bool hangingPunctuation_ = false;
     bool darkMode_ = false;
     bool smoothImages_ = true, hideNonlinearFragments_ = false;
