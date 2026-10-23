@@ -604,6 +604,7 @@ void Reader::buildAppearance(const kobalt::reader::AppearanceLayout &layout) {
     rotationButtons = appearance.rotationButtons;
     autoRotateOption = appearance.autoRotateOption;
     paragraphSpacingButtons = appearance.paragraphSpacingButtons;
+    paragraphIndentButtons = appearance.paragraphIndentButtons;
     connect(fontButton, &QPushButton::clicked, this, [this] {
         if (choices->isVisible() && choosingTypography) {
             choices->hide();
@@ -701,6 +702,14 @@ void Reader::buildAppearance(const kobalt::reader::AppearanceLayout &layout) {
             const auto *settings = appearanceEdit.edited() && appearanceEdit.ready() ? appearanceEdit.preview() : model;
             if (appearanceEdit.queued() || value != settings->paragraphSpacing())
                 mutateAppearance([value](ReaderSession &preview) { preview.setParagraphSpacing(value); });
+        });
+    }
+    for (auto *button : paragraphIndentButtons) {
+        const QString value = button->property("paragraph_indent").toString();
+        connect(button, &QPushButton::clicked, this, [this, value] {
+            const auto *settings = appearanceEdit.edited() && appearanceEdit.ready() ? appearanceEdit.preview() : model;
+            if (appearanceEdit.queued() || value != settings->requestedState().value("paragraph_indent").toString("publisher"))
+                mutateAppearance([value](ReaderSession &preview) { preview.setParagraphIndent(value); });
         });
     }
     for (auto *button : rotationButtons) {
