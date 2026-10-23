@@ -299,6 +299,12 @@ QHBoxLayout *labeledRow(QWidget *parent, QVBoxLayout *rows, const QString &label
 }
 SegmentedRow::SegmentedRow(QWidget *parent, QVBoxLayout *rows, const char *name, const QString &label) {
     auto *line = labeledRow(parent, rows, label);
+    // Match the unscaled slider captions for these two reading controls.
+    if (QString::fromLatin1(name) == QStringLiteral("rrAlignment") ||
+        QString::fromLatin1(name) == QStringLiteral("rrHyphenation")) {
+        if (auto *caption = qobject_cast<QLabel *>(line->itemAt(0)->widget()))
+            readerStyle(caption, QString("font-size:%1px;").arg(int(m::text::secondary)));
+    }
     frame = new QFrame(parent);
     frame->setObjectName(name);
     line->addWidget(frame, 1);
