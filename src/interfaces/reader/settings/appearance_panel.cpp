@@ -236,7 +236,7 @@ AppearancePanel::AppearancePanel(const AppearanceLayout &layout, const Appearanc
         auto *button = indent.add("rrParagraphIndent_" + value, label);
         button->setProperty("paragraph_indent", value);
         button->setProperty("full_label", label);
-        button->setProperty("compact_label", value == "none" ? QStringLiteral("KI") : value == "first" ? QStringLiteral("K") : value == "full" ? QStringLiteral("N") : QStringLiteral("E"));
+        button->setProperty("compact_label", value == "none" ? strings::get("common.off") : value == "first" ? QStringLiteral("S") : value == "full" ? QStringLiteral("M") : QStringLiteral("P"));
         button->setAccessibleName(label);
         button->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
         button->setCheckable(true);
