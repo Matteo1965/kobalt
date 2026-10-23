@@ -23,7 +23,7 @@
 "reader.dense_graph" = "Tömör fejezetdiagram";
 "reader.edge_light" = "Világítás állítása a széleken";
 "reader.enable_page_animations" = "Lapozási animáció";
-"reader.exit" = "Kilépés a Kobaltból";
+"reader.exit" = "Kilépés";
 "reader.font" = "Betűtípus";
 "reader.footer" = "Lábléc";
 "reader.header" = "Fejléc";
