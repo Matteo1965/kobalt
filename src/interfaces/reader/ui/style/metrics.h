@@ -20,7 +20,7 @@ namespace spacing {
 inline constexpr Px tight{8}, row{16}, section{24}, gutter{48};
 }
 namespace text {
-inline constexpr auto explanationLight = "#333333", explanationDark = "#cccccc";
+inline constexpr auto explanationLight = "#000000", explanationDark = "#ffffff";
 inline constexpr Px small{32}, secondary{30}, explanation{32}, body{36};
 inline constexpr Px choice{36}, heading{36}, opening{40}, typography{44}, pageHeading{48};
 }
