@@ -164,11 +164,11 @@ inline constexpr int exitGuardMilliseconds = 400;
 }
 namespace reading {
 // Reading chrome keeps its original default, independently of control text.
-inline constexpr Px defaultHeaderText{24}, defaultFooterText{26};
+inline constexpr Px defaultHeaderText{30}, defaultFooterText{30};
 inline int textPixels(const QString &size, bool footer) {
     const int base = (footer ? defaultFooterText : defaultHeaderText).design();
     return px(base + (size == "large" ? 4 : size == "medium" ? 2 : 0) +
-              (!footer && largeReaderDisplay() ? 6 : 0));
+              (largeReaderDisplay() ? 6 : 0));
 }
 inline QString textSize(const QString &size) {
     return size == "medium" || size == "large" ? size : QString("small");
