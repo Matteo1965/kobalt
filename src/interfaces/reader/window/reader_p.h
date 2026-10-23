@@ -171,7 +171,7 @@ private:
     bool restoringDefaults = false, themeReady = false, darkTheme = false;
     kobalt::ui::FontButton *fontButton;
     QVector<QPushButton *> alignmentButtons, hyphenButtons, headerSizeButtons, footerSizeButtons,
-                           paragraphSpacingButtons;
+                           paragraphSpacingButtons, paragraphIndentButtons;
     void syncChromeSizeButtons();
     kobalt::ui::SettingSlider *sizeSlider, *opticalSizeSlider, *weightSlider, *variableWeightSlider, *spacingSlider,
         *marginSlider, *verticalMarginSlider, *bookSlider;
