@@ -321,6 +321,9 @@ QPushButton *SegmentedRow::add(const QString &name, const QString &text) {
     button->setProperty("segment_first", group->buttons().isEmpty());
     // QSS heights exclude padding. Every segment has the same 72px hit area.
     readerStyle(button, styles::segment());
+    // Use an explicit outer geometry. QSS min-height plus padding used to exceed
+    // the row height, clipping the lower border and the bottom of letter glyphs.
+    button->setFixedHeight(m::control::stepSize);
     group->addButton(button);
     layout->addWidget(button, 1);
     return button;
