@@ -226,6 +226,7 @@ void Reader::showPageImage(const QImage &nextImage) {
 }
 
 void Reader::paintTurn() {
+    page->bookTitle = model->title();
     page->progress = !model->error().isEmpty() ? model->error()
                      : !model->imageWarning().isEmpty()
                          ? model->imageWarning()
@@ -350,6 +351,7 @@ void Reader::syncAppearanceControls(bool pickingFont) {
 }
 
 void Reader::syncReadingControls() {
+    page->bookTitle = model->title();
     page->progress = !model->error().isEmpty() ? model->error()
                      : !model->imageWarning().isEmpty()
                          ? model->imageWarning()
