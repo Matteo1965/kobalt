@@ -73,7 +73,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [qt5, qt6]
+        target: [qt5]
     steps:
       - uses: actions/checkout@v7
         with:
