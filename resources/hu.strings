@@ -172,3 +172,9 @@
 "common.size_large" = "Nagy";
 "reader.both" = "Mindkettő";
 "reader.paragraph_publisher" = "Eredeti";
+"reader.your_default_font" = "Alapértelmezett betűtípus";
+"reader.book_marked_finished" = "Befejezett Könyv";
+"bookmarks.empty" = "Nincs könyvjelző";
+"bookmarks.remove_prompt" = "Könyvjelző törlése?";
+"opening.native" = "Megnyitás Kobo olvasóval";
+"opening.try_native" = "Megnyitás beépített olvasóval";
