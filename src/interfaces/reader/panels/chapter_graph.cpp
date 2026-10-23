@@ -176,7 +176,7 @@ private:
         // Use the actual styled font for width and baseline, so large-screen scaling cannot lower the digits.
         const QFontMetrics renderedFigureMetrics(figure->font());
         const int figureWidth = qMin(inner, kobalt::qt::textWidth(renderedFigureMetrics, figure->text()) + ui::px(12));
-        figure->setGeometry(c::inset, m::figureBaseline - renderedFigureMetrics.ascent(), figureWidth,
+        figure->setGeometry(c::inset, m::figureBaseline - ui::px(6) - renderedFigureMetrics.ascent(), figureWidth,
                             renderedFigureMetrics.height());
         const int unitLeft = c::inset + figureWidth + m::unitGap;
         // A large figure keeps every digit; its unit shortens instead.
