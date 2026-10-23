@@ -148,7 +148,8 @@ void BluetoothIndicator::paintEvent(QPaintEvent *) {
 }
 
 BatteryIndicator::BatteryIndicator(QWidget *parent) : QLabel(parent) {
-    setFixedSize(m::panel::batteryWidth, m::panel::statusHeight);
+    // Make room for three digits at the enlarged Libra 2 interface font size.
+    setFixedSize(int(m::panel::batteryWidth) + (largeReaderDisplay() ? px(40) : 0), m::panel::statusHeight);
     setContentsMargins(0, 0, m::panel::batteryTextInset, 0);
     setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     setStatus(-1, false);
