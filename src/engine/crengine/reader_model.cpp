@@ -748,10 +748,8 @@ void ReaderModel::applyStyleSheet() {
     if (paragraphIndent_ == "none")
         overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n";
     else if (paragraphIndent_ == "first")
-        // CRengine does not consistently apply :first-of-type to EPUB paragraph structures.
-        // Start each paragraph run indented, then suppress indentation on subsequent siblings.
-        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0.8em !important; }\n"
-                     "p + p, [data-kobalt-prose=\"1\"] + [data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n";
+        // Small mode uses the same 0.8em indent on every prose paragraph.
+        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0.8em !important; }\n";
     else if (paragraphIndent_ == "full")
         overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:1.0em !important; }\n";
     if (hyphenation_ != "auto")
