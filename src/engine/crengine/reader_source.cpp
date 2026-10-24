@@ -420,6 +420,78 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
     }
     applyStyleSheet();
     engine_->Render();
+    // Experimental, narrowly scoped two-pass correction for an oversized
+    // initial followed by a separate paragraph. Only edit the in-memory DOM.
+    // Avoid modifying bookmarked/linked paragraphs or structured content.
+    if (!openedFromCache_) {
+        auto *doc = engine_->getDocument();
+        const auto dropAttr = doc->getAttrNameIndex("data-kobalt-initial");
+        const auto idAttr = doc->getAttrNameIndex("id");
+        const auto pId = doc->getElementNameIndex("p");
+        const auto brId = doc->getElementNameIndex("br");
+        auto glyphRect = [](ldomNode *text, bool last) -> lvRect {
+            lvRect out{};
+            if (!text || !text->isText() || text->getText().empty())
+                return out;
+            const int offset = last ? text->getText().length() - 1 : 0;
+            ldomXPointerEx start(ldomXPointer(text, offset));
+            ldomXPointerEx end(ldomXPointer(text, offset + 1));
+            LVArray<lvRect> rects;
+            ldomXRange(start, end).getSegmentRects(rects);
+            if (rects.length())
+                out = rects[0];
+            return out;
+        };
+        auto *root = doc->getRootNode();
+        QVector<ldomNode *> pending;
+        if (root)
+            pending.append(root);
+        int visited = 0, altered = 0;
+        while (!pending.isEmpty() && ++visited < 40000 && altered < 4) {
+            auto *parent = pending.takeLast();
+            if (!parent || !parent->isElement())
+                continue;
+            for (int i = 0; i + 1 < parent->getChildCount(); ++i) {
+                auto *first = parent->getChildNode(i);
+                auto *second = parent->getChildNode(i + 1);
+                if (!first || !second || !first->isElement() || !second->isElement() ||
+                    first->getNodeId() != pId || second->getNodeId() != pId ||
+                    !first->hasAttribute(dropAttr) || second->hasAttribute(idAttr) ||
+                    first->getChildCount() != 2 || second->getChildCount() != 1)
+                    continue;
+                auto *initial = first->getChildNode(0);
+                auto *after = first->getChildNode(1);
+                auto *next = second->getChildNode(0);
+                if (!initial || !initial->isElement() || !after || !after->isText() ||
+                    !next || !next->isText() || initial->getChildCount() != 1 ||
+                    !initial->getChildNode(0)->isText())
+                    continue;
+                const auto initialBox = glyphRect(initial->getChildNode(0), false);
+                const auto endFirst = glyphRect(after, true);
+                const auto beginFirst = glyphRect(after, false);
+                const auto nextBox = glyphRect(next, false);
+                // The first paragraph must occupy one text line, with its
+                // following paragraph entering the drop cap's vertical area.
+                if (initialBox.bottom <= initialBox.top || nextBox.bottom <= nextBox.top ||
+                    beginFirst.top != endFirst.top ||
+                    nextBox.top >= initialBox.bottom || nextBox.top <= beginFirst.top)
+                    continue;
+                // Force a line break, then move the plain text inside the
+                // first paragraph. Nothing in the original EPUB is rewritten.
+                if (!first->insertChildElement(brId))
+                    continue;
+                second->moveItemsTo(first, 0, 0);
+                parent->removeChild(i + 1);
+                ++altered;
+            }
+            for (int i = parent->getChildCount() - 1; i >= 0; --i)
+                pending.append(parent->getChildNode(i));
+        }
+        if (altered) {
+            doc->forceReinitStyles();
+            engine_->Render();
+        }
+    }
     openingTimes_["model_paginate_ms"] = double(phase.restart());
     if (!resourceError().isEmpty()) {
         const auto detail = resourceError();
