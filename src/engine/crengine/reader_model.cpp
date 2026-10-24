@@ -743,7 +743,12 @@ void ReaderModel::applyStyleSheet() {
                      .arg(boundaryCssPixels, 0, 'f', 6);
     if (paragraphSpacing_ != "publisher") {
         const char *amount = paragraphSpacing_ == "half" ? "0.5em" : paragraphSpacing_ == "full" ? "1em" : "0";
+        // Keep a larger, stepped gap below headings even when normal paragraph spacing is off.
+        // Publisher mode leaves both heading and paragraph margins entirely to the EPUB CSS.
+        const char *headingGap = paragraphSpacing_ == "half" ? "1.5em"
+                                 : paragraphSpacing_ == "full" ? "2em" : "1em";
         overrides += QString("p { margin-top:0 !important; margin-bottom:%1 !important; }\n").arg(amount);
+        overrides += QString("h1,h2,h3,h4,h5,h6 { margin-bottom:%1 !important; }\n").arg(headingGap);
     }
     if (paragraphIndent_ == "none")
         overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n";
