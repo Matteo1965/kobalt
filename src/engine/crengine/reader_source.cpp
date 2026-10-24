@@ -1,5 +1,6 @@
 #include "support/qt_compat.h"
 #include "support/strings.h"
+#include "support/diagnostics.h"
 #include "reader_model.h"
 #include "reader_source.h"
 #include "reader_render_callback.h"
@@ -446,7 +447,8 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
         QVector<ldomNode *> pending;
         if (root)
             pending.append(root);
-        int visited = 0, altered = 0;
+        int visited = 0, altered = 0, candidates = 0;
+        int rejectedStructure = 0, rejectedGeometry = 0;
         while (!pending.isEmpty() && ++visited < 40000 && altered < 4) {
             auto *parent = pending.takeLast();
             if (!parent || !parent->isElement())
@@ -462,10 +464,13 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                 auto *initial = first->getChildNode(0);
                 auto *after = first->getChildNode(1);
                 auto *next = second->getChildNode(0);
+                ++candidates;
                 if (!initial || !initial->isElement() || !after || !after->isText() ||
                     !next || !next->isText() || initial->getChildCount() != 1 ||
-                    !initial->getChildNode(0)->isText())
+                    !initial->getChildNode(0)->isText()) {
+                    ++rejectedStructure;
                     continue;
+                }
                 const auto initialBox = glyphRect(initial->getChildNode(0), false);
                 const auto endFirst = glyphRect(after, true);
                 const auto beginFirst = glyphRect(after, false);
@@ -474,8 +479,15 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                 // following paragraph entering the drop cap's vertical area.
                 if (initialBox.bottom <= initialBox.top || nextBox.bottom <= nextBox.top ||
                     beginFirst.top != endFirst.top ||
-                    nextBox.top >= initialBox.bottom || nextBox.top <= beginFirst.top)
+                    nextBox.top >= initialBox.bottom || nextBox.top <= beginFirst.top) {
+                    ++rejectedGeometry;
+                    if (rejectedGeometry <= 4)
+                        kobalt::diagnostic("reader-dropcap-merge-rejected",
+                                           {{"reason", "geometry"}, {"initial_bottom", initialBox.bottom},
+                                            {"first_top", beginFirst.top}, {"first_end_top", endFirst.top},
+                                            {"next_top", nextBox.top}}, false);
                     continue;
+                }
                 // Force a line break, then move the plain text inside the
                 // first paragraph. Nothing in the original EPUB is rewritten.
                 if (!first->insertChildElement(brId))
@@ -487,6 +499,10 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
             for (int i = parent->getChildCount() - 1; i >= 0; --i)
                 pending.append(parent->getChildNode(i));
         }
+        kobalt::diagnostic("reader-dropcap-merge-summary",
+                           {{"candidates", candidates}, {"rejected_structure", rejectedStructure},
+                            {"rejected_geometry", rejectedGeometry}, {"merged", altered},
+                            {"visited", visited}}, false);
         if (altered) {
             doc->forceReinitStyles();
             engine_->Render();
