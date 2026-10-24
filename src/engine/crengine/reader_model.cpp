@@ -761,18 +761,16 @@ void ReaderModel::applyStyleSheet() {
     // Never insert an automatic indent into a drop-cap paragraph.
     if (paragraphIndent_ == "first" || paragraphIndent_ == "full")
         overrides += "p[data-kobalt-initial=\"1\"] { text-indent:0 !important; }\n";
-    // Keep subsequent text lines to the right of a decorated EPUB initial.
-    // Floating the letter lets CRengine reserve its full multi-line footprint
-    // instead of painting the glyph over the next line of text.
+    // Float initial letters so the second text line does not run into the glyph.
     overrides +=
-        "p[data-kobalt-initial=\\"1\\"] > span.inic, "
-        "p[data-kobalt-initial=\\"1\\"] > span.initial, "
-        "p[data-kobalt-initial=\\"1\\"] > span.initiale, "
-        "p[data-kobalt-initial=\\"1\\"] > span.dropcap, "
-        "p[data-kobalt-initial=\\"1\\"] > span.drop-cap "
+        "p[data-kobalt-initial=\"1\"] > span.inic, "
+        "p[data-kobalt-initial=\"1\"] > span.initial, "
+        "p[data-kobalt-initial=\"1\"] > span.initiale, "
+        "p[data-kobalt-initial=\"1\"] > span.dropcap, "
+        "p[data-kobalt-initial=\"1\"] > span.drop-cap "
         "{ float:left !important; position:static !important; "
         "font-size:2.4em !important; line-height:1 !important; "
-        "margin:0 0.12em 0 0 !important; padding:0 !important; }\\n";
+        "margin:0 0.12em 0 0 !important; padding:0 !important; }\n";
     if (hyphenation_ != "auto")
         overrides += QString("* { hyphens:%1 !important; }\n").arg(hyphenation_ == "on" ? "auto" : "none");
     if (!face_.isEmpty()) {
