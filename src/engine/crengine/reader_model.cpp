@@ -2,6 +2,7 @@
 #include "ui/image_damage.h"
 #include "support/qt_compat.h"
 #include "support/strings.h"
+#include "support/diagnostics.h"
 #include "reader_model.h"
 #include "reader_source.h"
 #include "publication/image_policy.h"
@@ -898,6 +899,76 @@ QImage ReaderModel::image(int pageNumber) {
         return {};
     PageDrawBuffer buffer(result, darkMode_, smoothImages_);
     engine_->Draw(buffer, -1, pageNumber, false);
+
+    // Diagnostic only: compare the actual rendered first character after an
+    // initial with the start of the next paragraph. This does not alter layout.
+    // Keep the walk bounded so unusually large EPUB documents remain responsive.
+    if (auto *doc = engine_->getDocument()) {
+        auto *root = doc->getRootNode();
+        const auto initialAttr = doc->getAttrNameIndex("data-kobalt-initial");
+        auto textStartRect = [this](ldomNode *node) -> QRect {
+            if (!node || !node->isText() || node->getText().empty())
+                return {};
+            ldomXPointerEx first(node->getXPointer());
+            first.setOffset(0);
+            auto last = first;
+            last.setOffset(1);
+            const auto rectangles = rangeRects(qstring(first.toString()), qstring(last.toString()));
+            return rectangles.isEmpty() ? QRect() : rectangles.first();
+        };
+        auto firstText = [](ldomNode *node) -> ldomNode * {
+            if (!node)
+                return nullptr;
+            QVector<ldomNode *> pending{node};
+            int limit = 2000;
+            while (!pending.isEmpty() && --limit > 0) {
+                auto *current = pending.takeLast();
+                if (current->isText() && !qstring(current->getText()).trimmed().isEmpty())
+                    return current;
+                for (int j = current->getChildCount() - 1; j >= 0; --j)
+                    pending.append(current->getChildNode(j));
+            }
+            return nullptr;
+        };
+        QVector<ldomNode *> pending;
+        if (root)
+            pending.append(root);
+        int inspected = 0, recorded = 0;
+        while (!pending.isEmpty() && inspected++ < 40000 && recorded < 3) {
+            auto *node = pending.takeLast();
+            if (!node || !node->isElement())
+                continue;
+            if (node->hasAttribute(initialAttr) && node->getAttributeValue(initialAttr) == U"1") {
+                auto *parent = node->getParentNode();
+                ldomNode *continuation = nullptr;
+                if (parent) {
+                    for (int i = 0; i + 1 < parent->getChildCount(); ++i) {
+                        if (parent->getChildNode(i) == node) {
+                            continuation = parent->getChildNode(i + 1);
+                            break;
+                        }
+                    }
+                }
+                ldomNode *afterInitial = nullptr;
+                for (int i = 1; i < node->getChildCount() && !afterInitial; ++i)
+                    afterInitial = firstText(node->getChildNode(i));
+                const QRect first = textStartRect(afterInitial);
+                const QRect second = textStartRect(firstText(continuation));
+                if (!first.isEmpty() && !second.isEmpty()) {
+                    kobalt::diagnostic("reader-dropcap-positions",
+                                       {{"page", pageNumber}, {"first_x", first.x()},
+                                        {"first_y", first.y()}, {"second_x", second.x()},
+                                        {"second_y", second.y()}, {"delta_x", second.x() - first.x()},
+                                        {"first_height", first.height()}, {"second_height", second.height()}},
+                                       false);
+                    ++recorded;
+                }
+            }
+            for (int i = node->getChildCount() - 1; i >= 0; --i)
+                pending.append(node->getChildNode(i));
+        }
+    }
+
     // CREngine composites into 0x00RRGGBB. Qt's opaque RGB32 contract requires
     // 0xffRRGGBB, including when a painter uses this image as a source.
     bool hasColor = false;
