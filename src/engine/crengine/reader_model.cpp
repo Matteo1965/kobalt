@@ -757,6 +757,10 @@ void ReaderModel::applyStyleSheet() {
         overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0.8em !important; }\n";
     else if (paragraphIndent_ == "full")
         overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:1.0em !important; }\n";
+    // A decorated initial belongs to the same word as the following text.
+    // Never insert an automatic indent into a drop-cap paragraph.
+    if (paragraphIndent_ == "first" || paragraphIndent_ == "full")
+        overrides += "p[data-kobalt-initial=\"1\"] { text-indent:0 !important; }\n";
     if (hyphenation_ != "auto")
         overrides += QString("* { hyphens:%1 !important; }\n").arg(hyphenation_ == "on" ? "auto" : "none");
     if (!face_.isEmpty()) {
