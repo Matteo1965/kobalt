@@ -42,7 +42,9 @@ list(TRANSFORM managed PREPEND "${runtime}/")
 set(KOBALT_ASSET_INPUTS "${managed}" PARENT_SCOPE)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/../platforms/strings.cmake")
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/en.strings")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/en.strings" "${CMAKE_CURRENT_SOURCE_DIR}/hu.strings")
 file(GLOB_RECURSE string_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/../src/*.h")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${string_sources})
 kobalt_generate_strings("${CMAKE_CURRENT_SOURCE_DIR}/en.strings" "${CMAKE_CURRENT_BINARY_DIR}/../kobalt_strings.inc" ${string_sources})
+
+kobalt_generate_strings("${CMAKE_CURRENT_SOURCE_DIR}/hu.strings" "${CMAKE_CURRENT_BINARY_DIR}/../kobalt_strings_hu.inc")

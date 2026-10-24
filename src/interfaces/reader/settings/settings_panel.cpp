@@ -451,21 +451,28 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     auto *systemRows = new QVBoxLayout(systemPage);
     systemRows->setContentsMargins(0, 0, 0, 0);
     systemRows->setSpacing(0);
-    section(systemPage, systemRows, "rrSystemReaderSection", strings::get("settings.section_reader"));
+    // Use compact System headers and rows so the language setting fits on Clara BW.
+    auto systemSection = [&](const char *name, const QString &label) {
+        auto *heading = section(systemPage, systemRows, name, label);
+        heading->setFixedHeight(qMax(24, heading->sizeHint().height() - 4));
+    };
+    systemSection("rrSystemReaderSection", strings::get("settings.section_reader"));
     automaticOpeningOption =
         check(systemPage, "rrAutomaticBookOpening", strings::get("settings.automatic_book_opening"),
               inputs.automaticBookOpeningSupported ? strings::get("settings.automatic_book_opening_description")
                                                    : strings::get("settings.unsupported_description"));
     automaticOpeningOption->setEnabled(inputs.automaticBookOpeningSupported);
     systemRows->addWidget(automaticOpeningOption);
-    section(systemPage, systemRows, "rrSystemSleepSection", strings::get("settings.section_sleep"));
+    systemSection("rrSystemSleepSection", strings::get("settings.section_sleep"));
     sleepScreenButton =
         ui::makeCaptionButton(systemPage, nullptr, "rrSleepScreen", strings::get("settings.sleep_screen"), [] {});
     sleepScreenButton->setEnabled(inputs.sleepScreenSupported);
     if (!inputs.sleepScreenSupported)
         sleepScreenButton->setCaption(strings::get("settings.unsupported_caption"));
     systemRows->addWidget(sleepScreenButton);
-    section(systemPage, systemRows, "rrSystemInterfaceSection", strings::get("settings.section_user_interface"));
+    systemSection("rrSystemInterfaceSection", strings::get("settings.section_user_interface"));
+    languageButton = ui::makeCaptionButton(systemPage, nullptr, "rrInterfaceLanguage", strings::get("settings.interface_language"), [] {});
+    systemRows->addWidget(languageButton);
     uiFontButton = ui::makeCaptionButton(systemPage, nullptr, "rrUiFont", strings::get("settings.ui_font"), [] {});
     uiMonoFontButton =
         ui::makeCaptionButton(systemPage, nullptr, "rrUiMonoFont", strings::get("settings.ui_mono_font"), [] {});
@@ -1157,3 +1164,34 @@ void SettingsPanel::fitRail(int availableHeight) {
 }
 
 }
+
+namespace kobalt::reader {
+void SettingsPanel::showLanguageChoices(std::function<void(const QString &)> chosen) {
+    if (fontDialog) return;
+    fontDialog = new ui::ModalOverlay(parentWidget());
+    fontDialog->setObjectName("rrLanguagePopup");
+    fontDialog->setDimmed(true);
+    fontDialog->setGeometry(parentWidget()->rect());
+    fontDialog->dismissed = [this] { dismissFontChoices(); };
+    auto *card = fontDialog->card();
+    auto *rows = card->rows();
+    rows->setSpacing(0);
+    card->title(strings::get("settings.interface_language"));
+    card->message(strings::get("settings.interface_language_restart"));
+    auto *choices = new ui::RadioList(card);
+    choices->setMinimumRowHeight(c::listActionHeight);
+    choices->add("rrLanguageHU", QStringLiteral("Magyar"));
+    choices->add("rrLanguageEN", QStringLiteral("English"));
+    choices->setCurrent(strings::language() == "en" ? 1 : 0);
+    choices->chosen = [this, chosen](int index) { dismissFontChoices(); chosen(index == 1 ? QStringLiteral("en") : QStringLiteral("hu")); };
+    rows->addWidget(choices);
+    const int cardWidth = qMin<int>(m::notice::cardWidth, parentWidget()->width() - 2 * m::notice::sideClearance);
+    choices->setFixedHeight(choices->heightForWidth(cardWidth - 2 * m::control::border));
+    card->fitToWidth(cardWidth);
+    fontDialog->centerCard();
+    fontDialog->show();
+    fontDialog->raise();
+    fontDialog->setFocus();
+}
+
+} // namespace kobalt::reader

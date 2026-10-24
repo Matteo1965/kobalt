@@ -43,6 +43,7 @@ public:
     void dismissFontChoices();
     void showHeaderFooterWeights(int current, const QFont &sampleFont, std::function<void(int)> chosen);
     void showColumnSpacingChoices(int current, std::function<void(int)> chosen);
+    void showLanguageChoices(std::function<void(const QString &)> chosen);
     static QString columnSpacingLabel(int percent);
     enum class AdvancedText { WordSpacing, Tracking, Pagination };
     void showAdvancedTextChoices(AdvancedText feature, int current, std::function<void(int)> chosen,
@@ -66,7 +67,7 @@ public:
     ui::DescribedOption *landscapeColumnsOption = nullptr;
     ui::CaptionButton *columnSpacingButton = nullptr;
     ui::CaptionButton *wordSpacingButton = nullptr, *trackingButton = nullptr, *widowsOrphansButton = nullptr;
-    ui::CaptionButton *sleepScreenButton = nullptr, *menuViewButton = nullptr;
+    ui::CaptionButton *sleepScreenButton = nullptr, *menuViewButton = nullptr, *languageButton = nullptr;
     ui::CaptionButton *pageNavigationButton = nullptr, *tapZonesButton = nullptr, *navigationBarButton = nullptr;
     ui::DescribedOption *opticalMarginOption = nullptr;
     ui::CaptionButton *refreshButton = nullptr, *resetDefaults = nullptr;

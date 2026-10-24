@@ -1,0 +1,221 @@
+/* Kobalt Hungarian Edition: translated keys; unspecified keys fall back to English. */
+"about.description" = "Kísérleti EPUB-olvasó.";
+/* Arguments: %1, %2 */
+"about.version" = "Verzió: %1 (Qt%2)";
+"common.auto" = "Automatikus";
+"common.back" = "Vissza";
+"common.cancel" = "Mégse";
+"common.next_page" = "Következő oldal";
+"common.off" = "Ki";
+"common.ok" = "OK";
+"common.on" = "Be";
+"common.previous_page" = "Előző oldal";
+"reader.align_left" = "Balra igazítás";
+"reader.alignment" = "Igazítás";
+"reader.book_position" = "Olvasási pozíció";
+"reader.book_progress_bar" = "Olvasási folyamatjelző";
+"reader.bookmarks" = "Könyvjelzők";
+"reader.brightness_and_warmth" = "Fényerő és színhőmérséklet";
+"reader.clock" = "Óra";
+"reader.contents" = "Tartalomjegyzék";
+"reader.dark_mode" = "Sötét mód";
+"reader.default_font" = "Alapértelmezett betűtípus";
+"reader.dense_graph" = "Tömör fejezetdiagram";
+"reader.edge_light" = "Világítás állítása a széleken";
+"reader.enable_page_animations" = "Lapozási animáció";
+"reader.exit" = "Kilépés";
+"reader.font" = "Betűtípus";
+"reader.applying_appearance_changes" = "Megjelenési beállítások alkalmazása...";
+"reader.updating_page_layout" = "Oldalelrendezés frissítése...";
+"reader.one_embedded_font" = "1 beágyazott betűtípus";
+/* Arguments: %1 */
+"reader.embedded_fonts" = "%1 beágyazott betűtípus";
+"reader.no_embedded_fonts" = "Nincs beágyazott betűtípus";
+/* Arguments: %1 */
+"stats.time_left" = "%1";
+/* Arguments: %1 */
+"stats.duration_minutes" = "%1 perc van hátra";
+/* Arguments: %1, %2 */
+"stats.duration_hours" = "%1 óra %2 perc";
+/* Arguments: %1, %2 */
+"stats.duration_clock" = "%1:%2";
+"reader.footer" = "Lábléc";
+"reader.header" = "Fejléc";
+"reader.heavier_interface_text" = "Olvashatóbb menüszöveg";
+"reader.hide_nonlinear_fragments" = "Nem lineáris részek kihagyása";
+"reader.hyphenation" = "Elválasztás";
+"reader.justify" = "Sorkizárt";
+"reader.landscape" = "Fekvő";
+"reader.line_spacing" = "Sorköz: ";
+"reader.link_indicator_description" = "Jelölés a hivatkozásokat tartalmazó oldalakon. Érintéssel felfedhetők a hivatkozások.";
+"reader.margins" = "Oldalmargó: ";
+"reader.optical_size" = "Optikai méret";
+"reader.page_layout" = "Oldalelrendezés";
+"reader.pin_stats" = "Statisztika állandó megjelenítése";
+"reader.portrait" = "Álló";
+"reader.publisher_fonts" = "Kiadói betűtípusok";
+"reader.reader_settings" = "Olvasási beállítások";
+"reader.reading" = "Olvasás";
+"reader.refresh_the_screen" = "Képernyő frissítése";
+"reader.restore_appearance_defaults" = "Alapbeállítások visszaállítása";
+"reader.restore_appearance_defaults_prompt" = "Visszaállítod a megjelenés alapbeállításait?";
+"reader.rotation" = "Forgatás";
+"reader.search_book" = "Keresés a könyvben";
+"reader.show_link_indicator" = "Hivatkozásjelző";
+"reader.smooth_images" = "Képek simítása";
+"reader.text_size" = "Méret: ";
+"reader.typography" = "Tipográfia";
+"reader.vertical_margins" = "Függőleges: ";
+"settings.about" = "Névjegy";
+"settings.advanced" = "Haladó";
+"settings.animations_description" = "Lapozási animáció a támogatott eszközökön.";
+"settings.dark_description" = "Világos szöveg sötét háttéren.";
+"settings.dense_graph_description" = "A Statisztika fülön egyszerre több fejezet látható. Kapcsold ki a szélesebb oszlopokhoz.";
+"settings.dictionaries" = "Szótárak";
+"settings.display" = "Kijelző";
+"settings.edge_brightness_description" = "Húzd az ujjad fel vagy le a bal szélen a fényerő állításához.";
+"settings.edge_light_description" = "A bal szélen a fényerő, a jobb szélen a színhőmérséklet állítható.";
+"settings.heavier_interface_text_description" = "Kissé vastagabb menüszöveg.";
+"settings.hide_nonlinear_fragments_description" = "Lapozáskor kihagyja a nem lineáris részeket. Hivatkozásból továbbra is megnyithatók.";
+"settings.pin_stats_description" = "A Statisztika panel az olvasómenü megnyitásakor mindig látható.";
+"settings.progress_description" = "Olvasási folyamatjelző az alsó szélen.";
+"settings.refresh_every_chapter" = "Minden fejezetnél";
+/* Arguments: %1 */
+"settings.refresh_every_pages" = "%1 oldalanként";
+"settings.refresh_manually" = "Kézzel";
+"settings.refresh_smart" = "Intelligens";
+"settings.smoothing_description" = "A méretezett képek széleinek simítása.";
+"settings.stats" = "Statisztika";
+"settings.ui" = "Felület";
+"settings.unsupported_description" = "Ezt a funkciót az eszköz nem támogatja.";
+
+/* Hungarian Edition menu labels */
+"settings.clock_description" = "Óra megjelenítése olvasás közben.";
+"settings.optical_margin" = "Optikai margó";
+"settings.optical_margin_description" = "Az írásjelek túlnyúlhatnak a margón.";
+"reader.paragraph_space" = "Bekezdésköz";
+"reader.paragraph_indent" = "Behúzás";
+"reader.paragraph_normal" = "Normál";
+
+/* Short toolbar captions */
+"reader.toolbar_chapter" = "Fejezet";
+"reader.toolbar_text" = "Szöveg";
+"reader.toolbar_layout" = "Rendezés";
+"reader.toolbar_light" = "Világítás";
+"reader.toolbar_search" = "Keresés";
+
+"settings.restore_confirmation_caption" = "Megerősítés szükséges.";
+
+/* Light panel */
+"light_panel.brightness" = "Fényerő";
+"light_panel.warmth" = "Melegség";
+"light_panel.automatic_brightness" = "Automatikus fényerő";
+"light_panel.automatic_brightness_description" = "A környezeti fényhez igazodik. Kézi állításkor kikapcsol."; 
+"acknowledgments.acknowledgments" = "Köszönetnyilvánítás";
+"acknowledgments.kobalt_is_distributed_under_the_gnu_agpl_v3_without_any_warranty" = "A Kobalt GNU AGPL v3 licenc alatt, mindenféle garancia nélkül kerül terjesztésre.";
+"acknowledgments.thanks_to_the_open_source_projects_that_make_this_reader_possible" = "Köszönet a nyílt forráskódú projekteknek, amelyek lehetővé teszik az olvasó működését. Válassz egy projektet a jogi tudnivalók és licencek megtekintéséhez.";
+/* Arguments: %1 */
+"acknowledgments.projects" = "%1 projekt";
+"common.page" = "oldal";
+"common.pages" = "oldal";
+"chapter_contents.page" = "Oldal";
+/* Arguments: %1, %2 */
+"stats.page_of" = "%1 / %2. oldal";
+"stats.pages_left" = "oldal van hátra";
+"stats.page_left" = "oldal van hátra";
+/* Arguments: %1, %2 */
+"reader.menu_page_of" = "%1 / %2. OLDAL";
+"reader.font_thickness" = "Vastagság: ";
+
+/* Search panel */
+"search_panel.find_a_word_or_phrase" = "Szó vagy kifejezés keresése";
+"search_panel.search_hint" = "A keresés nem különbözteti meg a kis- és nagybetűket. Az indításhoz érintsd meg a billentyűzet Keresés gombját.";
+"search_panel.search_this_book" = "Keresés ebben a könyvben";
+"search_panel.search" = "Keresés";
+"search_panel.clear_search" = "Keresés törlése";
+"search_panel.no_matches_hint" = "Ellenőrizd a helyesírást, vagy próbálj rövidebb kifejezést.";
+
+/* Statistics panel */
+"stats.chapter" = "Fejezet";
+"stats.book" = "Könyv";
+"stats.session" = "Olvasási idő";
+"stats.since_opening" = "Megnyitás óta";
+"stats.minutes" = "perc";
+"stats.last_chapter" = "Utolsó fejezet";
+"stats.counting" = "Szavak számlálása…";
+/* Arguments: %1, %2 */
+"chapter_graph.next_chapter" = "Következik %1 %2";
+
+/* Arguments: %1 */
+"stats.words" = "%1 szó";
+
+/* Bottom navigation – visible tab captions */
+"navigation.chapters" = "FEJEZET";
+"navigation.text" = "SZÖVEG";
+"navigation.layout" = "RENDEZÉS";
+"navigation.light" = "VILÁGÍTÁS";
+"navigation.stats" = "STATISZTIKA";
+"navigation.search" = "KERESÉS";
+
+/* Arguments: %1 */
+"reader.session_minutes" = "Már %1 perce olvasol.";
+"opening.loading" = "Könyv megnyitása…";
+"chapter_contents.chapters" = "Fejezetek";
+/* Arguments: %1 */
+"chapter_contents.summary" = "Tartalom · %1 fejezet";
+"chapter_contents.summary_one" = "Tartalom · 1 fejezet";
+/* Arguments: %1, %2 */
+"stats.contents_position" = "Tartalom · %1 / %2";
+"bookmarks.title" = "Könyvjelzők";
+/* Arguments: %1 */
+"bookmarks.summary" = "Könyvjelzők · %1";
+/* Arguments: %1, %2 */
+"navigation.page_count" = "%1 / %2";
+"opening.may_take_a_while" = "HUNGARIAN EDITION";
+"reader.recommended_fonts" = "Ajánlott betűtípusok";
+"reader.set_default_font" = "Alapértelmezett betűtípus beállítása";
+"common.size_small" = "Kicsi";
+"common.size_medium" = "Közepes";
+"common.size_large" = "Nagy";
+"reader.both" = "Mindkettő";
+"reader.paragraph_publisher" = "Eredeti";
+"reader.your_default_font" = "Alapértelmezett betűtípus";
+"reader.book_marked_finished" = "Befejezett Könyv";
+"bookmarks.empty" = "Nincs könyvjelző";
+"bookmarks.remove_prompt" = "Könyvjelző törlése?";
+"opening.native" = "Megnyitás Kobo olvasóval";
+"opening.try_native" = "Megnyitás beépített olvasóval";
+"reader.built_in_fonts" = "Beépített betűtípusok";
+"reader.sideloaded_fonts" = "Külső betűtípusok";
+"reader.supplemental_fonts" = "Kiegészítő betűtípusok";
+"reader.close_fonts" = "Bezárás";
+"reader.make_default" = "Legyen alapértelmezett";
+"reader.font_weight" = "Változtatható vastagság:";
+"reader.automatic_rotation" = "Automatikus forgatás";
+"reader.front_matter" = "Bevezető részek";
+"reader.untitled_chapter" = "Cím nélküli fejezet";
+"reader.formatting_warning" = "Formázási figyelmeztetés";
+"reader.keep_reading_here" = "Olvasás folytatása itt";
+"reader.go_to_synced_position" = "Ugrás a szinkronizált pozícióra";
+"reader.return_to_passage" = "Visszatérés a szövegrészhez";
+"reader.follow_link" = "Hivatkozás követése";
+"reader.link_dictionary" = "Szótár";
+"reader.dismiss_link" = "Bezárás";
+"search_panel.searching" = "Keresés…";
+"search_panel.no_matches_found" = "Nincs találat";
+"search_panel.edit" = "Keresés módosítása";
+/* Arguments: %1, %2 */
+"search_panel.result_range" = "Találatok: %1–%2";
+"bookmarks.previous" = "Előző könyvjelzők";
+"bookmarks.next" = "Következő könyvjelzők";
+"finish.prompt" = "Befejezted a könyvet?";
+"finish.still_reading" = "Még olvasom";
+"finish.mark_finished" = "Megjelölés befejezettként";
+/* Arguments: %1, %2 */
+"dictionaries.downloading" = "Letöltés · %1 / %2";
+"dictionaries.installing" = "Telepítés";
+"dictionaries.download_failed" = "Sikertelen letöltés. Próbáld újra.";
+"reader.settings_write_error" = "Lemezírási hiba";
+
+"settings.interface_language" = "Felület nyelve";
+"settings.interface_language_restart" = "A nyelvváltáshoz indítsd újra a Kobaltot.";

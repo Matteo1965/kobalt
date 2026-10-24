@@ -1040,6 +1040,17 @@ void Reader::buildSettings() {
         connect(manager, &kobalt::DictionaryManager::changed, this, updateDictionaries);
         updateDictionaries();
     }
+    connect(settings->languageButton, &QPushButton::clicked, this, [this, settings] {
+        settings->showLanguageChoices([this, settings](const QString &code) {
+            if (strings::selectLanguage(code)) {
+                settings->languageButton->setCaption(code == "hu" ? QStringLiteral("Magyar") : QStringLiteral("English"));
+                refresh();
+            } else {
+                settingsError->setText(strings::get("reader.could_not_save_reader_settings"));
+                settingsError->show();
+            }
+        });
+    });
     hideStatusOption = settings->hideStatusOption;
     if (services.desktopUi) {
         hideStatusOption->setChecked(preferences.value("native_hide_status_bar").toBool(true));

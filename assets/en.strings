@@ -941,3 +941,6 @@
 "marks.sort_position" = "Book order";
 "marks.sort_position_description" = "Earlier passages in the book come first.";
 "marks.sort_title" = "Sort by";
+
+"settings.interface_language" = "Interface language";
+"settings.interface_language_restart" = "Restart Kobalt to apply the selected language.";
