@@ -909,7 +909,7 @@ QImage ReaderModel::image(int pageNumber) {
         auto textStartRect = [this](ldomNode *node) -> QRect {
             if (!node || !node->isText() || node->getText().empty())
                 return {};
-            ldomXPointerEx first(node->getXPointer());
+            ldomXPointerEx first(ldomXPointer(node, 0));
             first.setOffset(0);
             auto last = first;
             last.setOffset(1);
