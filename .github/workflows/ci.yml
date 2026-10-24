@@ -35,9 +35,12 @@ jobs:
         env:
           CONTAINER_ENGINE: docker
         run: bash platforms/ci/build.sh qt5
+      - name: Version Qt5 ZIP
+        run: |
+          mv build/release/Kobalt-qt5.zip "build/release/Kobalt-Hungarian-beta4-v0.3.${{ github.run_number }}-qt5.zip"
       - uses: actions/upload-artifact@v4
         with:
-          name: kobalt-hungarian-beta4-qt5
+          name: kobalt-hungarian-beta4-v0.3.${{ github.run_number }}-qt5
           path: build/release/*
           if-no-files-found: error
           compression-level: 0

@@ -4,7 +4,7 @@
 #include <QRegularExpression>
 #include <algorithm>
 #include <atomic>
-#include <QSettings>
+
 #include <cstring>
 
 namespace kobalt::strings {
@@ -26,16 +26,13 @@ inline const Entry *hungarianEntries(int *count) {
     *count = sizeof(values) / sizeof(values[0]);
     return values;
 }
-inline QString language() {
-    static const QString selected = QSettings("KobaltHungarianEdition", "Reader").value("interface_language", "hu").toString();
-    return selected == "en" ? QStringLiteral("en") : QStringLiteral("hu");
+inline QString &currentLanguage() {
+    static QString selected = QStringLiteral("hu");
+    return selected;
 }
-inline bool selectLanguage(const QString &code) {
-    if (code != "hu" && code != "en") return false;
-    QSettings settings("KobaltHungarianEdition", "Reader");
-    settings.setValue("interface_language", code);
-    settings.sync();
-    return settings.status() == QSettings::NoError;
+inline QString language() { return currentLanguage(); }
+inline void selectLanguage(const QString &code) {
+    currentLanguage() = code == QLatin1String("en") ? QStringLiteral("en") : QStringLiteral("hu");
 }
 inline std::atomic_bool &keyDisplay() {
     static std::atomic_bool enabled(qgetenv("KOBALT_SHOW_STRING_KEYS") == "1");
