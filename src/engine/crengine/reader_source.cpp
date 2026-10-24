@@ -469,6 +469,25 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                     !next || !next->isText() || initial->getChildCount() != 1 ||
                     !initial->getChildNode(0)->isText()) {
                     ++rejectedStructure;
+                    if (rejectedStructure <= 12)
+                        kobalt::diagnostic("reader-dropcap-merge-rejected",
+                                           {{"reason", "structure"},
+                                            {"first_children", first->getChildCount()},
+                                            {"second_children", second->getChildCount()},
+                                            {"initial_is_element", initial && initial->isElement()},
+                                            {"initial_children", initial && initial->isElement()
+                                                                     ? initial->getChildCount() : -1},
+                                            {"initial_child_is_text", initial && initial->isElement() &&
+                                                initial->getChildCount() > 0 &&
+                                                initial->getChildNode(0)->isText()},
+                                            {"after_is_text", after && after->isText()},
+                                            {"next_is_text", next && next->isText()},
+                                            {"initial_tag", initial && initial->isElement()
+                                                ? qstring(initial->getNodeName()) : QString()},
+                                            {"after_tag", after && after->isElement()
+                                                ? qstring(after->getNodeName()) : QString()},
+                                            {"next_tag", next && next->isElement()
+                                                ? qstring(next->getNodeName()) : QString()}}, false);
                     continue;
                 }
                 const auto initialBox = glyphRect(initial->getChildNode(0), false);
