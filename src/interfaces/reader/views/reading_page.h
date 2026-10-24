@@ -21,7 +21,7 @@ public:
         footerTextPixels = ui::metrics::reading::textPixels({}, true);
     bool hideDeviceStatus = false;
     bool clockVisible() const {
-        return showClock && !hideDeviceStatus;
+        return showHeader && showClock && !hideDeviceStatus;
     }
     void setPanelBelowHeader(bool visible);
     int topHeight() const;
