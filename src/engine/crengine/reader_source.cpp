@@ -1,6 +1,5 @@
 #include "support/qt_compat.h"
 #include "support/strings.h"
-#include "support/diagnostics.h"
 #include "reader_model.h"
 #include "reader_source.h"
 #include "reader_render_callback.h"
@@ -447,8 +446,7 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
         QVector<ldomNode *> pending;
         if (root)
             pending.append(root);
-        int visited = 0, altered = 0, candidates = 0;
-        int rejectedStructure = 0, rejectedGeometry = 0;
+        int visited = 0, altered = 0;
         while (!pending.isEmpty() && ++visited < 40000 && altered < 4) {
             auto *parent = pending.takeLast();
             if (!parent || !parent->isElement())
@@ -464,7 +462,6 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                 auto *initial = first->getChildNode(0);
                 auto *after = first->getChildNode(1);
                 auto *next = second->getChildNode(0);
-                ++candidates;
                 // CREngine wraps rendered text in inline span nodes and
                 // the initial in a floatBox. Keep those wrappers intact.
                 auto firstText = [](ldomNode *node) -> ldomNode * {
@@ -485,26 +482,6 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                 auto *nextText = firstText(next);
                 if (!initial || !initial->isElement() || !initialText ||
                     !afterText || !nextText) {
-                    ++rejectedStructure;
-                    if (rejectedStructure <= 12)
-                        kobalt::diagnostic("reader-dropcap-merge-rejected",
-                                           {{"reason", "structure"},
-                                            {"first_children", first->getChildCount()},
-                                            {"second_children", second->getChildCount()},
-                                            {"initial_is_element", initial && initial->isElement()},
-                                            {"initial_children", initial && initial->isElement()
-                                                                     ? initial->getChildCount() : -1},
-                                            {"initial_child_is_text", initial && initial->isElement() &&
-                                                initial->getChildCount() > 0 &&
-                                                initial->getChildNode(0)->isText()},
-                                            {"after_is_text", after && after->isText()},
-                                            {"next_is_text", next && next->isText()},
-                                            {"initial_tag", initial && initial->isElement()
-                                                ? qstring(initial->getNodeName()) : QString()},
-                                            {"after_tag", after && after->isElement()
-                                                ? qstring(after->getNodeName()) : QString()},
-                                            {"next_tag", next && next->isElement()
-                                                ? qstring(next->getNodeName()) : QString()}}, false);
                     continue;
                 }
                 const auto initialBox = glyphRect(initialText, false);
@@ -516,12 +493,6 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                 if (initialBox.bottom <= initialBox.top || nextBox.bottom <= nextBox.top ||
                     beginFirst.top != endFirst.top ||
                     nextBox.top >= initialBox.bottom || nextBox.top <= beginFirst.top) {
-                    ++rejectedGeometry;
-                    if (rejectedGeometry <= 4)
-                        kobalt::diagnostic("reader-dropcap-merge-rejected",
-                                           {{"reason", "geometry"}, {"initial_bottom", initialBox.bottom},
-                                            {"first_top", beginFirst.top}, {"first_end_top", endFirst.top},
-                                            {"next_top", nextBox.top}}, false);
                     continue;
                 }
                 // Force a line break, then move the plain text inside the
@@ -535,10 +506,6 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
             for (int i = parent->getChildCount() - 1; i >= 0; --i)
                 pending.append(parent->getChildNode(i));
         }
-        kobalt::diagnostic("reader-dropcap-merge-summary",
-                           {{"candidates", candidates}, {"rejected_structure", rejectedStructure},
-                            {"rejected_geometry", rejectedGeometry}, {"merged", altered},
-                            {"visited", visited}}, false);
         if (altered) {
             doc->forceReinitStyles();
             engine_->Render();
