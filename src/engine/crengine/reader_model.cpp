@@ -760,7 +760,8 @@ void ReaderModel::applyStyleSheet() {
     // A decorated initial belongs to the same word as the following text.
     // Never insert an automatic indent into a drop-cap paragraph.
     if (paragraphIndent_ == "first" || paragraphIndent_ == "full")
-        overrides += "p[data-kobalt-initial=\"1\"] { text-indent:0 !important; }\n";
+        overrides += "p[data-kobalt-initial=\"1\"], "
+                     "p[data-kobalt-initial=\"1\"] + p { text-indent:0 !important; }\n";
     // The first drop-cap paragraph may contain just a few words, while the
     // initial extends into the following sibling paragraph. Keep their boundary
     // free of spacing so the continued text stays alongside the initial.
@@ -768,16 +769,15 @@ void ReaderModel::applyStyleSheet() {
     overrides +=
         "p[data-kobalt-initial=\"1\"] { margin-bottom:0 !important; }\n"
         "p[data-kobalt-initial=\"1\"] + p { margin-top:0 !important; }\n";
-    // Float initial letters so the second text line does not run into the glyph.
+    // Preserve the publisher's drop-cap font size, line-height and positioning.
+    // Only reserve horizontal space with a float; do not resize the initial.
     overrides +=
         "p[data-kobalt-initial=\"1\"] > span.inic, "
         "p[data-kobalt-initial=\"1\"] > span.initial, "
         "p[data-kobalt-initial=\"1\"] > span.initiale, "
         "p[data-kobalt-initial=\"1\"] > span.dropcap, "
         "p[data-kobalt-initial=\"1\"] > span.drop-cap "
-        "{ float:left !important; position:static !important; "
-        "font-size:2.4em !important; line-height:1 !important; "
-        "margin:0 0.12em 0 0 !important; padding:0 !important; }\n";
+        "{ float:left !important; }\n";
     if (hyphenation_ != "auto")
         overrides += QString("* { hyphens:%1 !important; }\n").arg(hyphenation_ == "on" ? "auto" : "none");
     if (!face_.isEmpty()) {
