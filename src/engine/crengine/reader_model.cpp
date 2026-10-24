@@ -938,7 +938,7 @@ QImage ReaderModel::image(int pageNumber) {
             auto *node = pending.takeLast();
             if (!node || !node->isElement())
                 continue;
-            if (node->hasAttribute(initialAttr) && node->getAttributeValue(initialAttr) == U"1") {
+            if (node->hasAttribute(initialAttr)) {
                 auto *parent = node->getParentNode();
                 ldomNode *continuation = nullptr;
                 if (parent) {
