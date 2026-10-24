@@ -952,6 +952,11 @@ QImage ReaderModel::image(int pageNumber) {
                 ldomNode *afterInitial = nullptr;
                 for (int i = 1; i < node->getChildCount() && !afterInitial; ++i)
                     afterInitial = firstText(node->getChildNode(i));
+                // Measure the decorated letter itself, in addition to both
+                // text starts. This distinguishes an actual float footprint
+                // problem from a next-paragraph first-line indent problem.
+                const QRect initial = node->getChildCount() ? textStartRect(firstText(node->getChildNode(0)))
+                                                          : QRect();
                 const QRect first = textStartRect(afterInitial);
                 const QRect second = textStartRect(firstText(continuation));
                 if (!first.isEmpty() && !second.isEmpty()) {
@@ -959,7 +964,12 @@ QImage ReaderModel::image(int pageNumber) {
                                        {{"page", pageNumber}, {"first_x", first.x()},
                                         {"first_y", first.y()}, {"second_x", second.x()},
                                         {"second_y", second.y()}, {"delta_x", second.x() - first.x()},
-                                        {"first_height", first.height()}, {"second_height", second.height()}},
+                                        {"delta_y", second.y() - first.y()},
+                                        {"first_height", first.height()}, {"second_height", second.height()},
+                                        {"initial_x", initial.x()}, {"initial_y", initial.y()},
+                                        {"initial_width", initial.width()}, {"initial_height", initial.height()},
+                                        {"initial_right", initial.right()},
+                                        {"initial_bottom", initial.bottom()}},
                                        false);
                     ++recorded;
                 }
