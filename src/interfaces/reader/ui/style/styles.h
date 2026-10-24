@@ -35,12 +35,14 @@ inline QString reader() {
         .arg(interfaceFontFamily());
 }
 inline QString segment() {
+    // Segmented controls use a fixed 72px outer height (see SegmentedRow).
+    // Draw only 2px borders and keep text clear of the frame on both axes.
     return QString(
-               "QPushButton{border-radius:0;min-height:0;max-height:16777215px;padding:0 %3px;border:%4px solid palette(window-text);border-left:none;background:palette(window);color:palette(window-text);} QPushButton[segment_first=\"true\"]{border-left:%4px solid palette(window-text);} QPushButton:checked{background:palette(window-text);color:palette(window);} QPushButton:pressed{background:palette(window-text);color:palette(window);}")
-               .arg(metrics::control::segmentHeight)
-               .arg(metrics::control::segmentVerticalPadding)
-               .arg(metrics::control::segmentHorizontalPadding)
-               .arg(metrics::control::border) +
+               "QPushButton{border-radius:0;min-height:0;max-height:16777215px;"
+               "padding:4px 8px;border:2px solid palette(window-text);border-left:none;"
+               "background:palette(window);color:palette(window-text);}"
+               "QPushButton[segment_first=\"true\"]{border-left:2px solid palette(window-text);}"
+               "QPushButton:checked,QPushButton:pressed{background:palette(window-text);color:palette(window);}") +
            "QPushButton{" + font(metrics::text::secondary) + "}";
 }
 inline QString outlined() {
