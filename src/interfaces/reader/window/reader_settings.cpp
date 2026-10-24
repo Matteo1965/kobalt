@@ -131,7 +131,7 @@ void Reader::applySettings() {
         return;
     }
     auto next = preferences;
-    next["show_clock"] = true;
+    next["show_clock"] = restoringDefaults ? true : clockOption->isChecked();
     next["bold_reading"] = QStringLiteral("off");
     next["dark_mode"] = darkOption->isChecked();
     next["smooth_images"] = smoothOption->isChecked();
@@ -175,7 +175,7 @@ void Reader::applySettings() {
     page->headerTextPixels = m::reading::textPixels(page->headerSize, false);
     page->footerTextPixels = m::reading::textPixels(page->footerSize, true);
     syncChromeSizeButtons();
-    page->showClock = true;
+    page->showClock = preferences.value("show_clock").toBool(true);
     page->showProgress = progressOption->isChecked();
     applyEdgeLight();
     chapterGraph->setDense(preferences.value("dense_stats_chart").toBool(false));
@@ -462,7 +462,7 @@ void Reader::finishPreview() {
         // A failed preview has no settings to apply. Dismiss it without
         // trapping the reader now that panels have no Cancel action.
         orientation->configure(preferences);
-        clockOption->setChecked(true);
+        clockOption->setChecked(preferences.value("show_clock").toBool(true));
         appearanceEdit.resetPreview();
         appearanceEdit.setPanelOpen(false);
         appearanceEdit.cancelDeferredApply();
@@ -486,7 +486,7 @@ void Reader::finishPreview() {
     }
     appearanceEdit.cancelDeferredApply();
     auto next = preferences;
-    next["show_clock"] = true;
+    // Preserve the user clock preference when switching the header or closing the preview.
     const auto rotation = orientation->settings();
     for (auto it = rotation.begin(); it != rotation.end(); ++it)
         next[it.key()] = it.value();
@@ -498,7 +498,7 @@ void Reader::finishPreview() {
     }
     preferences = next;
     appearanceEdit.clearError();
-    page->showClock = true;
+    page->showClock = preferences.value("show_clock").toBool(true);
     const QSize viewport(width(), height() - page->topHeight() - page->bottomHeight());
     if (appearanceEdit.ready())
         model->apply(appearanceEdit.preview()->requestedState(), viewport);
