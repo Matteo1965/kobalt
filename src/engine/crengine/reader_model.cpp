@@ -761,6 +761,13 @@ void ReaderModel::applyStyleSheet() {
     // Never insert an automatic indent into a drop-cap paragraph.
     if (paragraphIndent_ == "first" || paragraphIndent_ == "full")
         overrides += "p[data-kobalt-initial=\"1\"] { text-indent:0 !important; }\n";
+    // The first drop-cap paragraph may contain just a few words, while the
+    // initial extends into the following sibling paragraph. Keep their boundary
+    // free of spacing so the continued text stays alongside the initial.
+    // Other paragraphs keep their selected paragraph spacing.
+    overrides +=
+        "p[data-kobalt-initial=\"1\"] { margin-bottom:0 !important; }\n"
+        "p[data-kobalt-initial=\"1\"] + p { margin-top:0 !important; }\n";
     // Float initial letters so the second text line does not run into the glyph.
     overrides +=
         "p[data-kobalt-initial=\"1\"] > span.inic, "
