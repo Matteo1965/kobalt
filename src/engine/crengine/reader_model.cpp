@@ -761,11 +761,6 @@ void ReaderModel::applyStyleSheet() {
     // Never insert an automatic indent into a drop-cap paragraph.
     if (paragraphIndent_ == "first" || paragraphIndent_ == "full")
         overrides += "p[data-kobalt-initial=\"1\"] { text-indent:0 !important; }\n";
-    // A drop-cap float lives in the preceding <p>, so CRengine may not wrap
-    // the first line of the next sibling around it. Indent only that next
-    // paragraph's first line; leave all later lines at their normal position.
-    // No font-size or line-height override is applied to the initial itself.
-    overrides += "p[data-kobalt-initial=\"1\"] + p { text-indent:2em !important; }\n";
     // The first drop-cap paragraph may contain just a few words, while the
     // initial extends into the following sibling paragraph. Keep their boundary
     // free of spacing so the continued text stays alongside the initial.
