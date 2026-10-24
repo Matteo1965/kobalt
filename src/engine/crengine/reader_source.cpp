@@ -363,7 +363,7 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
         properties->setString(DOC_PROP_FILE_NAME,
                               Utf8ToUnicode(lString8(documentCacheName(cacheFingerprint_).toUtf8().constData())));
         properties->setHex(DOC_PROP_FILE_CRC32,
-                           documentCacheChecksum(cachePolicy_ + ":bionic-v3:dropcap-merge-v2:" + bionic_.toUtf8(), domVersion_));
+                           documentCacheChecksum(cachePolicy_ + ":bionic-v3:dropcap-merge-v3:" + bionic_.toUtf8(), domVersion_));
         properties->setString(DOC_PROP_FILE_SIZE, lString32::itoa(int(cacheBytes_ < 0         ? 0
                                                                       : cacheBytes_ > INT_MAX ? INT_MAX
                                                                                               : cacheBytes_)));
@@ -465,9 +465,26 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                 auto *after = first->getChildNode(1);
                 auto *next = second->getChildNode(0);
                 ++candidates;
-                if (!initial || !initial->isElement() || !after || !after->isText() ||
-                    !next || !next->isText() || initial->getChildCount() != 1 ||
-                    !initial->getChildNode(0)->isText()) {
+                // CREngine wraps rendered text in inline span nodes and
+                // the initial in a floatBox. Keep those wrappers intact.
+                auto firstText = [](ldomNode *node) -> ldomNode * {
+                    if (!node) return nullptr;
+                    QVector<ldomNode *> todo{node};
+                    int limit = 64;
+                    while (!todo.isEmpty() && --limit > 0) {
+                        auto *current = todo.takeLast();
+                        if (current->isText() && !qstring(current->getText()).trimmed().isEmpty())
+                            return current;
+                        for (int j = current->getChildCount() - 1; j >= 0; --j)
+                            todo.append(current->getChildNode(j));
+                    }
+                    return nullptr;
+                };
+                auto *initialText = firstText(initial);
+                auto *afterText = firstText(after);
+                auto *nextText = firstText(next);
+                if (!initial || !initial->isElement() || !initialText ||
+                    !afterText || !nextText) {
                     ++rejectedStructure;
                     if (rejectedStructure <= 12)
                         kobalt::diagnostic("reader-dropcap-merge-rejected",
@@ -490,10 +507,10 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                                                 ? qstring(next->getNodeName()) : QString()}}, false);
                     continue;
                 }
-                const auto initialBox = glyphRect(initial->getChildNode(0), false);
-                const auto endFirst = glyphRect(after, true);
-                const auto beginFirst = glyphRect(after, false);
-                const auto nextBox = glyphRect(next, false);
+                const auto initialBox = glyphRect(initialText, false);
+                const auto endFirst = glyphRect(afterText, true);
+                const auto beginFirst = glyphRect(afterText, false);
+                const auto nextBox = glyphRect(nextText, false);
                 // The first paragraph must occupy one text line, with its
                 // following paragraph entering the drop cap's vertical area.
                 if (initialBox.bottom <= initialBox.top || nextBox.bottom <= nextBox.top ||
