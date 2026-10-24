@@ -472,8 +472,11 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     systemRows->addWidget(sleepScreenButton);
     systemSection("rrSystemInterfaceSection", strings::get("settings.section_user_interface"));
     languageButton = ui::makeCaptionButton(systemPage, nullptr, "rrInterfaceLanguage", strings::get("settings.interface_language"), [] {});
-    // Match the Sleep screen row typography exactly.
-    languageButton->setFont(sleepScreenButton->font());
+    // Use the same list-row font as Sleep screen, with a smaller explicit pixel size.
+    QFont languageFont = sleepScreenButton->font();
+    const int basePixels = languageFont.pixelSize() > 0 ? languageFont.pixelSize() : QFontMetrics(languageFont).height();
+    languageFont.setPixelSize(qMax(12, basePixels - 4));
+    languageButton->setFont(languageFont);
     systemRows->addWidget(languageButton);
     uiFontButton = ui::makeCaptionButton(systemPage, nullptr, "rrUiFont", strings::get("settings.ui_font"), [] {});
     uiMonoFontButton =
