@@ -334,6 +334,7 @@ private:
     double opticalSize_ = 0;
     int weight_ = 0;
     QString bionic_ = "off";
+    bool hangingPunctuation_ = true;
     // The engine DOM version that parses this book and writes its positions.
     int domVersion_ = 0;
     QString hyphenation_ = "off";

@@ -573,6 +573,8 @@
 "settings.section_frontlight" = "Frontlight";
 "settings.section_new_books" = "New Book";
 "settings.section_book_content" = "Book content";
+"settings.optical_margin" = "Optical margin";
+"settings.optical_margin_description" = "Hang punctuation into the margins for cleaner line edges.";
 "settings.advanced_text" = "Advanced typography";
 "settings.justification_tracking" = "Justification tracking";
 /* Arguments: %1 (Justify icon) */

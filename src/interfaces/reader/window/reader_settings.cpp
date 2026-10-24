@@ -276,7 +276,7 @@ void Reader::openSettings() {
     settingsWidowsOrphans = model->state().value("widows_orphans").toString("publisher");
     showAdvancedText();
     animationOption->setChecked(preferences.value("page_animations").toBool(false));
-    bionicOption->setChecked(model->state().value("bold_reading").toString("off") == "bold");
+    opticalMarginOption->setChecked(model->state().value("hanging_punctuation").toBool(true));
     linkIndicatorOption->setChecked(preferences.value("show_link_indicator").toBool(false));
     edgeLightOption->setChecked(preferences.value("edge_light_gestures").toBool(true));
     denseGraphOption->setChecked(preferences.value("dense_stats_chart").toBool(false));
@@ -349,7 +349,8 @@ void Reader::applySettings() {
     next["hide_tab_labels"] = hideTabLabelsOption->isChecked();
     for (const auto *key : appearance::fallbackFontKeys)
         next[key] = settingsFontFaces.value(key).toString();
-    next["bold_reading"] = bionicOption->isChecked() ? QStringLiteral("bold") : QStringLiteral("off");
+    next["bold_reading"] = QStringLiteral("off");
+    next["hanging_punctuation"] = opticalMarginOption->isChecked();
     next["dark_mode"] = darkOption->isChecked();
     next[appearance::inheritTextLayoutKey] = inheritTextLayoutOption->isChecked();
     next["hide_nonlinear_fragments"] = hideNonlinearOption->isChecked();
@@ -377,7 +378,7 @@ void Reader::applySettings() {
     for (auto it = rotation.begin(); it != rotation.end(); ++it)
         next[it.key()] = it.value();
     if (!writePreferences(next)) {
-        bionicOption->setChecked(model->requestedState().value("bold_reading").toString("off") == "bold");
+        opticalMarginOption->setChecked(model->requestedState().value("hanging_punctuation").toBool(true));
         minimalAnnotationOption->setChecked(minimalAnnotationMode());
         settingsError->setText(strings::get("reader.could_not_save_reader_settings"));
         settingsError->show();
@@ -409,7 +410,8 @@ void Reader::applySettings() {
     settings["word_spacing"] = settingsWordSpacing;
     settings["justification_tracking"] = settingsTracking;
     settings["widows_orphans"] = settingsWidowsOrphans;
-    settings["bold_reading"] = bionicOption->isChecked() ? QStringLiteral("bold") : QStringLiteral("off");
+    settings["bold_reading"] = QStringLiteral("off");
+    settings["hanging_punctuation"] = opticalMarginOption->isChecked();
     if (restoringDefaults) {
         const auto defaults = kobalt::appearance::typographyDefaults();
         for (auto it = defaults.begin(); it != defaults.end(); ++it)
@@ -445,34 +447,6 @@ void Reader::applyDarkMode(bool enabled) {
     model->setDarkMode(enabled);
     if (appearanceEdit.preview())
         appearanceEdit.preview()->setDarkMode(enabled);
-    refresh();
-}
-
-void Reader::applyBoldReading(bool enabled) {
-    if (model->temporaryTypography())
-        return;
-    const auto mode = enabled ? QStringLiteral("bold") : QStringLiteral("off");
-    auto next = preferences;
-    next["bold_reading"] = mode;
-    if (!writePreferences(next)) {
-        bionicOption->setChecked(model->requestedState().value("bold_reading").toString("off") == "bold");
-        return;
-    }
-    preferences = next;
-    settingsError->clear();
-    settingsError->hide();
-    auto settings = model->requestedState();
-    settings["bold_reading"] = mode;
-    model->apply(settings);
-    // Keep a pending typography draft in the same mode, including a preview
-    // that has not finished opening yet.
-    if (appearanceEdit.preview()) {
-        mutateAppearance([mode](ReaderSession &preview) {
-            auto settings = preview.requestedState();
-            settings["bold_reading"] = mode;
-            preview.apply(settings);
-        });
-    }
     refresh();
 }
 

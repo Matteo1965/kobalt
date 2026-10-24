@@ -12,6 +12,7 @@ QJsonObject readerPreferences(const QJsonObject &global, const QJsonObject &book
         result["bold_reading"] = result.value("bionic_reading");
     }
     result.remove("bionic_reading");
+    result["bold_reading"] = QStringLiteral("off");
     result.remove("smooth_images");
     result.remove("heavier_interface_text");
     bool globalChrome = false;
@@ -33,6 +34,7 @@ QJsonObject globalPreferences(QJsonObject preferences) {
     if (!preferences.contains("bold_reading") && preferences.contains("bionic_reading"))
         preferences["bold_reading"] = preferences.value("bionic_reading");
     preferences.remove("bionic_reading");
+    preferences["bold_reading"] = QStringLiteral("off");
     if (!preferences.contains("header_footer") && preferences.value(lastPresetKey).isString())
         preferences["header_footer"] = preferences.value(lastPresetKey);
     preferences.remove(lastPresetKey);

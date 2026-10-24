@@ -1093,7 +1093,7 @@ void Reader::buildSettings() {
             showAdvancedText();
         });
     });
-    bionicOption = settings->bionicOption;
+    opticalMarginOption = settings->opticalMarginOption;
     refreshButton = settings->refreshButton;
     resetDefaults = settings->resetDefaults;
     settingsError = settings->settingsError;
@@ -1128,9 +1128,6 @@ void Reader::buildSettings() {
     }
     connect(darkOption, &QCheckBox::clicked, this, [this](bool enabled) {
         applyDarkMode(enabled);
-    });
-    connect(bionicOption, &QCheckBox::clicked, this, [this](bool enabled) {
-        applyBoldReading(enabled);
     });
     connect(sleepScreenButton, &QPushButton::clicked, this, [this] {
         openSleepScreen();
@@ -1167,7 +1164,6 @@ void Reader::buildSettings() {
         showSettingsFonts();
         darkOption->setChecked(false);
         animationOption->setChecked(false);
-        bionicOption->setChecked(false);
         screenRefreshMode = kobalt::ScreenRefresh::Smart;
         showScreenRefresh();
         resetDefaults->setText(strings::get("reader.defaults_selected"));

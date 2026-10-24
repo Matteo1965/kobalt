@@ -385,7 +385,6 @@ private:
     void openSettings();
     void applyEdgeLight();
     void applyDarkMode(bool enabled);
-    void applyBoldReading(bool enabled);
     void prepareSleepCover();
     void updateSleepBattery();
     void showSleepScreen();
@@ -437,7 +436,7 @@ private:
     // Turns since the last flash, for the Refresh the screen setting.
     int pagesSinceFlash = 0;
     kobalt::ScreenRefresh screenRefreshMode = kobalt::ScreenRefresh::Smart;
-    ui::DescribedOption *bionicOption = nullptr;
+    ui::DescribedOption *opticalMarginOption = nullptr;
     kobalt::ui::CaptionButton *refreshButton = nullptr;
     QPointer<kobalt::ui::ModalOverlay> refreshPopup;
     kobalt::ui::CaptionButton *sleepScreenButton = nullptr;

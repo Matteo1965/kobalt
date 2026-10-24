@@ -431,12 +431,8 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     if (hyphenation_ != "auto" && hyphenation_ != "on" && hyphenation_ != "off")
         hyphenation_ = "off";
     weight_ = qBound(0, saved.value("weight_steps").toInt(0), 12);
-    bionic_ = saved.value("bold_reading").toString("off");
-    // Preserve enabled Bionic reading from the retired thickness mode.
-    if (bionic_ == "synthetic")
-        bionic_ = "bold";
-    if (bionic_ != "bold")
-        bionic_ = "off";
+    bionic_ = "off";
+    hangingPunctuation_ = saved.value("hanging_punctuation").toBool(true);
     face_ = saved.value("font_face").toString(defaultFontFace);
     if (face_ == "KF Libron")
         face_ = defaultFontFace;
@@ -482,7 +478,7 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     properties->setInt(PROP_FORMAT_MIN_SPACE_CONDENSING_PERCENT, 100);
     properties->setInt(PROP_FORMAT_SPACE_WIDTH_SCALE_PERCENT, wordSpacing_);
     properties->setInt(PROP_FORMAT_MAX_ADDED_LETTER_SPACING_PERCENT, justificationTracking_);
-    properties->setInt(PROP_FLOATING_PUNCTUATION, 0);
+    properties->setInt(PROP_FLOATING_PUNCTUATION, hangingPunctuation_ ? 1 : 0);
     properties->setInt(PROP_RENDER_BLOCK_RENDERING_FLAGS,
                        avoidWastefulStyling_
                            ? DEF_RENDER_BLOCK_RENDERING_FLAGS
@@ -669,7 +665,8 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const int topMargin = settings.value("top_margin_pixels").toInt(topMargin_);
     const int bottomMargin = settings.value("bottom_margin_pixels").toInt(bottomMargin_);
     const int weight = settings.value("weight_steps").toInt(weight_);
-    const auto bionic = settings.value("bold_reading").toString(bionic_);
+    const QString bionic = QStringLiteral("off");
+    const bool hangingPunctuation = settings.value("hanging_punctuation").toBool(hangingPunctuation_);
     const auto face = settings.value("font_face").toString(face_);
     const auto defaultFace = settings.value("default_font_face").toString(defaultFace_);
     auto fallbackFaces = fallbackFaces_;
@@ -721,7 +718,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const bool thicknessChanged = weight != weight_;
     const bool styled = fallbackFaces != fallbackFaces_ || avoidWastefulStyling != avoidWastefulStyling_ ||
                         wordSpacing != wordSpacing_ || tracking != justificationTracking_ || widowsOrphans != widowsOrphans_ ||
-                        bionicChanged || axisChanged || opticalChanged || pixels != pixels_ || spacing != spacing_ ||
+                        bionicChanged || hangingPunctuation != hangingPunctuation_ || axisChanged || opticalChanged || pixels != pixels_ || spacing != spacing_ ||
                         face != face_ || defaultFace != defaultFace_ || margin != margin_ || topMargin != topMargin_ ||
                         bottomMargin != bottomMargin_ || alignment != alignment_ || hyphenation != hyphenation_;
     const bool resized = size != size_ || columns != columns_ || columnSpacing != columnSpacing_;
@@ -747,6 +744,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     axisWeight_ = axisWeight;
     opticalSize_ = opticalSize;
     bionic_ = bionic;
+    hangingPunctuation_ = hangingPunctuation;
     darkMode_ = dark;
     activateFontParameters();
     hideNonlinearFragments_ = hideNonlinear;
@@ -760,6 +758,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
         properties->setInt(PROP_FONT_BASE_WEIGHT, LVRendGetBaseFontWeight());
         properties->setInt(PROP_FORMAT_SPACE_WIDTH_SCALE_PERCENT, wordSpacing_);
         properties->setInt(PROP_FORMAT_MAX_ADDED_LETTER_SPACING_PERCENT, justificationTracking_);
+        properties->setInt(PROP_FLOATING_PUNCTUATION, hangingPunctuation_ ? 1 : 0);
         properties->setInt(PROP_RENDER_BLOCK_RENDERING_FLAGS,
                            avoidWastefulStyling_
                                ? DEF_RENDER_BLOCK_RENDERING_FLAGS
@@ -1281,6 +1280,7 @@ QJsonObject ReaderModel::state() const {
                                {"font_weight", axisWeight_},
                                {"font_optical_size", opticalSize_},
                                {"bold_reading", bionic_},
+                               {"hanging_punctuation", hangingPunctuation_},
                                {"hyphenation", hyphenation_},
                                {"dark_mode", darkMode_},
                                {"hide_nonlinear_fragments", hideNonlinearFragments_},

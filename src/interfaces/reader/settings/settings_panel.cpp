@@ -314,16 +314,13 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                             animationsSupported ? strings::get("settings.animations_description")
                                                 : strings::get("settings.unsupported_description"));
     animationOption->setEnabled(animationsSupported);
-    bionicOption = check(displayPage, "rrBionicReading", strings::get("reader.bold_reading"),
-                         strings::get("reader.bionic_description"));
     section(displayPage, generalOptions, "rrDisplayScreenSection", strings::get("settings.section_screen"));
     refreshButton = ui::makeCaptionButton(displayPage, nullptr, "rrScreenRefresh",
                                           strings::get("reader.refresh_the_screen"), [] {});
     generalOptions->addWidget(refreshButton);
     generalOptions->addWidget(animationOption);
     section(displayPage, generalOptions, "rrDisplayAppearanceSection", strings::get("settings.section_appearance"));
-    for (auto *option : {darkOption, bionicOption})
-        generalOptions->addWidget(option);
+    generalOptions->addWidget(darkOption);
     section(displayPage, generalOptions, "rrDisplayColumnsSection", strings::get("reader.columns"));
     landscapeColumnsOption = check(displayPage, "rrLandscapeColumns", strings::get("settings.landscape_columns"),
                                     strings::get("settings.landscape_columns_description"));
@@ -435,6 +432,9 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         check(stylingPage, "rrHideNonlinearFragments", strings::get("reader.hide_nonlinear_fragments"),
               strings::get("settings.hide_nonlinear_fragments_description"));
     stylingRows->addWidget(hideNonlinearOption);
+    opticalMarginOption = check(stylingPage, "rrOpticalMargin", strings::get("settings.optical_margin"),
+                                strings::get("settings.optical_margin_description"));
+    stylingRows->addWidget(opticalMarginOption);
     avoidWastefulStylingOption =
         check(stylingPage, "rrAvoidWastefulStyling", strings::get("settings.avoid_wasteful_styling"),
               strings::get("settings.avoid_wasteful_styling_description"));
@@ -623,9 +623,9 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     settingsTabButtons.first()->setChecked(true);
     QVector<ui::DescribedOption *> options = {avoidWastefulStylingOption,
                                               hideNonlinearOption,
+                                               opticalMarginOption,
                                               linkIndicatorOption,
                                               darkOption,
-                                              bionicOption,
                                               landscapeColumnsOption,
                                               animationOption,
                                               inheritTextLayoutOption,
