@@ -1,0 +1,555 @@
+--- a/crengine/include/lvfnt.h
++++ b/crengine/include/lvfnt.h
+@@ -242,7 +242,7 @@ lUInt16 lvfontMeasureText( const lvfont_handle pfont,
+ // (This one is actually not set by lvfntman)
+ #define LCHAR_LOCKED_SPACING         0x0040 ///< flag: forbid any letter spacing tweak on this char
+                                             //         (for cursive scripts like arabic, and special cases)
+-#define LCHAR__AVAILABLE_BIT_08__    0x0080
++#define LCHAR_HUNGARIAN_HYPH_REPLACE 0x0080 ///< Hungarian doubled digraph/trigraph break needs a restored tail.
+ 
+ /// The next ones, not fitting in a lUInt8, should only be set and used by lvtextfm
+ #define LCHAR_IS_OBJECT              0x0100 ///< flag: this char is object (image, float)
+--- a/crengine/include/lvtextfm.h
++++ b/crengine/include/lvtextfm.h
+@@ -208,7 +208,7 @@ typedef struct
+ #define LTEXT_WORD_VALIGN_BOTTOM             0x2000 /// word is to be vertical-align: bottom
+ #define LTEXT_WORD_STRUT_CONFINED            0x4000 /// word is to be fully contained into strut bounds
+                                                     /// (used only when one of the 2 previous is set)
+-#define LTEXT_WORD__AVAILABLE_BIT_16__       0x8000
++#define LTEXT_WORD_HUNGARIAN_HYPH_REPLACE    0x8000 /// append the compact Hungarian consonant tail before hyphen
+ 
+ //#define LTEXT_BACKGROUND_MARK_FLAGS 0xFFFF0000l
+ 
+--- a/crengine/include/textlang.h
++++ b/crengine/include/textlang.h
+@@ -26,6 +26,7 @@
+ #define TEXTLANG_DEFAULT_HYPHENATION_ENABLED    true
+ #define TEXTLANG_DEFAULT_HYPH_SOFT_HYPHENS_ONLY false
+ #define TEXTLANG_DEFAULT_HYPH_FORCE_ALGORITHMIC false
++#define TEXTLANG_DEFAULT_HYPH_HUNGARIAN_EXTENDED true
+ #define TEXTLANG_FALLBACK_HYPH_DICT_ID  U"English_US.pattern" // For languages without specific hyph dicts
+ 
+ 
+@@ -179,6 +180,7 @@ class TextLangMan
+     static bool _hyphenation_enabled;
+     static bool _hyphenation_soft_hyphens_only;
+     static bool _hyphenation_force_algorithmic;
++    static bool _hyphenation_hungarian_extended;
+     static HyphMethod * _no_hyph_method;       // instance of hyphman NoHyph
+     static HyphMethod * _soft_hyphens_method;  // instance of hyphman SoftHyphensHyph
+     static HyphMethod * _algo_hyph_method;     // instance of hyphman AlgoHyph
+@@ -213,6 +215,11 @@ class TextLangMan
+         _overridden_hyph_method = !_hyphenation_enabled || _hyphenation_soft_hyphens_only || _hyphenation_force_algorithmic;
+     }
+ 
++    static bool getHyphenationHungarianExtended() { return _hyphenation_hungarian_extended; }
++    static void setHyphenationHungarianExtended( bool enabled ) {
++        _hyphenation_hungarian_extended = enabled;
++    }
++
+     static TextLangCfg * getTextLangCfg(); // get LangCfg for _main_lang
+     static TextLangCfg * getTextLangCfg( lString32 lang_tag, bool force=false );
+         // (frontends can provide force=true to ignore _embedded_langs_enabled=false)
+@@ -271,6 +278,7 @@ class TextLangCfg
+ 
+ public:
+     lString32 getLangTag() const { return _lang_tag; }
++    bool isHungarian() const;
+ 
+     HyphMethod * getHyphMethod() const {
+         if ( !TextLangMan::_overridden_hyph_method )
+--- a/crengine/src/textlang.cpp
++++ b/crengine/src/textlang.cpp
+@@ -123,6 +123,7 @@ LVPtrVector<TextLangCfg> TextLangMan::_lang_cfg_list;
+ bool TextLangMan::_hyphenation_enabled = TEXTLANG_DEFAULT_HYPHENATION_ENABLED;
+ bool TextLangMan::_hyphenation_soft_hyphens_only = TEXTLANG_DEFAULT_HYPH_SOFT_HYPHENS_ONLY;
+ bool TextLangMan::_hyphenation_force_algorithmic = TEXTLANG_DEFAULT_HYPH_FORCE_ALGORITHMIC;
++bool TextLangMan::_hyphenation_hungarian_extended = TEXTLANG_DEFAULT_HYPH_HUNGARIAN_EXTENDED;
+ bool TextLangMan::_overridden_hyph_method =   !TEXTLANG_DEFAULT_HYPHENATION_ENABLED
+                                             || TEXTLANG_DEFAULT_HYPH_SOFT_HYPHENS_ONLY
+                                             || TEXTLANG_DEFAULT_HYPH_FORCE_ALGORITHMIC ;
+@@ -139,7 +140,8 @@ TextLangMan::~TextLangMan() {
+ 
+ lUInt32 TextLangMan::getHash() {
+     lUInt32 hash = _main_lang.getHash();
+-    hash = hash << 4;
++    hash = hash << 5;
++    hash = hash + (_hyphenation_hungarian_extended << 4);
+     hash = hash + (_embedded_langs_enabled << 3);
+     hash = hash + (_hyphenation_soft_hyphens_only << 2);
+     hash = hash + (_hyphenation_force_algorithmic << 1);
+@@ -148,6 +150,12 @@ lUInt32 TextLangMan::getHash() {
+     return hash;
+ }
+ 
++bool TextLangCfg::isHungarian() const {
++    lString32 lang_tag = _lang_tag;
++    lang_tag.lowercase();
++    return lang_tag == U"hu" || lang_tag == U"hun" || lang_tag.startsWith(U"hu-") || lang_tag.startsWith(U"hu_");
++}
++
+ // No need to explicitely call this in frontend code.
+ // Calling HyphMan::uninit() will have this one called.
+ void TextLangMan::uninit() {
+--- a/crengine/src/lvtextfm.cpp
++++ b/crengine/src/lvtextfm.cpp
+@@ -43,6 +43,245 @@
+ #define MAX_ADDED_LETTER_SPACING_PERCENT 0
+ #define CJK_WIDTH_SCALE_PERCENT 100
+ 
++static lChar32 huAsciiLower( lChar32 ch ) {
++    return ch >= 'A' && ch <= 'Z' ? ch + ('a' - 'A') : ch;
++}
++
++static bool huIsVowel( lChar32 ch ) {
++    switch ( ch ) {
++        case 'a': case 'A': case 0x00E1: case 0x00C1:
++        case 'e': case 'E': case 0x00E9: case 0x00C9:
++        case 'i': case 'I': case 0x00ED: case 0x00CD:
++        case 'o': case 'O': case 0x00F3: case 0x00D3: case 0x00F6: case 0x00D6: case 0x0151: case 0x0150:
++        case 'u': case 'U': case 0x00FA: case 0x00DA: case 0x00FC: case 0x00DC: case 0x0171: case 0x0170:
++            return true;
++        default:
++            return false;
++    }
++}
++
++static bool huHasVowel( const lChar32 * text, int start, int end ) {
++    for ( int i=start; i<end; i++ ) {
++        if ( huIsVowel(text[i]) )
++            return true;
++    }
++    return false;
++}
++
++// Return the characters which have to be restored on the left side of a
++// Hungarian compact doubled digraph/trigraph (for example asszony -> asz-szony).
++static int huHyphenReplacement( const lChar32 * text, int len, int break_after, lChar32 replacement[2] ) {
++    if ( break_after < 0 || break_after + 2 >= len )
++        return 0;
++    lChar32 a = huAsciiLower(text[break_after]);
++    lChar32 b = huAsciiLower(text[break_after + 1]);
++    lChar32 c = huAsciiLower(text[break_after + 2]);
++    if ( a != b )
++        return 0;
++    bool uppercase = text[break_after] >= 'A' && text[break_after] <= 'Z';
++    if ( a == 'd' && c == 'z' && break_after + 3 < len && huAsciiLower(text[break_after + 3]) == 's' ) {
++        replacement[0] = uppercase ? 'Z' : 'z';
++        replacement[1] = uppercase ? 'S' : 's';
++        return 2;
++    }
++    if ( (a == 'g' || a == 'l' || a == 'n' || a == 't') && c == 'y' ) {
++        replacement[0] = uppercase ? 'Y' : 'y';
++        return 1;
++    }
++    if ( (a == 's' || a == 'd') && c == 'z' ) {
++        replacement[0] = uppercase ? 'Z' : 'z';
++        return 1;
++    }
++    if ( (a == 'c' || a == 'z') && c == 's' ) {
++        replacement[0] = uppercase ? 'S' : 's';
++        return 1;
++    }
++    return 0;
++}
++
++// CPHUN-34/35: verified compound families. A compact doubled digraph at
++// an internal position of the left member is NOT a replacement break.
++struct HuCompoundFamily {
++    const lChar32 * left;
++    const lChar32 * rightStem;
++};
++
++static lChar32 huFold( lChar32 ch ) {
++    if ( ch >= 'A' && ch <= 'Z' ) return ch + ('a' - 'A');
++    switch ( ch ) {
++        case 0x00C1: return 0x00E1; case 0x00C9: return 0x00E9;
++        case 0x00CD: return 0x00ED; case 0x00D3: return 0x00F3;
++        case 0x00D6: return 0x00F6; case 0x0150: return 0x0151;
++        case 0x00DA: return 0x00FA; case 0x00DC: return 0x00FC;
++        case 0x0170: return 0x0171;
++        default: return ch;
++    }
++}
++
++static int huMatchStem( const lChar32 * text, int len, int offset, const lChar32 * stem ) {
++    int n = 0;
++    while ( stem[n] ) {
++        if ( offset + n >= len || huFold(text[offset + n]) != stem[n] ) return 0;
++        ++n;
++    }
++    return n;
++}
++
++static const HuCompoundFamily huCompoundFamilies[] = {
++    {U"meg", U"gyull"}, {U"meg", U"gyón"}, {U"meg", U"győz"},
++    {U"meg", U"gyaláz"}, {U"kis", U"szék"}, {U"kis", U"szoba"},
++    {U"kis", U"szekrény"}, {U"ruhás", U"szekrény"}, {U"vas", U"szeg"},
++    {U"cipős", U"szekrény"}, {U"hús", U"szelet"}, {U"ideg", U"gyógyász"},
++    {U"gyors", U"szolgálat"}, {U"okos", U"szemüveg"}, {U"nyolc", U"csillag"},
++    {U"arc", U"csont"}, {U"szín", U"nyom"}, {U"tánc", U"csoport"},
++    {U"rossz", U"indulat"}, {U"rossz", U"íz"}
++};
++
++// CPHUN-149: explicitly vetted Hungarian prefix+stem families.
++// Match both the prefix and the following stem: never infer from prefix alone.
++static const HuCompoundFamily huCuratedPrefixFamilies[] = {
++    {U"el", U"ad"}, {U"el", U"es"}, {U"el", U"akad"},
++    {U"meg", U"ad"}, {U"meg", U"ír"},
++    {U"fel", U"ad"}, {U"fel", U"emel"},
++    {U"föl", U"emel"}, {U"föl", U"áll"},
++    {U"le", U"ad"}, {U"le", U"ír"},
++    {U"be", U"ad"}, {U"be", U"ír"},
++    {U"ki", U"ad"}, {U"ki", U"ír"},
++    {U"át", U"ad"}, {U"át", U"ve"}, {U"át", U"utal"},
++    {U"át", U"értékel"}, {U"át", U"alszik"}, {U"át", U"alud"},
++    {U"rá", U"ad"}, {U"rá", U"ír"},
++    {U"alá", U"ír"}, {U"alá", U"ad"},
++    {U"túl", U"ad"}, {U"túl", U"ír"},
++    {U"utó", U"irat"}, {U"utó", U"hang"},
++    {U"ide", U"ad"}, {U"ide", U"ér"},
++    {U"oda", U"ad"}, {U"oda", U"ér"},
++    {U"elő", U"ad"}, {U"elő", U"ír"},
++    {U"szét", U"ad"}, {U"szét", U"es"}
++};
++
++static int huCuratedPrefixBoundary( const lChar32 * text, int len ) {
++    for ( unsigned i=0; i<sizeof(huCuratedPrefixFamilies)/sizeof(huCuratedPrefixFamilies[0]); ++i ) {
++        const HuCompoundFamily & family = huCuratedPrefixFamilies[i];
++        const int left = huMatchStem(text, len, 0, family.left);
++        if ( left && huMatchStem(text, len, left, family.rightStem) ) return left;
++    }
++    return 0;
++}
++
++// CPHUN-154: exact-word exceptions, independent of the special 1/2 minima mode.
++// Caller decides whether proposed boundaries respect normal minima.
++static bool huIsAzutanOrEzutan( const lChar32 * text, int len ) {
++    if ( len != 6 ) return false;
++    const lChar32 first = huFold(text[0]);
++    return (first == 'a' || first == 'e') && huFold(text[1]) == 'z' &&
++           huFold(text[2]) == 'u' && huFold(text[3]) == 't' &&
++           huFold(text[4]) == 0x00E1 && huFold(text[5]) == 'n';
++}
++
++static int huCompoundBoundary( const lChar32 * text, int len ) {
++    for ( unsigned i=0; i<sizeof(huCompoundFamilies)/sizeof(huCompoundFamilies[0]); ++i ) {
++        const HuCompoundFamily & family = huCompoundFamilies[i];
++        int left = huMatchStem(text, len, 0, family.left);
++        if ( left && huMatchStem(text, len, left, family.rightStem) ) return left;
++    }
++    return 0;
++}
++
++static bool huAddExtendedHyphenation( const lChar32 * text, int len, lUInt16 * flags,
++                                      int left_hyphen_min, int right_hyphen_min ) {
++    bool found = false;
++    const int ordinaryCompound = huCompoundBoundary(text, len);
++    const int curatedPrefix = huCuratedPrefixBoundary(text, len);
++    const int compound = ordinaryCompound ? ordinaryCompound : curatedPrefix;
++    const bool specialAzutan = huIsAzutanOrEzutan(text, len);
++    for ( int i=0; i<len; i++ ) {
++        lChar32 replacement[2];
++        const int replacement_len = huHyphenReplacement(text, len, i, replacement);
++        if ( !replacement_len ) continue;
++        const int split = i + 1;
++        if ( split < left_hyphen_min || len - split < right_hyphen_min ) continue;
++        // CPHUN-35: compact doubled consonant must be directly flanked by vowels.
++        // Prevents, for instance, rosszfiúi -> rosz-szfiúi.
++        const int compact_len = replacement_len == 2 ? 4 : 3;
++        if ( i == 0 || i + compact_len >= len ||
++             !huIsVowel(text[i - 1]) || !huIsVowel(text[i + compact_len]) ) continue;
++        // CPHUN-34/35: do not apply replacement inside the first compound member,
++        // nor at the morphological boundary; those are ordinary breaks.
++        if ( compound && split <= compound ) continue;
++        if ( !huHasVowel(text, 0, split) || !huHasVowel(text, split, len) ) continue;
++        flags[i] |= LCHAR_ALLOW_HYPH_WRAP_AFTER | LCHAR_HUNGARIAN_HYPH_REPLACE;
++        found = true;
++    }
++    // Add a normal (non-replacement) break at verified compound boundaries.
++    if ( compound >= left_hyphen_min && len - compound >= right_hyphen_min ) {
++        flags[compound - 1] |= LCHAR_ALLOW_HYPH_WRAP_AFTER;
++        flags[compound - 1] &= ~LCHAR_HUNGARIAN_HYPH_REPLACE;
++        found = true;
++    }
++    // CPHUN-154: azután/ezután may break after az/ez and (when legal)
++    // after azu/ezu; do not add any single-letter split.
++    if ( specialAzutan ) {
++        for ( int split=2; split<=3; ++split ) {
++            if ( split >= left_hyphen_min && len - split >= right_hyphen_min ) {
++                flags[split - 1] |= LCHAR_ALLOW_HYPH_WRAP_AFTER;
++                flags[split - 1] &= ~LCHAR_HUNGARIAN_HYPH_REPLACE;
++                found = true;
++            }
++        }
++    }
++    return found;
++}
++
++// Extra width of the *rendered prefix*, not isolated glyph advances.
++// For compact Hungarian consonants, replacement glyphs are appended to
++// the rendered left half before the hyphen is drawn.
++
++
++static int huReplacementWidth( LVFont * font, const lChar32 * text, int len, int break_after, int letter_spacing, TextLangCfg * lang_cfg ) {
++    lChar32 replacement[2];
++    int replacement_len = huHyphenReplacement(text, len, break_after, replacement);
++    if ( !font || !replacement_len )
++        return 0;
++    int prefix_len = break_after + 1;
++    lString32 rendered_prefix;
++    rendered_prefix.append(text, prefix_len);
++    for ( int i=0; i<replacement_len; i++ )
++        rendered_prefix << replacement[i];
++    // Use the same measurement API as the paragraph formatter.  In
++    // particular, getTextWidth() does not accept the paragraph's letter
++    // spacing, while measureText() does.
++    // Hungarian replacement sequences are at most two characters long.
++    // Avoid unbounded stack allocations when measuring unusually long words.
++    int shaped_extra = 0;
++    if ( prefix_len > 0 && prefix_len + replacement_len <= 127 ) {
++        lUInt16 original_widths[128];
++        lUInt8 original_flags[128];
++        lUInt16 rendered_widths[128];
++        lUInt8 rendered_flags[128];
++        font->measureText(text, prefix_len, original_widths, original_flags,
++                          0x7FFF, '?', lang_cfg, letter_spacing, false);
++        font->measureText(rendered_prefix.c_str(), rendered_prefix.length(),
++                          rendered_widths, rendered_flags,
++                          0x7FFF, '?', lang_cfg, letter_spacing, false);
++        int original_width = original_widths[prefix_len - 1];
++        int rendered_width = rendered_widths[rendered_prefix.length() - 1];
++        shaped_extra = rendered_width > original_width
++                        ? rendered_width - original_width : 0;
++    }
++    int glyph_extra = 0;
++    for ( int i=0; i<replacement_len; i++ )
++        glyph_extra += font->getCharWidth(replacement[i]);
++    // Never reserve less than the previous implementation did.
++    // The appended replacement glyph(s) are also subject to the
++    // same letter spacing passed to DrawTextString().
++    // measureText() already included letter spacing in shaped_extra.
++    // Keep the legacy advance + tracking as a conservative lower bound.
++    int glyph_with_spacing = glyph_extra;
++    if ( letter_spacing > 0 )
++        glyph_with_spacing += replacement_len * letter_spacing;
++    return shaped_extra > glyph_with_spacing ? shaped_extra : glyph_with_spacing;
++}
++
+ // to debug formatter
+ 
+ #if defined(_DEBUG) && 0
+@@ -2752,6 +2990,34 @@ class LVFormatter {
+ #define MIN_WORD_LEN_TO_HYPHENATE 4
+ #define MAX_WORD_SIZE 64
+ 
++    // HU252: measure fully rendered Hungarian replacement prefix, *without* the hyphen.
++    // This is used only for Hungarian replacement hyphenation, not regular breaks.
++    // Return -1 if unsupported: callers then retain the existing calculation.
++    static int hu252RenderedPrefixWidth(LVFont * font, const lChar32 * text,
++                         int source_len, int break_after, int letter_spacing,
++                         TextLangCfg * lang_cfg) {
++        if (!font || !text || break_after < 0 || break_after >= source_len)
++            return -1;
++        lChar32 replacement[2];
++        int extra = huHyphenReplacement(text, source_len, break_after, replacement);
++        int prefix_len = break_after + 1;
++        int rendered_len = prefix_len + extra;
++        if (extra <= 0 || rendered_len > 127)
++            return -1;
++        lString32 rendered;
++        rendered.append(text, prefix_len);
++        for (int k = 0; k < extra; ++k)
++            rendered << replacement[k];
++        lUInt16 widths[128] = {0};
++        lUInt8 flags[128] = {0};
++        int measured = font->measureText(rendered.c_str(), rendered_len,
++                            widths, flags, 0x7FFF, '?', lang_cfg,
++                            letter_spacing, false);
++        if (measured != rendered_len)
++            return -1;
++        return widths[rendered_len - 1];
++    }
++
+     /// align line: add or reduce widths of spaces to achieve desired text alignment
+     void alignLine( formatted_line_t * frmline, int alignment, int rightIndent=0, bool hasInlineBoxes=false ) {
+         // Fetch current line x offset and max width
+@@ -2972,6 +3238,19 @@ class LVFormatter {
+ 
+         // We might want to prevent this when LangCfg == "de" (in german,
+         // letter spacing is used for emphasis)
++        // Count Hungarian replacement glyphs in justified line spacing.
++        auto huSpacingGlyphCount = [this](const formatted_word_t * word) -> int {
++            int count = word->distinct_glyphs;
++            if ( word->flags & LTEXT_WORD_HUNGARIAN_HYPH_REPLACE ) {
++                src_text_fragment_t * src = &m_pbuffer->srctext[word->src_text_index];
++                const lChar32 * str = src->t.text + word->t.start;
++                int source_len = src->t.len - word->t.start;
++                lChar32 replacement[2];
++                count += huHyphenReplacement(str, source_len, word->t.len-1, replacement);
++            }
++            return count;
++        };
++
+         if ( m_pbuffer->max_added_letter_spacing_percent > 0 // only if allowed
+                         && alignment == LTEXT_ALIGN_WIDTH    // only when justifying
+                         && frmline->word_count > 1           // not if single word (expanded, but not taking the full width is ugly)
+@@ -3033,7 +3312,7 @@ class LVFormatter {
+                         word->added_letter_spacing = word_max_letter_spacing;
+                     else
+                         can_try_larger = true;
+-                    added_spacing += word->distinct_glyphs * word->added_letter_spacing;
++                    added_spacing += huSpacingGlyphCount(word) * word->added_letter_spacing;
+                     // spaces between words need the same amount of tracking as the glyphs to
+                     // maintain visual contrast between letter spacing and word spacing.
+                     if ( word->flags & LTEXT_WORD_CAN_ADD_SPACE_AFTER && i < frmline->word_count-1 )
+@@ -3048,7 +3327,7 @@ class LVFormatter {
+                         if ( word->distinct_glyphs <= 0 || word->flags & LTEXT_WORD_IS_CJK )
+                             continue;
+                         word->added_letter_spacing = word->_baseline_to_bottom;
+-                        added_spacing += word->distinct_glyphs * word->added_letter_spacing;
++                        added_spacing += huSpacingGlyphCount(word) * word->added_letter_spacing;
+                     }
+                     break;
+                 }
+@@ -3065,7 +3344,7 @@ class LVFormatter {
+                 for ( int i=0; i<(int)frmline->word_count; i++ ) {
+                     formatted_word_t * word = &frmline->words[i];
+                     if ( word->distinct_glyphs > 0 && !(word->flags & LTEXT_WORD_IS_CJK) ) {
+-                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
++                        int added_width = huSpacingGlyphCount(word) * word->added_letter_spacing;
+                         if ( i == frmline->word_count-1 ) {
+                             // For the last word on a justified line, we want to not see
+                             // any letter_spacing added after last glyph.
+@@ -4402,7 +4681,32 @@ class LVFormatter {
+                                 word->width = new_width;
+                             }
+                         }
++                        if ( m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE ) {
++                            word->width += huReplacementWidth(font, m_text+wstart, end-wstart, i-1-wstart, srcline->letter_spacing, srcline->lang_cfg);
++                            word->flags |= LTEXT_WORD_HUNGARIAN_HYPH_REPLACE;
++                        }
+                         word->width += font->getHyphenWidth();
++                        if ( word->flags & LTEXT_WORD_HUNGARIAN_HYPH_REPLACE ) {
++                            // HU252: reserve at least the actual independently shaped
++                            // rendered prefix plus hyphen. Only when word is entirely
++                            // in one source fragment (same assumption as drawing).
++                            bool same_source_fragment = true;
++                            for (int k = wstart; k < i; ++k) {
++                                if (m_srcs[k] != srcline) {
++                                    same_source_fragment = false;
++                                    break;
++                                }
++                            }
++                            if (same_source_fragment) {
++                                int source_len = srcline->t.len - word->t.start;
++                                int painted = hu252RenderedPrefixWidth(font,
++                                    srcline->t.text + word->t.start,
++                                    source_len, word->t.len - 1,
++                                    srcline->letter_spacing, srcline->lang_cfg);
++                                if (painted >= 0 && word->width < painted + font->getHyphenWidth())
++                                    word->width = painted + font->getHyphenWidth();
++                            }
++                        }
+                         word->min_width = word->width;
+                         word->flags |= LTEXT_WORD_CAN_HYPH_BREAK_LINE_AFTER;
+                     }
+@@ -5480,33 +5784,71 @@ class LVFormatter {
+                     // (lStr_findWordBounds() might grab objects or inlineboxes as part of
+                     // the word, so skip them when looking for a font)
+                     int _hyphen_width = 0;
++                    LVFont * hyphen_font = NULL;
+                     for ( int i=wstart; i<wend; i++ ) {
+                         if ( !(m_srcs[i]->flags & LTEXT_SRC_IS_OBJECT) ) {
+-                            _hyphen_width = ((LVFont*)m_srcs[i]->t.font)->getHyphenWidth();
++                            hyphen_font = (LVFont*)m_srcs[i]->t.font;
++                            _hyphen_width = hyphen_font->getHyphenWidth();
+                             break;
+                         }
+                     }
+                     // Use the hyph method of the source node that contains wordpos
+-                    if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2) ) {
++                    HyphMethod * hyph_method = m_srcs[wordpos]->lang_cfg->getHyphMethod();
++                    bool hyphen_found = hyph_method->hyphenate(m_text+wstart, len, widths, flags,
++                                                               _hyphen_width, max_width, 2);
++                    if ( TextLangMan::getHyphenationHungarianExtended() &&
++                         m_srcs[wordpos]->lang_cfg->isHungarian() ) {
++                        int left_hyphen_min = HyphMan::getLeftHyphenMin();
++                        int right_hyphen_min = HyphMan::getRightHyphenMin();
++                        if ( !left_hyphen_min )
++                            left_hyphen_min = hyph_method->getLeftHyphenMin();
++                        if ( !right_hyphen_min )
++                            right_hyphen_min = hyph_method->getRightHyphenMin();
++                        hyphen_found = huAddExtendedHyphenation(m_text+wstart, len, m_flags+wstart,
++                                                               left_hyphen_min, right_hyphen_min) || hyphen_found;
++                    }
++                    if ( hyphen_found ) {
+                         // We need to reset the flag for the multiple hyphenation
+                         // opportunities we will not be using (or they could cause
+                         // spurious spaces, as a word here may be multiple words
+                         // in AddLine() if parts from different text nodes).
+                         for ( int i=0; i<len; i++ ) {
+                             if ( m_flags[wstart+i] & LCHAR_ALLOW_HYPH_WRAP_AFTER ) {
+-                                if ( widths[i] + _hyphen_width > max_width ) {
++                                int candidate_width = widths[i] + _hyphen_width;
++                                if ( (m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE) && hyphen_font ) {
++                                    candidate_width += huReplacementWidth(hyphen_font, m_text+wstart, len, i, m_srcs[wordpos]->letter_spacing, m_srcs[wordpos]->lang_cfg);
++                                    // HU252: the full-word cumulative prefix can be narrower
++                                    // than the separately shaped, actually drawn prefix.
++                                    // Use the larger estimate for the fit decision.
++                                    bool same_font_fragment = true;
++                                    for (int k = wstart; k <= wstart + i; ++k) {
++                                        if (m_srcs[k] != m_srcs[wstart]) {
++                                            same_font_fragment = false;
++                                            break;
++                                        }
++                                    }
++                                    if (same_font_fragment) {
++                                        int painted = hu252RenderedPrefixWidth(hyphen_font,
++                                            m_text+wstart, len, i,
++                                            m_srcs[wordpos]->letter_spacing,
++                                            m_srcs[wordpos]->lang_cfg);
++                                        if (painted >= 0 && candidate_width < painted + _hyphen_width)
++                                            candidate_width = painted + _hyphen_width;
++                                    }
++                                }
++                                if ( candidate_width > max_width ) {
+                                     TR("hyphen found, but max width reached at char %d", i);
+-                                    m_flags[wstart+i] &= ~LCHAR_ALLOW_HYPH_WRAP_AFTER; // reset flag
++                                    m_flags[wstart+i] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER|LCHAR_HUNGARIAN_HYPH_REPLACE); // reset flags
+                                 }
+                                 else if ( wstart + i > pos+1 ) {
+                                     if ( lastHyphWrap >= 0 ) { // reset flag on previous candidate
+-                                        m_flags[lastHyphWrap] &= ~LCHAR_ALLOW_HYPH_WRAP_AFTER;
++                                        m_flags[lastHyphWrap] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER|LCHAR_HUNGARIAN_HYPH_REPLACE);
+                                     }
+                                     lastHyphWrap = wstart + i;
+                                     // Keep looking for some other candidates in that word
+                                 }
+                                 else if ( wstart + i >= pos ) {
+-                                    m_flags[wstart+i] &= ~LCHAR_ALLOW_HYPH_WRAP_AFTER; // reset flag
++                                    m_flags[wstart+i] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER|LCHAR_HUNGARIAN_HYPH_REPLACE); // reset flags
+                                 }
+                                 // Don't reset those < pos as they are part of previous line
+                             }
+@@ -6634,6 +6976,20 @@ void LFormattedText::Draw( LVDrawBuf * buf, int x, int y, ldomMarkedRangeList *
+                     }
+                     font = (LVFont *) srcline->t.font;
+                     str = srcline->t.text + word->t.start;
++                    int draw_len = word->t.len;
++                    lString32 hungarian_hyphenated_word;
++                    if ( flgHyphen && (word->flags & LTEXT_WORD_HUNGARIAN_HYPH_REPLACE) ) {
++                        lChar32 replacement[2];
++                        int source_len = srcline->t.len - word->t.start;
++                        int replacement_len = huHyphenReplacement(str, source_len, word->t.len-1, replacement);
++                        if ( replacement_len ) {
++                            hungarian_hyphenated_word.append(str, word->t.len);
++                            for ( int k=0; k<replacement_len; k++ )
++                                hungarian_hyphenated_word << replacement[k];
++                            str = hungarian_hyphenated_word.c_str();
++                            draw_len += replacement_len;
++                        }
++                    }
+                     /*
+                     lUInt32 srcFlags = srcline->flags;
+                     if ( srcFlags & LTEXT_BACKGROUND_MARK_FLAGS ) {
