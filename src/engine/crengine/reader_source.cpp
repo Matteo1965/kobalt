@@ -401,7 +401,7 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                               Utf8ToUnicode(lString8(documentCacheName(cacheFingerprint_).toUtf8().constData())));
         properties->setHex(
             DOC_PROP_FILE_CRC32,
-            documentCacheChecksum(documentCachePolicy() + ":bionic-v3:dropcap-merge-v3:alignment-initial-markers-v4:" + bionic_.toUtf8(), domVersion_));
+            documentCacheChecksum(documentCachePolicy() + ":bionic-v3:dropcap-merge-v3:dropcap-multi-chapter-v5:" + bionic_.toUtf8(), domVersion_));
         properties->setString(DOC_PROP_FILE_SIZE, lString32::itoa(int(cacheBytes_ < 0         ? 0
                                                                       : cacheBytes_ > INT_MAX ? INT_MAX
                                                                                               : cacheBytes_)));
@@ -488,8 +488,9 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
         QVector<ldomNode *> pending;
         if (root)
             pending.append(root);
+        // A book can contain many short chapters and drop caps. Do not stop after four repairs.
         int visited = 0, altered = 0;
-        while (!pending.isEmpty() && ++visited < 40000 && altered < 4) {
+        while (!pending.isEmpty() && ++visited < 120000 && altered < 128) {
             auto *parent = pending.takeLast();
             if (!parent || !parent->isElement())
                 continue;
