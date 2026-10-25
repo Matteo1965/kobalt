@@ -926,7 +926,7 @@ void ReaderModel::applyStyleSheet() {
         QString("body,p,div,section,article,blockquote,li,dt,dd,h1,h2,h3,h4,h5,h6 { line-height:%1% !important; }")
             .arg(spacing_);
     // Do not indent visually centered or right-aligned paragraphs, without altering the EPUB.
-    overrides += "[data-kobalt-centered=\"1\"], [data-kobalt-prose=\"1\"][style*=\"text-align: center\"], [data-kobalt-prose=\"1\"][style*=\"text-align: right\"] { text-indent:0 !important; }\n";
+    overrides += "[data-kobalt-no-indent=\"1\"] { text-indent:0 !important; }\n";
     if (alignment_ == "center" || alignment_ == "right")
         overrides += "[data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n";
     // Only marked text blocks override publisher alignment; decorative blocks keep it.

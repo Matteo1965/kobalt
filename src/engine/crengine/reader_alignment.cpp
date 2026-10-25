@@ -46,6 +46,7 @@ void markBodyAlignment(ldomDocument *document) {
     if (!document || !document->getRootNode())
         return;
     const auto attribute = document->getAttrNameIndex("data-kobalt-prose");
+    const auto noIndentAttribute = document->getAttrNameIndex("data-kobalt-no-indent");
     static const QSet<QString> blocks{"p", "li", "dt", "dd", "blockquote", "div", "section", "article"};
     std::vector<Frame> stack{{document->getRootNode()}};
     while (!stack.empty()) {
@@ -57,6 +58,15 @@ void markBodyAlignment(ldomDocument *document) {
             frame.blocked = frame.blocked || preserve(node, name);
             if (node->hasAttribute(attribute))
                 node->setAttributeValue(0, attribute, U"");
+            // Inspect computed publisher alignment, including inherited CSS and class rules.
+            // This must precede the reader paragraph-indent override.
+            if (node->hasAttribute(noIndentAttribute))
+                node->setAttributeValue(0, noIndentAttribute, U"");
+            if (frame.block) {
+                const auto style = node->getStyle();
+                if (!style.isNull() && (style->text_align == css_ta_center || style->text_align == css_ta_right))
+                    node->setAttributeValue(0, noIndentAttribute, U"1");
+            }
         }
         if (frame.child < node->getChildCount()) {
             auto *child = node->getChildNode(frame.child++);
