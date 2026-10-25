@@ -373,7 +373,7 @@
                      else
                          can_try_larger = true;
 -                    added_spacing += word->distinct_glyphs * word->added_letter_spacing;
-+                    added_spacing += huSpacingGlyphCount(word, m_pbuffer) * word->added_letter_spacing;
++                    added_spacing += huSpacingGlyphCount(word, fmt->m_pbuffer) * word->added_letter_spacing;
                      // spaces between words need the same amount of tracking as the glyphs to
                      // maintain visual contrast between letter spacing and word spacing.
                      if ( word->flags & LTEXT_WORD_CAN_ADD_SPACE_AFTER && i < frmline->word_count-1 )
@@ -382,21 +382,21 @@
                              continue;
                          word->added_letter_spacing = word->_baseline_to_bottom;
 -                        added_spacing += word->distinct_glyphs * word->added_letter_spacing;
-+                        added_spacing += huSpacingGlyphCount(word, m_pbuffer) * word->added_letter_spacing;
++                        added_spacing += huSpacingGlyphCount(word, fmt->m_pbuffer) * word->added_letter_spacing;
                      }
                      break;
                  }
 @@ -3067,3 +3346,3 @@
                      if ( word->distinct_glyphs > 0 && !(word->flags & LTEXT_WORD_IS_CJK) ) {
 -                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
-+                        int added_width = huSpacingGlyphCount(word, m_pbuffer) * word->added_letter_spacing;
++                        int added_width = huSpacingGlyphCount(word, fmt->m_pbuffer) * word->added_letter_spacing;
                          if ( i == frmline->word_count-1 ) {
 @@ -4402,7 +4681,32 @@ class LVFormatter {
                                  word->width = new_width;
                              }
                          }
-+                        if ( m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE ) {
-+                            word->width += huReplacementWidth(font, m_text+wstart, end-wstart, i-1-wstart, srcline->letter_spacing, srcline->lang_cfg);
++                        if ( fmt->m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE ) {
++                            word->width += huReplacementWidth(font, fmt->m_text+wstart, end-wstart, i-1-wstart, srcline->letter_spacing, srcline->lang_cfg);
 +                            word->hungarian_replace = 1;
 +                        }
                          word->width += font->getHyphenWidth();
@@ -406,7 +406,7 @@
 +                            // in one source fragment (same assumption as drawing).
 +                            bool same_source_fragment = true;
 +                            for (int k = wstart; k < i; ++k) {
-+                                if (m_srcs[k] != srcline) {
++                                if (fmt->m_srcs[k] != srcline) {
 +                                    same_source_fragment = false;
 +                                    break;
 +                                }
