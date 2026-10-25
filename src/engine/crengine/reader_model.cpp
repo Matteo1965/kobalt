@@ -892,7 +892,7 @@ void ReaderModel::applyStyleSheet() {
     // Other paragraphs keep their selected paragraph spacing.
     overrides +=
         "p[data-kobalt-initial=\"1\"] { margin-bottom:0 !important; }\n"
-        "p[data-kobalt-initial=\"1\"] + p { margin-top:0 !important; }\n";
+        "p[data-kobalt-initial=\"1\"] + p { margin-top:0 !important; text-indent:0 !important; }\n";
     // Preserve the publisher's drop-cap font size, line-height and positioning.
     // Only reserve horizontal space with a float; do not resize the initial.
     overrides +=
