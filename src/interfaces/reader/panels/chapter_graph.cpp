@@ -159,12 +159,14 @@ private:
     QString unitValue, detailValue, shortValue;
     void arrange() {
         const int inner = qMax(1, width() - 2 * c::inset);
-        const QFontMetrics captionMetrics(ui::captionFont()), figureMetrics(ui::brandFont(m::figureText)),
-            unitMetrics(ui::interfaceFont(m::unitText));
+        const QFontMetrics captionMetrics(ui::captionFont()), figureMetrics(ui::brandFont(int(m::figureText) / 2)),
+            originalFigureMetrics(ui::brandFont(m::figureText)), unitMetrics(ui::interfaceFont(m::unitText));
         caption->setGeometry(c::inset, m::cellPadding, inner, captionMetrics.height());
         percent->setGeometry(c::inset, m::cellPadding, inner, captionMetrics.height());
         const int figureWidth = qMin(inner, kobalt::qt::textWidth(figureMetrics, figure->text()) + 2);
-        figure->setGeometry(c::inset, m::figureBaseline - figureMetrics.ascent(), figureWidth, figureMetrics.height());
+        // Keep the original figure box height while aligning the smaller numerals to the unit baseline.
+        figure->setGeometry(c::inset, m::figureBaseline - figureMetrics.ascent(), figureWidth,
+                            originalFigureMetrics.height());
         const int unitLeft = c::inset + figureWidth + m::unitGap;
         // A large figure keeps every digit; its unit shortens instead.
         const int unitWidth = qMax(1, width() - c::inset - unitLeft);

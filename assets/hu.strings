@@ -408,6 +408,6 @@
 "header_footer.preset.modified_name" = "%1, módosítva";
 "light_panel.brightness_swipe_hint" = "A fényerő beállításához húzd az ujjad fel vagy le a bal szélen.";
 "header_footer.custom_hint" = "Hat mezőt szabhat testre: érintse meg a módosítani kívánt mezőt. A változtatások az Egyéni elrendezésben tárolódnak, és minden azt használó könyvre érvényesek!";
-"annotations.title" = "Jegyzet készítése";
+"annotations.title" = "JEGYZETEK";
 "annotations.mode" = "Jegyzetelési mód";
 "annotations.mode_active" = "A KIEMELÉSI MÓD AKTÍV";
