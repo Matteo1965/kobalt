@@ -62,7 +62,7 @@ QColor sectionColor(const QWidget *widget) {
     return QColor(darkTheme(widget) ? "#333333" : "#dddddd");
 }
 QColor noteColor(const QWidget *widget) {
-    return QColor(darkTheme(widget) ? m::text::explanationDark : m::text::explanationLight);
+    return widget->palette().color(QPalette::WindowText);
 }
 void paintHeaderRules(QPainter &painter, const QWidget *view) {
     painter.fillRect(0, m::chrome::statusHeight - m::control::border, view->width(), m::control::border,
@@ -91,7 +91,7 @@ void readerStyle(QWidget *widget, const QString &source) {
     style.replace("palette(midlight)", dark ? "#333333" : "#dddddd");
     style.replace("palette(mid)", "#999999");
     style.replace("palette(light)", dark ? m::chrome::dividerDark : m::chrome::dividerLight);
-    style.replace("palette(placeholder-text)", dark ? "#cccccc" : "#333333");
+    style.replace("palette(placeholder-text)", dark ? "white" : "black");
     style.replace("palette(dark)", dark ? m::control::darkOutline : m::control::lightOutline);
     if (widget->styleSheet() != style)
         widget->setStyleSheet(style);
@@ -104,6 +104,9 @@ QPalette readerPalette(QPalette colors, bool dark) {
     for (const auto role : {QPalette::WindowText, QPalette::Text, QPalette::ButtonText, QPalette::Highlight})
         colors.setColor(role, ink);
     colors.setColor(QPalette::Mid, QColor("#999999"));
+    for (const auto group : {QPalette::Active, QPalette::Inactive, QPalette::Disabled})
+        for (const auto role : {QPalette::WindowText, QPalette::Text, QPalette::ButtonText})
+            colors.setColor(group, role, ink);
     colors.setColor(QPalette::Midlight, dark ? QColor("#333333") : QColor("#dddddd"));
     return colors;
 }

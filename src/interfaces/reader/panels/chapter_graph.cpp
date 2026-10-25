@@ -125,7 +125,7 @@ public:
         figure = new ui::InterfaceLabel(this);
         figure->setObjectName(prefix + "Figure");
         figure->setTextFormat(Qt::PlainText);
-        ui::readerStyle(figure, ui::styles::brand(m::figureText) + "background:transparent;");
+        ui::readerStyle(figure, ui::styles::brand(int(m::figureText) / 2) + "background:transparent;");
         unit = new ui::InterfaceLabel(this);
         unit->setObjectName(prefix + "Unit");
         detail = new ui::InterfaceLabel(this);
@@ -135,7 +135,7 @@ public:
         for (auto *label : {unit, detail}) {
             label->setTextFormat(Qt::PlainText);
             ui::readerStyle(label,
-                            ui::styles::font(m::unitText) + "background:transparent;color:palette(placeholder-text);");
+                            ui::styles::font(m::unitText) + "background:transparent;color:palette(window-text);");
         }
     }
     QLabel *caption, *percent, *figure, *unit, *detail;
