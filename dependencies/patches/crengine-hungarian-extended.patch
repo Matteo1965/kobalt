@@ -11,15 +11,9 @@
  #define LCHAR_IS_OBJECT              0x0100 ///< flag: this char is object (image, float)
 --- a/crengine/include/lvtextfm.h
 +++ b/crengine/include/lvtextfm.h
-@@ -208,7 +208,7 @@ typedef struct
- #define LTEXT_WORD_VALIGN_BOTTOM             0x2000 /// word is to be vertical-align: bottom
- #define LTEXT_WORD_STRUT_CONFINED            0x4000 /// word is to be fully contained into strut bounds
-                                                     /// (used only when one of the 2 previous is set)
+@@ -211,1 +211,1 @@
 -#define LTEXT_WORD__AVAILABLE_BIT_16__       0x8000
 +#define LTEXT_WORD_HUNGARIAN_HYPH_REPLACE    0x8000 /// append the compact Hungarian consonant tail before hyphen
- 
- //#define LTEXT_BACKGROUND_MARK_FLAGS 0xFFFF0000l
- 
 --- a/crengine/include/textlang.h
 +++ b/crengine/include/textlang.h
 @@ -26,6 +26,7 @@
@@ -339,9 +333,7 @@
  // to debug formatter
  
  #if defined(_DEBUG) && 0
-@@ -2752,6 +2990,34 @@ class LVFormatter {
- #define MIN_WORD_LEN_TO_HYPHENATE 4
- #define MAX_WORD_SIZE 64
+@@ -2754,2 +2992,30 @@
  
 +    // HU252: measure fully rendered Hungarian replacement prefix, *without* the hyphen.
 +    // This is used only for Hungarian replacement hyphenation, not regular breaks.
@@ -372,11 +364,7 @@
 +    }
 +
      /// align line: add or reduce widths of spaces to achieve desired text alignment
-     void alignLine( formatted_line_t * frmline, int alignment, int rightIndent=0, bool hasInlineBoxes=false ) {
-         // Fetch current line x offset and max width
-@@ -2972,6 +3238,19 @@ class LVFormatter {
- 
-         // We might want to prevent this when LangCfg == "de" (in german,
+@@ -2974,2 +3240,15 @@
          // letter spacing is used for emphasis)
 +        // Count Hungarian replacement glyphs in justified line spacing.
 +        auto huSpacingGlyphCount = [this](const formatted_word_t * word) -> int {
@@ -392,8 +380,6 @@
 +        };
 +
          if ( m_pbuffer->max_added_letter_spacing_percent > 0 // only if allowed
-                         && alignment == LTEXT_ALIGN_WIDTH    // only when justifying
-                         && frmline->word_count > 1           // not if single word (expanded, but not taking the full width is ugly)
 @@ -3033,7 +3312,7 @@ class LVFormatter {
                          word->added_letter_spacing = word_max_letter_spacing;
                      else
@@ -412,15 +398,11 @@
                      }
                      break;
                  }
-@@ -3065,7 +3344,7 @@ class LVFormatter {
-                 for ( int i=0; i<(int)frmline->word_count; i++ ) {
-                     formatted_word_t * word = &frmline->words[i];
+@@ -3067,3 +3346,3 @@
                      if ( word->distinct_glyphs > 0 && !(word->flags & LTEXT_WORD_IS_CJK) ) {
 -                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
 +                        int added_width = huSpacingGlyphCount(word) * word->added_letter_spacing;
                          if ( i == frmline->word_count-1 ) {
-                             // For the last word on a justified line, we want to not see
-                             // any letter_spacing added after last glyph.
 @@ -4402,7 +4681,32 @@ class LVFormatter {
                                  word->width = new_width;
                              }
@@ -454,9 +436,7 @@
                          word->min_width = word->width;
                          word->flags |= LTEXT_WORD_CAN_HYPH_BREAK_LINE_AFTER;
                      }
-@@ -5480,33 +5784,71 @@ class LVFormatter {
-                     // (lStr_findWordBounds() might grab objects or inlineboxes as part of
-                     // the word, so skip them when looking for a font)
+@@ -5482,5 +5786,7 @@
                      int _hyphen_width = 0;
 +                    LVFont * hyphen_font = NULL;
                      for ( int i=wstart; i<wend; i++ ) {
@@ -465,8 +445,7 @@
 +                            hyphen_font = (LVFont*)m_srcs[i]->t.font;
 +                            _hyphen_width = hyphen_font->getHyphenWidth();
                              break;
-                         }
-                     }
+@@ -5489,3 +5795,17 @@
                      // Use the hyph method of the source node that contains wordpos
 -                    if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2) ) {
 +                    HyphMethod * hyph_method = m_srcs[wordpos]->lang_cfg->getHyphMethod();
@@ -485,10 +464,7 @@
 +                    }
 +                    if ( hyphen_found ) {
                          // We need to reset the flag for the multiple hyphenation
-                         // opportunities we will not be using (or they could cause
-                         // spurious spaces, as a word here may be multiple words
-                         // in AddLine() if parts from different text nodes).
-                         for ( int i=0; i<len; i++ ) {
+@@ -5496,5 +5816,27 @@
                              if ( m_flags[wstart+i] & LCHAR_ALLOW_HYPH_WRAP_AFTER ) {
 -                                if ( widths[i] + _hyphen_width > max_width ) {
 +                                int candidate_width = widths[i] + _hyphen_width;
@@ -518,20 +494,16 @@
 -                                    m_flags[wstart+i] &= ~LCHAR_ALLOW_HYPH_WRAP_AFTER; // reset flag
 +                                    m_flags[wstart+i] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER|LCHAR_HUNGARIAN_HYPH_REPLACE); // reset flags
                                  }
-                                 else if ( wstart + i > pos+1 ) {
+@@ -5502,3 +5844,3 @@
                                      if ( lastHyphWrap >= 0 ) { // reset flag on previous candidate
 -                                        m_flags[lastHyphWrap] &= ~LCHAR_ALLOW_HYPH_WRAP_AFTER;
 +                                        m_flags[lastHyphWrap] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER|LCHAR_HUNGARIAN_HYPH_REPLACE);
                                      }
-                                     lastHyphWrap = wstart + i;
-                                     // Keep looking for some other candidates in that word
-                                 }
+@@ -5508,3 +5850,3 @@
                                  else if ( wstart + i >= pos ) {
 -                                    m_flags[wstart+i] &= ~LCHAR_ALLOW_HYPH_WRAP_AFTER; // reset flag
 +                                    m_flags[wstart+i] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER|LCHAR_HUNGARIAN_HYPH_REPLACE); // reset flags
                                  }
-                                 // Don't reset those < pos as they are part of previous line
-                             }
 @@ -6634,6 +6976,20 @@ void LFormattedText::Draw( LVDrawBuf * buf, int x, int y, ldomMarkedRangeList *
                      }
                      font = (LVFont *) srcline->t.font;
