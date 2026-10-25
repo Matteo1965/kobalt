@@ -393,3 +393,17 @@
 "reader.formatting_warning_description" = "A könyv formázása hibás lehet. Az olvasás folytatható, de egyes szövegrészek vagy elrendezési elemek eltérően jelenhetnek meg.";
 "reader.one_column" = "Egy oszlop";
 "reader.two_columns" = "Két oszlop";
+"navigation.seek" = "NAVIGÁCIÓ";
+"controls.currently" = "Jelenleg:";
+"header_footer.title" = "Fejléc és lábléc";
+"header_footer.customize_title" = "Fejléc és lábléc testreszabása";
+"header_footer.preset.custom" = "Egyéni";
+"header_footer.progress_bar" = "Folyamatjelző";
+"light_panel.automatic_warmth" = "Kobo színhőmérséklet-időzítés követése";
+"light_panel.automatic_warmth_description" = "A Kobo beállításaiban megadott lefekvési időt használja. A színhőmérséklet kézi módosítása kikapcsolja ezt.";
+"light_panel.swipe_hint" = "A gyors beállításhoz húzd az ujjad fel vagy le a képernyő szélein.";
+"annotations.tab" = "Jegyzetek";
+"common.more_next_page" = "Folytatás a következő oldalon";
+"header_footer.close" = "Fejléc és lábléc bezárása";
+"header_footer.preset.modified_name" = "%1, módosítva";
+"light_panel.brightness_swipe_hint" = "A fényerő beállításához húzd az ujjad fel vagy le a bal szélen.";
