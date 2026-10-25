@@ -523,6 +523,11 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     version->setAlignment(Qt::AlignCenter);
     readerStyle(version, styles::font(m::text::secondary));
     build->addWidget(version);
+    auto *hungarianEdition = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition 0.3.15"), aboutPage);
+    hungarianEdition->setObjectName("rrAboutHungarianEditionVersion");
+    hungarianEdition->setAlignment(Qt::AlignCenter);
+    readerStyle(hungarianEdition, styles::font(m::text::secondary));
+    build->addWidget(hungarianEdition);
     auto *commit = new ui::InterfaceLabel(inputs.commit, aboutPage);
     commit->setObjectName("rrAboutCommit");
     commit->setAlignment(Qt::AlignCenter);

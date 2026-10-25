@@ -1,4 +1,4 @@
-name: Hungarian Edition beta 4 Qt5
+name: Hungarian Edition 0.3.15 Qt5 and Qt6
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: kobalt-hu-beta4-qt5-${{ github.ref }}
+  group: kobalt-hu-0315-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -37,10 +37,32 @@ jobs:
         run: bash platforms/ci/build.sh qt5
       - name: Version Qt5 ZIP
         run: |
-          mv build/release/Kobalt-qt5.zip "build/release/Kobalt-Hungarian-beta4-v0.3.${{ github.run_number }}-qt5.zip"
+          mv build/release/Kobalt-qt5.zip "build/release/Kobalt-Hungarian-Edition-0.3.15-qt5.zip"
       - uses: actions/upload-artifact@v4
         with:
-          name: kobalt-hungarian-beta4-v0.3.${{ github.run_number }}-qt5
+          name: kobalt-hungarian-edition-0.3.15-qt5
+          path: build/release/*
+          if-no-files-found: error
+          compression-level: 0
+
+  build-qt6:
+    needs: validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build Kobo Qt6 firmware
+        env:
+          CONTAINER_ENGINE: docker
+        run: bash platforms/ci/build.sh qt6
+      - name: Version Qt6 ZIP
+        run: |
+          mv build/release/Kobalt-qt6.zip "build/release/Kobalt-Hungarian-Edition-0.3.15-qt6.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kobalt-hungarian-edition-0.3.15-qt6
           path: build/release/*
           if-no-files-found: error
           compression-level: 0
