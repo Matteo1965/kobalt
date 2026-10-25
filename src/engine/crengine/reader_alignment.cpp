@@ -40,13 +40,16 @@ struct Frame {
     ldomNode *node;
     int child = 0;
     bool blocked = false, words = false, protectedChild = false, blockChild = false, block = false;
+    bool initialLetter = false;
 };
 }
 void markBodyAlignment(ldomDocument *document) {
     if (!document || !document->getRootNode())
         return;
     const auto attribute = document->getAttrNameIndex("data-kobalt-prose");
+    const auto centeredAttribute = document->getAttrNameIndex("data-kobalt-centered");
     const auto noIndentAttribute = document->getAttrNameIndex("data-kobalt-no-indent");
+    const auto initialAttribute = document->getAttrNameIndex("data-kobalt-initial");
     static const QSet<QString> blocks{"p", "li", "dt", "dd", "blockquote", "div", "section", "article"};
     std::vector<Frame> stack{{document->getRootNode()}};
     while (!stack.empty()) {
@@ -55,18 +58,29 @@ void markBodyAlignment(ldomDocument *document) {
         if (!frame.child && node->isElement()) {
             const auto name = text(node->getNodeName());
             frame.block = blocks.contains(name);
+            // EPUB drop caps are often a first-letter span (e.g. <span class="inic">A</span>z).
+            // Flag the containing paragraph so an added first-line indent does not split the word.
+            if (name == "span") {
+                static const QRegularExpression initialClass(
+                    "(?:^|[\\s_-])(?:inic|initial|initiale|dropcap|drop-cap)(?:$|[\\s_-])",
+                    QRegularExpression::CaseInsensitiveOption);
+                frame.initialLetter = initialClass.match(text(node->getAttributeValue("class"))).hasMatch();
+            }
+            // Centered publisher headings can carry a first-line indent. Mark
+            // computed center alignment, including CSS classes and inheritance.
+            const auto style = node->getStyle();
+            static const QSet<QString> centeredBlocks{
+                "p", "li", "dt", "dd", "blockquote", "div", "section", "article",
+                "h1", "h2", "h3", "h4", "h5", "h6", "header", "figcaption", "caption"
+            };
+            if (centeredBlocks.contains(name) && !style.isNull() && style->text_align == css_ta_center)
+                node->setAttributeValue(0, centeredAttribute, U"1");
+            if (centeredBlocks.contains(name) && !style.isNull() &&
+                (style->text_align == css_ta_center || style->text_align == css_ta_right))
+                node->setAttributeValue(0, noIndentAttribute, U"1");
             frame.blocked = frame.blocked || preserve(node, name);
             if (node->hasAttribute(attribute))
                 node->setAttributeValue(0, attribute, U"");
-            // Inspect computed publisher alignment, including inherited CSS and class rules.
-            // This must precede the reader paragraph-indent override.
-            if (node->hasAttribute(noIndentAttribute))
-                node->setAttributeValue(0, noIndentAttribute, U"");
-            if (frame.block) {
-                const auto style = node->getStyle();
-                if (!style.isNull() && (style->text_align == css_ta_center || style->text_align == css_ta_right))
-                    node->setAttributeValue(0, noIndentAttribute, U"1");
-            }
         }
         if (frame.child < node->getChildCount()) {
             auto *child = node->getChildNode(frame.child++);
@@ -76,6 +90,8 @@ void markBodyAlignment(ldomDocument *document) {
         if (node->isText())
             frame.words = !text(node->getText()).trimmed().isEmpty();
         const bool block = frame.block;
+        if (block && frame.initialLetter && text(node->getNodeName()) == "p")
+            node->setAttributeValue(0, initialAttribute, U"1");
         if (block && frame.words && !frame.blocked && !frame.protectedChild && !frame.blockChild)
             node->setAttributeValue(0, attribute, U"1");
         const auto finished = frame;
@@ -83,6 +99,7 @@ void markBodyAlignment(ldomDocument *document) {
         if (!stack.empty()) {
             auto &parent = stack.back();
             parent.words |= finished.words;
+            parent.initialLetter |= finished.initialLetter;
             parent.protectedChild |= finished.blocked || finished.protectedChild;
             parent.blockChild |= block || finished.blockChild;
         }
