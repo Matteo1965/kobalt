@@ -173,7 +173,7 @@
 +        }
 +        // lStr_findWordBounds() will find the word contained at wordpos
 +        // (or the previous word if wordpos happens to be a space or some
-+        // punctuation) by looking only for alpha chars in m_text.
++        // punctuation) by looking only for alpha chars in fmt->m_text.
 +        int wstart, wend;
 +        bool has_rtl;
 +        lStr_findWordBounds( fmt->m_text, fmt->m_length, wordpos, wstart, wend, has_rtl );
@@ -199,7 +199,7 @@
 +            len = MAX_WORD_SIZE;
 +        // ->hyphenate(), which is used by some other parts of the code,
 +        // expects a lUInt8 array. We added flagSize=1|2 so it can set the correct
-+        // flags on our upgraded (from lUInt8 to lUInt16) m_flags.
++        // flags on our upgraded (from lUInt8 to lUInt16) fmt->m_flags.
 +        lUInt8 * flags = (lUInt8*) (fmt->m_flags + wstart);
 +        // Fill static array with cumulative widths relative to word start
 +        static lUInt16 widths[MAX_WORD_SIZE];

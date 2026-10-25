@@ -82,7 +82,7 @@
  void TextLangMan::uninit() {
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -43,6 +43,245 @@
+@@ -43,6 +43,285 @@
  #define MAX_ADDED_LETTER_SPACING_PERCENT 0
  #define CJK_WIDTH_SCALE_PERCENT 100
  
@@ -325,12 +325,7 @@
 +    return shaped_extra > glyph_with_spacing ? shaped_extra : glyph_with_spacing;
 +}
 +
- // to debug formatter
- 
- #if defined(_DEBUG) && 0
-@@ -2754,2 +2992,30 @@
- 
-+    // HU252: measure fully rendered Hungarian replacement prefix, *without* the hyphen.
++// HU252: measure fully rendered Hungarian replacement prefix, *without* the hyphen.
 +    // This is used only for Hungarian replacement hyphenation, not regular breaks.
 +    // Return -1 if unsupported: callers then retain the existing calculation.
 +    static int hu252RenderedPrefixWidth(LVFont * font, const lChar32 * text,
@@ -358,29 +353,27 @@
 +        return widths[rendered_len - 1];
 +    }
 +
-     /// align line: add or reduce widths of spaces to achieve desired text alignment
-@@ -2974,2 +3240,15 @@
-         // letter spacing is used for emphasis)
-+        // Count Hungarian replacement glyphs in justified line spacing.
-+        auto huSpacingGlyphCount = [this](const formatted_word_t * word) -> int {
++static int huSpacingGlyphCount(const formatted_word_t * word, formatted_text_fragment_t * buffer) {
 +            int count = word->distinct_glyphs;
 +            if ( word->hungarian_replace ) {
-+                src_text_fragment_t * src = &m_pbuffer->srctext[word->src_text_index];
++                src_text_fragment_t * src = &buffer->srctext[word->src_text_index];
 +                const lChar32 * str = src->t.text + word->t.start;
 +                int source_len = src->t.len - word->t.start;
 +                lChar32 replacement[2];
 +                count += huHyphenReplacement(str, source_len, word->t.len-1, replacement);
 +            }
 +            return count;
-+        };
++        }
 +
-         if ( m_pbuffer->max_added_letter_spacing_percent > 0 // only if allowed
+ // to debug formatter
+ 
+ #if defined(_DEBUG) && 0
 @@ -3033,7 +3312,7 @@ class LVFormatter {
                          word->added_letter_spacing = word_max_letter_spacing;
                      else
                          can_try_larger = true;
 -                    added_spacing += word->distinct_glyphs * word->added_letter_spacing;
-+                    added_spacing += huSpacingGlyphCount(word) * word->added_letter_spacing;
++                    added_spacing += huSpacingGlyphCount(word, m_pbuffer) * word->added_letter_spacing;
                      // spaces between words need the same amount of tracking as the glyphs to
                      // maintain visual contrast between letter spacing and word spacing.
                      if ( word->flags & LTEXT_WORD_CAN_ADD_SPACE_AFTER && i < frmline->word_count-1 )
@@ -389,14 +382,14 @@
                              continue;
                          word->added_letter_spacing = word->_baseline_to_bottom;
 -                        added_spacing += word->distinct_glyphs * word->added_letter_spacing;
-+                        added_spacing += huSpacingGlyphCount(word) * word->added_letter_spacing;
++                        added_spacing += huSpacingGlyphCount(word, m_pbuffer) * word->added_letter_spacing;
                      }
                      break;
                  }
 @@ -3067,3 +3346,3 @@
                      if ( word->distinct_glyphs > 0 && !(word->flags & LTEXT_WORD_IS_CJK) ) {
 -                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
-+                        int added_width = huSpacingGlyphCount(word) * word->added_letter_spacing;
++                        int added_width = huSpacingGlyphCount(word, m_pbuffer) * word->added_letter_spacing;
                          if ( i == frmline->word_count-1 ) {
 @@ -4402,7 +4681,32 @@ class LVFormatter {
                                  word->width = new_width;
