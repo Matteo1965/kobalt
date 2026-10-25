@@ -944,3 +944,8 @@
 
 "settings.interface_language" = "Interface language";
 "settings.interface_language_restart" = "Restart Kobalt to apply the selected language.";
+
+"reader.paragraph_space" = "Paragraph space";
+"reader.paragraph_indent" = "Indentation";
+"reader.paragraph_normal" = "Normal";
+"reader.paragraph_publisher" = "Publisher";

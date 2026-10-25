@@ -430,6 +430,10 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     hyphenation_ = hyphenation.isBool() ? (hyphenation.toBool() ? "auto" : "off") : hyphenation.toString("off");
     if (hyphenation_ != "auto" && hyphenation_ != "on" && hyphenation_ != "off")
         hyphenation_ = "off";
+    paragraphSpacing_ = saved.value("paragraph_spacing").toString("publisher");
+    if (paragraphSpacing_ != "none" && paragraphSpacing_ != "half" && paragraphSpacing_ != "full") paragraphSpacing_ = "publisher";
+    paragraphIndent_ = saved.value("paragraph_indent").toString("publisher");
+    if (paragraphIndent_ != "none" && paragraphIndent_ != "first" && paragraphIndent_ != "full") paragraphIndent_ = "publisher";
     weight_ = qBound(0, saved.value("weight_steps").toInt(0), 12);
     bionic_ = "off";
     hangingPunctuation_ = saved.value("hanging_punctuation").toBool(true);
@@ -688,6 +692,8 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const bool axisChanged = axis.available() && axisWeight != axisWeight_;
     const auto alignment = settings.value("text_alignment").toString(alignment_);
     const auto hyphenation = settings.value("hyphenation").toString(hyphenation_);
+    const auto paragraphSpacing = settings.value("paragraph_spacing").toString(paragraphSpacing_);
+    const auto paragraphIndent = settings.value("paragraph_indent").toString(paragraphIndent_);
     const bool dark = settings.value("dark_mode").toBool(darkMode_);
     const bool hideNonlinear = settings.value("hide_nonlinear_fragments").toBool(hideNonlinearFragments_);
     const bool avoidWastefulStyling = settings.value("avoid_wasteful_styling").toBool(avoidWastefulStyling_);
@@ -720,7 +726,8 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
                         wordSpacing != wordSpacing_ || tracking != justificationTracking_ || widowsOrphans != widowsOrphans_ ||
                         bionicChanged || hangingPunctuation != hangingPunctuation_ || axisChanged || opticalChanged || pixels != pixels_ || spacing != spacing_ ||
                         face != face_ || defaultFace != defaultFace_ || margin != margin_ || topMargin != topMargin_ ||
-                        bottomMargin != bottomMargin_ || alignment != alignment_ || hyphenation != hyphenation_;
+                        bottomMargin != bottomMargin_ || alignment != alignment_ || hyphenation != hyphenation_ ||
+                        paragraphSpacing != paragraphSpacing_ || paragraphIndent != paragraphIndent_;
     const bool resized = size != size_ || columns != columns_ || columnSpacing != columnSpacing_;
     twoColumnsLandscape_ = landscapeColumns;
     columnSpacingPercent_ = gapPercent;
@@ -740,6 +747,8 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     bottomMargin_ = bottomMargin;
     alignment_ = alignment;
     hyphenation_ = hyphenation;
+    paragraphSpacing_ = paragraphSpacing;
+    paragraphIndent_ = paragraphIndent;
     weight_ = weight;
     axisWeight_ = axisWeight;
     opticalSize_ = opticalSize;
@@ -857,6 +866,42 @@ void ReaderModel::applyStyleSheet() {
         overrides += QString("body[data-kobalt-leading-image=\"1\"] { padding-top:%1px !important; }\n")
                          .arg(boundaryCssPixels, 0, 'f', 6);
     }
+    if (paragraphSpacing_ != "publisher") {
+        const char *amount = paragraphSpacing_ == "half" ? "0.5em" : paragraphSpacing_ == "full" ? "1em" : "0";
+        // Keep a larger, stepped gap below headings even when normal paragraph spacing is off.
+        // Publisher mode leaves both heading and paragraph margins entirely to the EPUB CSS.
+        const char *headingGap = paragraphSpacing_ == "half" ? "1.5em"
+                                 : paragraphSpacing_ == "full" ? "2em" : "1em";
+        overrides += QString("p { margin-top:0 !important; margin-bottom:%1 !important; }\n").arg(amount);
+        overrides += QString("h1,h2,h3,h4,h5,h6 { margin-bottom:%1 !important; }\n").arg(headingGap);
+    }
+    if (paragraphIndent_ == "none")
+        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n";
+    else if (paragraphIndent_ == "first")
+        // Small mode uses the same 0.8em indent on every prose paragraph.
+        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:0.8em !important; }\n";
+    else if (paragraphIndent_ == "full")
+        overrides += "p, [data-kobalt-prose=\"1\"] { text-indent:1.0em !important; }\n";
+    // A decorated initial belongs to the same word as the following text.
+    // Never insert an automatic indent into a drop-cap paragraph.
+    if (paragraphIndent_ == "first" || paragraphIndent_ == "full")
+        overrides += "p[data-kobalt-initial=\"1\"] { text-indent:0 !important; }\n";
+    // The first drop-cap paragraph may contain just a few words, while the
+    // initial extends into the following sibling paragraph. Keep their boundary
+    // free of spacing so the continued text stays alongside the initial.
+    // Other paragraphs keep their selected paragraph spacing.
+    overrides +=
+        "p[data-kobalt-initial=\"1\"] { margin-bottom:0 !important; }\n"
+        "p[data-kobalt-initial=\"1\"] + p { margin-top:0 !important; }\n";
+    // Preserve the publisher's drop-cap font size, line-height and positioning.
+    // Only reserve horizontal space with a float; do not resize the initial.
+    overrides +=
+        "p[data-kobalt-initial=\"1\"] > span.inic, "
+        "p[data-kobalt-initial=\"1\"] > span.initial, "
+        "p[data-kobalt-initial=\"1\"] > span.initiale, "
+        "p[data-kobalt-initial=\"1\"] > span.dropcap, "
+        "p[data-kobalt-initial=\"1\"] > span.drop-cap "
+        "{ float:left !important; }\n";
     if (hyphenation_ != "auto")
         overrides += QString("* { hyphens:%1 !important; }\n").arg(hyphenation_ == "on" ? "auto" : "none");
     // Explicit choices replace publisher declarations on every element, including
@@ -880,6 +925,10 @@ void ReaderModel::applyStyleSheet() {
     overrides +=
         QString("body,p,div,section,article,blockquote,li,dt,dd,h1,h2,h3,h4,h5,h6 { line-height:%1% !important; }")
             .arg(spacing_);
+    // Do not indent visually centered or right-aligned paragraphs, without altering the EPUB.
+    overrides += "[data-kobalt-centered=\"1\"], [data-kobalt-prose=\"1\"][style*=\"text-align: center\"], [data-kobalt-prose=\"1\"][style*=\"text-align: right\"] { text-indent:0 !important; }\n";
+    if (alignment_ == "center" || alignment_ == "right")
+        overrides += "[data-kobalt-prose=\"1\"] { text-indent:0 !important; }\n";
     // Only marked text blocks override publisher alignment; decorative blocks keep it.
     if (alignment_ != "publisher")
         overrides +=
@@ -1282,6 +1331,8 @@ QJsonObject ReaderModel::state() const {
                                {"bold_reading", bionic_},
                                {"hanging_punctuation", hangingPunctuation_},
                                {"hyphenation", hyphenation_},
+                               {"paragraph_spacing", paragraphSpacing_},
+                               {"paragraph_indent", paragraphIndent_},
                                {"dark_mode", darkMode_},
                                {"hide_nonlinear_fragments", hideNonlinearFragments_},
                                {"avoid_wasteful_styling", avoidWastefulStyling_},

@@ -338,6 +338,8 @@ private:
     // The engine DOM version that parses this book and writes its positions.
     int domVersion_ = 0;
     QString hyphenation_ = "off";
+    QString paragraphSpacing_ = "publisher";
+    QString paragraphIndent_ = "publisher";
     bool darkMode_ = false;
     bool hideNonlinearFragments_ = false;
     bool avoidWastefulStyling_ = true;

@@ -40,7 +40,8 @@ public:
     ui::SettingSlider *opticalSizeSlider = nullptr, *sizeSlider = nullptr, *weightSlider = nullptr,
                       *variableWeightSlider = nullptr, *spacingSlider = nullptr, *marginSlider = nullptr,
                       *verticalMarginSlider = nullptr;
-    QVector<QPushButton *> alignmentButtons, hyphenButtons, rotationButtons;
+    QVector<QPushButton *> alignmentButtons, hyphenButtons, rotationButtons,
+                           paragraphSpacingButtons, paragraphIndentButtons;
     QPushButton *autoRotateOption = nullptr;
     // Header and footer: the Layout row that opens its view, and the view's
     // presets and controls, built only when the layout has its rows. Size

@@ -347,6 +347,12 @@ void Reader::syncAppearanceControls(bool pickingFont) {
     fontButton->setFace(settings->fontFace());
     for (auto *button : hyphenButtons)
         button->setChecked(button->property("hyphenation").toString() == settings->hyphenation());
+    for (auto *button : paragraphIndentButtons)
+        button->setChecked(button->property("paragraph_indent").toString() ==
+                           settings->requestedState().value("paragraph_indent").toString("publisher"));
+    for (auto *button : paragraphSpacingButtons)
+        button->setChecked(button->property("paragraph_spacing").toString() ==
+                           settings->requestedState().value("paragraph_spacing").toString("publisher"));
     for (auto *button : alignmentButtons)
         button->setChecked(button->property("alignment").toString() == settings->alignment());
 }

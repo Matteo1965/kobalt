@@ -263,7 +263,7 @@ private:
     QVector<QPushButton *> rotationButtons;
     bool restoringDefaults = false, themeReady = false, darkTheme = false;
     kobalt::ui::FontButton *fontButton;
-    QVector<QPushButton *> alignmentButtons, hyphenButtons;
+    QVector<QPushButton *> alignmentButtons, hyphenButtons, paragraphSpacingButtons, paragraphIndentButtons;
     // Header and footer. The preset is saved per book; the Custom layout is
     // shared by every book that selects it.
     kobalt::headerfooter::Preset chromePreset = kobalt::headerfooter::Preset::Default;
