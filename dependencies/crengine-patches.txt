@@ -15,5 +15,3 @@ crengine-page-layout.patch
 crengine-inherited-indent.patch
 crengine-compaction-diagnostics.patch
 crengine-hungarian-extended.patch
-crengine-hungarian-vertical-adapter.patch
-crengine-hungarian-draw-length.patch
