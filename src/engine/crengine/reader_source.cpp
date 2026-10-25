@@ -401,7 +401,7 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                               Utf8ToUnicode(lString8(documentCacheName(cacheFingerprint_).toUtf8().constData())));
         properties->setHex(
             DOC_PROP_FILE_CRC32,
-            documentCacheChecksum(documentCachePolicy() + ":bionic-v3:dropcap-merge-v3:dropcap-multi-chapter-v5:" + bionic_.toUtf8(), domVersion_));
+            documentCacheChecksum(documentCachePolicy() + ":bionic-v3:dropcap-merge-v3:dropcap-compact-continuation-v6:" + bionic_.toUtf8(), domVersion_));
         properties->setString(DOC_PROP_FILE_SIZE, lString32::itoa(int(cacheBytes_ < 0         ? 0
                                                                       : cacheBytes_ > INT_MAX ? INT_MAX
                                                                                               : cacheBytes_)));
@@ -531,11 +531,19 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                 const auto endFirst = glyphRect(afterText, true);
                 const auto beginFirst = glyphRect(afterText, false);
                 const auto nextBox = glyphRect(nextText, false);
-                // The first paragraph must occupy one text line, with its
-                // following paragraph entering the drop cap's vertical area.
+                // The first paragraph must occupy one text line. Usually the
+                // next paragraph must enter the drop cap's vertical area.
+                // With both small paragraph spacing and small indentation, the
+                // continuation may start just below the initial's bottom and
+                // fail that test even though it is the same opening paragraph.
+                // Permit only a one-line-height gap in this exact mode.
+                const bool compactContinuation = paragraphSpacing_ == "half" && paragraphIndent_ == "first";
+                const int lineHeight = qMax(1, endFirst.bottom - endFirst.top);
+                const bool nextNearInitial = nextBox.top < initialBox.bottom ||
+                    (compactContinuation && nextBox.top - initialBox.bottom <= lineHeight);
                 if (initialBox.bottom <= initialBox.top || nextBox.bottom <= nextBox.top ||
                     beginFirst.top != endFirst.top ||
-                    nextBox.top >= initialBox.bottom || nextBox.top <= beginFirst.top) {
+                    !nextNearInitial || nextBox.top <= beginFirst.top) {
                     continue;
                 }
                 // Force a line break, then move the plain text inside the
