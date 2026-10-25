@@ -163,7 +163,7 @@ private:
             originalFigureMetrics(ui::brandFont(m::figureText)), unitMetrics(ui::interfaceFont(m::unitText));
         caption->setGeometry(c::inset, m::cellPadding, inner, captionMetrics.height());
         percent->setGeometry(c::inset, m::cellPadding, inner, captionMetrics.height());
-        const int figureWidth = qMin(inner, 2 * (kobalt::qt::textWidth(figureMetrics, figure->text()) + 2));
+        const int figureWidth = qMin(inner, (3 * (kobalt::qt::textWidth(figureMetrics, figure->text()) + 2)) / 2);
         // Keep the original figure box height while aligning the smaller numerals to the unit baseline.
         figure->setGeometry(c::inset, m::figureBaseline - figureMetrics.ascent(), figureWidth,
                             originalFigureMetrics.height());

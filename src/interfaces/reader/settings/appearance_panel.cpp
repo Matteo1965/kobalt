@@ -301,11 +301,11 @@ AppearancePanel::AppearancePanel(const AppearanceLayout &layout, const Appearanc
         const QString value = QString::fromLatin1(mode);
         const QString label = value == "none" ? strings::get("common.off")
                               : value == "half" ? strings::get("common.size_small")
-                              : value == "full" ? strings::get("common.size_medium")
+                              : value == "full" ? strings::get("reader.paragraph_normal")
                                                 : strings::get("reader.paragraph_publisher");
         const QString compact = value == "none" ? strings::get("common.off")
-                                : value == "half" ? QStringLiteral("S")
-                                : value == "full" ? QStringLiteral("M") : QStringLiteral("P");
+                                : value == "half" ? strings::get("common.size_small")
+                                : value == "full" ? strings::get("reader.paragraph_normal") : strings::get("reader.paragraph_publisher");
         auto *button = paragraphs.add("rrParagraphSpacing_" + value, label);
         button->setProperty("paragraph_spacing", value);
         button->setProperty("full_label", label);
@@ -325,7 +325,7 @@ AppearancePanel::AppearancePanel(const AppearanceLayout &layout, const Appearanc
                                                 : strings::get("reader.paragraph_publisher");
         auto *button = indent.add("rrParagraphIndent_" + value, label);
         button->setProperty("paragraph_indent", value);
-        button->setProperty("force_compact_on_small_display", true);
+        button->setProperty("force_compact_on_small_display", false);
         button->setProperty("full_label", label);
         button->setProperty("compact_label", value == "none" ? strings::get("common.off") : value == "first" ? QStringLiteral("S") : value == "full" ? QStringLiteral("M") : QStringLiteral("P"));
         button->setAccessibleName(label);
