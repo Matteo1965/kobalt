@@ -234,6 +234,7 @@ qint64 find(Mapped &offsets, QFile &indexFile, const QByteArray &word) {
 }
 struct StarDict::Data {
     QString id, name, source;
+    bool plainText = false;
     Body body;
     QFile idx, syn;
     std::unique_ptr<Mapped> words, synonyms;
@@ -257,13 +258,13 @@ bool StarDict::prepare(const QString &directory, const QString &id, QString *err
     }
     bool valid = false;
     const quint32 words = values["wordcount"].toUInt(&valid);
-    if (!valid || !words || values["version"] != "2.4.2" || values["sametypesequence"] != "h")
+    if (!valid || !words || values["version"] != "2.4.2" || (values["sametypesequence"] != "h" && values["sametypesequence"] != "m"))
         return fail(error, "Unsupported StarDict format.");
     const auto indexSize = values["idxfilesize"].toULongLong(&valid);
     if (!valid || indexSize != quint64(QFile(prefix + ".idx").size()))
         return fail(error, "StarDict index size differs.");
     Body body;
-    if (!body.open(prefix + ".dict.dz"))
+    if (!body.open(QFile::exists(prefix + ".dict.dz") ? prefix + ".dict.dz" : prefix + ".dict"))
         return fail(error, "Invalid dictzip data.");
     if (!index(prefix + ".idx", 8, body.length, words, error, cancelled, words))
         return false;
@@ -278,13 +279,15 @@ bool StarDict::open(const QString &directory, const QString &id, QString *error)
     data.reset();
     auto next = std::make_unique<Data>();
     next->id = id;
+    QFile meta(prefix + ".ifo");
+    if (meta.open(QIODevice::ReadOnly)) next->plainText = meta.readAll().contains("sametypesequence=m");
     next->name = id;
     const auto prefix = QDir(directory).filePath(id);
     next->idx.setFileName(prefix + ".idx");
     next->syn.setFileName(prefix + ".syn");
     next->words = std::make_unique<Mapped>(prefix + ".idx.kobalt");
     if (!next->words->bytes || next->words->file.size() % 4 || !next->idx.open(QIODevice::ReadOnly) ||
-        !next->body.open(prefix + ".dict.dz"))
+        !next->body.open(QFile::exists(prefix + ".dict.dz") ? prefix + ".dict.dz" : prefix + ".dict"))
         return fail(error, "Installed dictionary is damaged.");
     if (next->syn.exists() && next->syn.size() > 0) {
         next->synonyms = std::make_unique<Mapped>(prefix + ".syn.kobalt");
@@ -335,7 +338,7 @@ DictionaryResult StarDict::lookup(const QString &word) {
     if (html.isEmpty())
         result.error = "Dictionary definition is damaged.";
     else
-        result.html = QString::fromUtf8(html);
+        result.html = data->plainText ? QString::fromUtf8(html).toHtmlEscaped().replace("\n", "<br>") : QString::fromUtf8(html);
     return result;
 }
 }
