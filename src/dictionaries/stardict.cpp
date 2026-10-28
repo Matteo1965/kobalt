@@ -1,4 +1,5 @@
 #include "stardict.h"
+#include "hu_stemmer.h"
 #include <QFile>
 #include <QDir>
 #include <QtEndian>
@@ -332,6 +333,14 @@ DictionaryResult StarDict::lookup(const QString &word) {
             const int zero = entry.indexOf('\0');
             if (zero > 0 && zero + 5 <= entry.size())
                 number = be32(entry.constData() + zero + 1);
+        }
+    }
+    if (number < 0 && data->id == "hu-hu") {
+        std::vector<std::string> candidates;
+        hungarianStemVariants(word.toUtf8().toStdString(), candidates);
+        for (const auto &candidate : candidates) {
+            number = find(*data->words, data->idx, QByteArray::fromStdString(candidate));
+            if (number >= 0) break;
         }
     }
     if (number < 0)
