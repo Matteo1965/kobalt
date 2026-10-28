@@ -43,7 +43,7 @@ bool importHungarianDictionary(const QString &root) {
     const QString destination = folder(root, id);
     if (QFileInfo::exists(folder(destination, "installed.json")))
         return true;
-    if (!QFileInfo::isFile(archive) || !QDir().mkpath(root) || QFileInfo::exists(destination))
+    if (!QFileInfo(archive).isFile() || !QDir().mkpath(root) || QFileInfo::exists(destination))
         return false;
     QTemporaryDir staging(folder(root, ".hu-import-XXXXXX"));
     if (!staging.isValid())
