@@ -337,9 +337,10 @@ DictionaryResult StarDict::lookup(const QString &word) {
     }
     if (number < 0 && data->id == "hu-hu") {
         std::vector<std::string> candidates;
-        hungarianStemVariants(word.toUtf8().toStdString(), candidates);
+        const QByteArray utf8 = word.toUtf8();
+        hungarianStemVariants(std::string(utf8.constData(), size_t(utf8.size())), candidates);
         for (const auto &candidate : candidates) {
-            number = find(*data->words, data->idx, QByteArray::fromStdString(candidate));
+            number = find(*data->words, data->idx, QByteArray(candidate.data(), int(candidate.size())));
             if (number >= 0) break;
         }
     }
