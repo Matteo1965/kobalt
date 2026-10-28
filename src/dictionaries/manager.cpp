@@ -39,7 +39,7 @@ QString folder(const QString &root, const QString &id) {
 
 bool importHungarianDictionary(const QString &root) {
     const QString id = QStringLiteral("hu-hu");
-    const QString archive = QStringLiteral("/mnt/onboard/.kobo/custom-dict/HU_Merged_v3.zip");
+    const QString archive = QStringLiteral("/mnt/onboard/.kobo/custom-dict/HU_HU_Merged_v3.zip");
     const QString destination = folder(root, id);
     if (QFileInfo::exists(folder(destination, "installed.json")))
         return true;
@@ -48,7 +48,7 @@ bool importHungarianDictionary(const QString &root) {
     QTemporaryDir staging(folder(root, ".hu-import-XXXXXX"));
     if (!staging.isValid())
         return false;
-    const QString prefix = QStringLiteral("HU_Merged_v3 - Copy/hungarian-dictionary-merged-v3.");
+    const QString prefix = QStringLiteral("hungarian-dictionary-merged-v3.");
     for (const auto &ext : {QStringLiteral("ifo"), QStringLiteral("idx"), QStringLiteral("dict")}) {
         ZipResource input;
         if (!input.open(archive, prefix + ext, ext == "dict" ? 64LL * 1024 * 1024 : 8LL * 1024 * 1024))
