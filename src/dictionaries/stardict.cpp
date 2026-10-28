@@ -279,10 +279,11 @@ bool StarDict::open(const QString &directory, const QString &id, QString *error)
     data.reset();
     auto next = std::make_unique<Data>();
     next->id = id;
-    QFile meta(prefix + ".ifo");
-    if (meta.open(QIODevice::ReadOnly)) next->plainText = meta.readAll().contains("sametypesequence=m");
     next->name = id;
     const auto prefix = QDir(directory).filePath(id);
+    QFile meta(prefix + ".ifo");
+    if (meta.open(QIODevice::ReadOnly))
+        next->plainText = meta.readAll().contains("sametypesequence=m");
     next->idx.setFileName(prefix + ".idx");
     next->syn.setFileName(prefix + ".syn");
     next->words = std::make_unique<Mapped>(prefix + ".idx.kobalt");
