@@ -6,6 +6,7 @@
 #include <QSaveFile>
 #include <zlib.h>
 #include <cstring>
+#include <algorithm>
 
 namespace kobalt {
 namespace {
@@ -159,8 +160,11 @@ bool index(const QString &path, int suffix, quint32 bodyLength, quint32 wordCoun
     QSaveFile positions(path + ".kobalt");
     if (!file.open(QIODevice::ReadOnly) || !positions.open(QIODevice::WriteOnly))
         return fail(error, "Cannot read dictionary index.");
-    QByteArray previous;
-    quint32 count = 0;
+    struct Entry { QByteArray word; quint32 position; };
+    QVector<Entry> entries;
+    if (wordCount > 2000000)
+        return fail(error, "Dictionary has too many words.");
+    entries.reserve(int(wordCount));
     while (!file.atEnd()) {
         if (cancelled && cancelled())
             return fail(error, "Installation cancelled.");
@@ -180,21 +184,29 @@ bool index(const QString &path, int suffix, quint32 bodyLength, quint32 wordCoun
             word.append(c);
         }
         const auto value = file.read(suffix);
-        if (!ended || word.isEmpty() || QString::fromUtf8(word).toUtf8() != word || value.size() != suffix ||
-            (!previous.isEmpty() && compare(previous, word) > 0))
+        if (!ended || word.isEmpty() || QString::fromUtf8(word).toUtf8() != word || value.size() != suffix)
             return fail(error, "Invalid StarDict index.");
         if (suffix == 8 ? quint64(be32(value.constData())) + be32(value.constData() + 4) > bodyLength
                         : be32(value.constData()) >= wordCount)
             return fail(error, "Dictionary index points outside its data.");
+        entries.append({word, quint32(position)});
+        if (entries.size() > int(expectedCount))
+            return fail(error, "StarDict word count differs from its index.");
+    }
+    if (entries.size() != int(expectedCount))
+        return fail(error, "StarDict word count differs from its index.");
+    // User-provided StarDict indexes may not be sorted (CrossPoint accepts
+    // such dictionaries). Sort only the Kobalt offset map; do not rewrite
+    // the source IDX or dictionary data.
+    std::sort(entries.begin(), entries.end(), [](const Entry &a, const Entry &b) {
+        return compare(a.word, b.word) < 0;
+    });
+    for (const auto &entry : entries) {
         char bytes[4];
-        qToBigEndian<quint32>(position, reinterpret_cast<uchar *>(bytes));
+        qToBigEndian<quint32>(entry.position, reinterpret_cast<uchar *>(bytes));
         if (positions.write(bytes, 4) != 4)
             return fail(error, "Cannot save dictionary index.");
-        previous = word;
-        ++count;
     }
-    if (count != expectedCount)
-        return fail(error, "StarDict word count differs from its index.");
     if (!positions.commit())
         return fail(error, "Cannot save dictionary index.");
     return true;
