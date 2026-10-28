@@ -2,7 +2,7 @@ name: Hungarian Edition 0.3.15 Qt5 and Qt6
 
 on:
   push:
-    branches: [hungarian-edition-beta4]
+    branches: [hungarian-edition-beta4, hungarian-edition-dictionary-test]
   workflow_dispatch:
 
 permissions:
