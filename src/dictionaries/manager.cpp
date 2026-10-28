@@ -39,39 +39,72 @@ QString folder(const QString &root, const QString &id) {
 
 bool importHungarianDictionary(const QString &root) {
     const QString id = QStringLiteral("hu-hu");
+    const QString logPath = QStringLiteral("/mnt/onboard/kobalt-hu-dictionary-import.log");
+    const auto log = [&](const QString &message) {
+        QFile file(logPath);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+            file.write(message.toUtf8());
+            file.write("\\n");
+        }
+    };
+    log(QStringLiteral("HU import start"));
     const QString archive = QStringLiteral("/mnt/onboard/.kobo/custom-dict/HU_HU_Merged_v3.zip");
     const QString destination = folder(root, id);
-    if (QFileInfo::exists(folder(destination, "installed.json")))
+    if (QFileInfo::exists(folder(destination, "installed.json"))) {
+        log(QStringLiteral("Already installed"));
         return true;
-    if (!QFileInfo(archive).isFile() || !QDir().mkpath(root) || QFileInfo::exists(destination))
+    }
+    if (!QFileInfo(archive).isFile() || !QDir().mkpath(root) || QFileInfo::exists(destination)) {
+        log(QStringLiteral("Archive/root/destination check failed: ") + archive + QStringLiteral(" root=") + root);
         return false;
+    }
     QTemporaryDir staging(folder(root, ".hu-import-XXXXXX"));
-    if (!staging.isValid())
+    if (!staging.isValid()) {
+        log(QStringLiteral("Cannot create staging directory"));
         return false;
+    }
     const QString prefix = QStringLiteral("hungarian-dictionary-merged-v3.");
     for (const auto &ext : {QStringLiteral("ifo"), QStringLiteral("idx"), QStringLiteral("dict")}) {
         ZipResource input;
-        if (!input.open(archive, prefix + ext, ext == "dict" ? 64LL * 1024 * 1024 : 8LL * 1024 * 1024))
+        if (!input.open(archive, prefix + ext, ext == "dict" ? 64LL * 1024 * 1024 : 8LL * 1024 * 1024)) {
+            log(QStringLiteral("ZIP open failed: ") + prefix + ext);
             return false;
+        }
         QFile output(folder(staging.path(), id + "." + ext));
-        if (!output.open(QIODevice::WriteOnly))
+        if (!output.open(QIODevice::WriteOnly)) {
+            log(QStringLiteral("Output open failed: ") + output.fileName());
             return false;
+        }
         while (input.valid() && !input.finished()) {
             const auto chunk = input.next();
-            if (output.write(chunk) != chunk.size())
+            if (output.write(chunk) != chunk.size()) {
+                log(QStringLiteral("Write failed: ") + ext);
                 return false;
+            }
         }
-        if (!input.valid())
+        if (!input.valid()) {
+            log(QStringLiteral("ZIP CRC/stream failed: ") + ext);
             return false;
+        }
+        output.close();
+        log(QStringLiteral("Extracted ") + ext);
     }
     QString error;
-    if (!StarDict::prepare(staging.path(), id, &error))
+    if (!StarDict::prepare(staging.path(), id, &error)) {
+        log(QStringLiteral("StarDict prepare failed: ") + error);
         return false;
+    }
+    log(QStringLiteral("StarDict index prepared"));
     if (!storage::writeJson(folder(staging.path(), "installed.json"),
-           qt::object({{"id", id}, {"name", QStringLiteral("Magyar értelmező szótár")}})))
+           qt::object({{"id", id}, {"name", QStringLiteral("Magyar értelmező szótár")}}))) {
+        log(QStringLiteral("Metadata write failed"));
         return false;
-    if (!QDir().rename(staging.path(), destination))
+    }
+    if (!QDir().rename(staging.path(), destination)) {
+        log(QStringLiteral("Install rename failed"));
         return false;
+    }
+    log(QStringLiteral("Import complete"));
     staging.setAutoRemove(false);
     return true;
 }
