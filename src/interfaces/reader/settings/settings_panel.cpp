@@ -523,7 +523,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     version->setAlignment(Qt::AlignCenter);
     readerStyle(version, styles::font(m::text::secondary));
     build->addWidget(version);
-    auto *hungarianEdition = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition 0.3.15"), aboutPage);
+    auto *hungarianEdition = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition 0.3.16-DICT-CPHUN224-TEST"), aboutPage);
     hungarianEdition->setObjectName("rrAboutHungarianEditionVersion");
     hungarianEdition->setAlignment(Qt::AlignCenter);
     readerStyle(hungarianEdition, styles::font(m::text::secondary));
