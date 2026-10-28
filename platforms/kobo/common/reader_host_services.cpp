@@ -129,7 +129,8 @@ ReaderHostServices readerHostServices() {
     result.colorDisplay = [] {
         return pageAnimationPanel() == AnimationPanel::Colour;
     };
-    result.downloadableDictionaries = false;
+    // Enable Kobalt's StarDict manager on Kobo while retaining the native fallback.
+    result.downloadableDictionaries = true;
     result.browserAvailable = nativeReaderBrowserAvailable;
     result.openBrowser = nativeReaderOpenBrowser;
     result.clock = nativeReaderClock;
