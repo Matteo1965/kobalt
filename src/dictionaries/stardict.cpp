@@ -329,7 +329,16 @@ DictionaryResult StarDict::lookup(const QString &word) {
     // CPHUN-224 priority order: canonical lemmas, exact, direct possessives,
     // dictionary-authored synonyms, then bounded Hungarian morphology.
     const bool hungarian = data->id == "hu-hu";
-    const QString cleaned = hungarian ? word.normalized(QString::NormalizationForm_C).trimmed().toLower() : word;
+    QString normalized = word.normalized(QString::NormalizationForm_C).toLower();
+    if (hungarian) {
+        // CPHUN-163 edge punctuation handling; retain inner hyphens in compounds.
+        while (!normalized.isEmpty() && !normalized.at(0).isLetterOrNumber() && normalized.at(0) != QChar('-'))
+            normalized.remove(0, 1);
+        while (!normalized.isEmpty() && !normalized.at(normalized.size() - 1).isLetterOrNumber() &&
+               normalized.at(normalized.size() - 1) != QChar('-'))
+            normalized.chop(1);
+    }
+    const QString cleaned = hungarian ? normalized : word;
     const QByteArray key = cleaned.toUtf8();
     const QByteArray lookupKey = hungarian && cleaned == QStringLiteral("kabátja") ? QByteArray("kabát")
                                : hungarian && cleaned == QStringLiteral("igazgatónője") ? QStringLiteral("igazgató").toUtf8()
