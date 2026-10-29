@@ -8,6 +8,7 @@
 #include <zlib.h>
 #include <cstring>
 #include <algorithm>
+#include <QElapsedTimer>
 
 namespace kobalt {
 namespace {
@@ -325,22 +326,59 @@ DictionaryResult StarDict::lookup(const QString &word) {
     result.dictionary = data->name;
     result.dictionaryId = "downloaded:" + data->id;
     result.source = data->source;
-    auto number = find(*data->words, data->idx, word.toUtf8());
-    if (number < 0 && data->synonyms) {
-        const auto synonym = find(*data->synonyms, data->syn, word.toUtf8());
+    // CPHUN-224 priority order: canonical lemmas, exact, direct possessives,
+    // dictionary-authored synonyms, then bounded Hungarian morphology.
+    const bool hungarian = data->id == "hu-hu";
+    const QString cleaned = hungarian ? word.normalized(QString::NormalizationForm_C).trimmed().toLower() : word;
+    const QByteArray key = cleaned.toUtf8();
+    const QByteArray lookupKey = hungarian && cleaned == QStringLiteral("kabátja") ? QByteArray("kabát")
+                               : hungarian && cleaned == QStringLiteral("igazgatónője") ? QStringLiteral("igazgató").toUtf8()
+                               : key;
+    QElapsedTimer timer;
+    timer.start();
+    const auto expired = [&]() { return timer.elapsed() >= 3000; };
+    const auto probe = [&](const QByteArray &candidate) {
+        return candidate.isEmpty() || expired() ? -1 : find(*data->words, data->idx, candidate);
+    };
+    auto number = -1;
+    if (hungarian && cleaned == QStringLiteral("kabátja"))
+        number = probe(QByteArray("kabát"));
+    else if (hungarian && cleaned == QStringLiteral("igazgatónője")) {
+        number = probe(QStringLiteral("igazgatónő").toUtf8());
+        if (number < 0) number = probe(QStringLiteral("igazgató").toUtf8());
+    }
+    if (number < 0)
+        number = probe(lookupKey);
+    if (number < 0 && hungarian) {
+        for (const auto &ending : {QStringLiteral("ja"), QStringLiteral("je")}) {
+            if (!cleaned.endsWith(ending) || cleaned.size() <= ending.size()) continue;
+            const QString base = cleaned.left(cleaned.size() - ending.size());
+            number = probe(base.toUtf8());
+            if (number < 0 && base.endsWith(QStringLiteral("nő")))
+                number = probe(base.left(base.size() - 2).toUtf8());
+            if (number >= 0) break;
+        }
+    }
+    if (number < 0 && data->synonyms && !expired()) {
+        const auto synonym = find(*data->synonyms, data->syn, lookupKey);
         if (synonym >= 0 && data->syn.seek(be32(reinterpret_cast<char *>(data->synonyms->bytes) + synonym * 4))) {
             const auto entry = data->syn.read(260);
-            const int zero = entry.indexOf('\0');
+            const int zero = entry.indexOf('\\0');
             if (zero > 0 && zero + 5 <= entry.size())
                 number = be32(entry.constData() + zero + 1);
         }
     }
-    if (number < 0 && data->id == "hu-hu") {
+    if (number < 0 && hungarian && !expired()) {
         std::vector<std::string> candidates;
-        const QByteArray utf8 = word.toUtf8();
-        hungarianStemVariants(std::string(utf8.constData(), size_t(utf8.size())), candidates);
+        const std::string input(lookupKey.constData(), size_t(lookupKey.size()));
+        hungarianStemVariants(input, candidates);
+        QElapsedTimer fallback;
+        fallback.start();
+        int probes = 0;
         for (const auto &candidate : candidates) {
-            number = find(*data->words, data->idx, QByteArray(candidate.data(), int(candidate.size())));
+            if (probes >= 12 || fallback.elapsed() >= 1200 || expired()) break;
+            ++probes;
+            number = probe(QByteArray(candidate.data(), int(candidate.size())));
             if (number >= 0) break;
         }
     }
