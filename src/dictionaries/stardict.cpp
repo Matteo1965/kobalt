@@ -363,7 +363,7 @@ DictionaryResult StarDict::lookup(const QString &word) {
         const auto synonym = find(*data->synonyms, data->syn, lookupKey);
         if (synonym >= 0 && data->syn.seek(be32(reinterpret_cast<char *>(data->synonyms->bytes) + synonym * 4))) {
             const auto entry = data->syn.read(260);
-            const int zero = entry.indexOf('\\0');
+            const int zero = entry.indexOf('\0');
             if (zero > 0 && zero + 5 <= entry.size())
                 number = be32(entry.constData() + zero + 1);
         }
