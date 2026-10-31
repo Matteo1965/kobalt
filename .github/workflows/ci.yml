@@ -1,8 +1,8 @@
-name: CPHUN224 Dictionary Morphology Qt5 Test
+name: CPHUN224 Multi-StarDict Hungarian Qt5 Test
 
 on:
   push:
-    branches: [hungarian-edition-dictionary-test]
+    branches: [hungarian-edition-dictionary-language-test]
   workflow_dispatch:
 
 permissions:
@@ -37,10 +37,10 @@ jobs:
         run: bash platforms/ci/build.sh qt5
       - name: Version Qt5 ZIP
         run: |
-          mv build/release/Kobalt-qt5.zip "build/release/Kobalt-Hungarian-Edition-0.3.16-DICT-CPHUN224-TEST-${{ github.run_number }}-Qt5.zip"
+          mv build/release/Kobalt-qt5.zip "build/release/Kobalt-Hungarian-Edition-0.3.17-MULTI-STARDICT-TEST-${{ github.run_number }}-Qt5.zip"
       - uses: actions/upload-artifact@v4
         with:
-          name: kobalt-hu-0.3.16-dict-cphun224-test-${{ github.run_number }}-qt5
+          name: kobalt-hu-0.3.17-multi-stardict-test-${{ github.run_number }}-qt5
           path: build/release/*
           if-no-files-found: error
           compression-level: 0
