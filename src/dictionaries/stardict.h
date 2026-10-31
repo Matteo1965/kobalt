@@ -10,6 +10,7 @@ public:
     ~StarDict();
     bool open(const QString &directory, const QString &id, QString *error);
     DictionaryResult lookup(const QString &word);
+    void setHungarianSource(bool enabled);
     static bool prepare(const QString &directory, const QString &id, QString *error,
                         const std::function<bool()> &cancelled = {});
 
