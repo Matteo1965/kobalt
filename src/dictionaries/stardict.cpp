@@ -249,6 +249,7 @@ qint64 find(Mapped &offsets, QFile &indexFile, const QByteArray &word) {
 struct StarDict::Data {
     QString id, name, source;
     bool plainText = false;
+    bool hungarianSource = false;
     Body body;
     QFile idx, syn;
     std::unique_ptr<Mapped> words, synonyms;
@@ -315,6 +316,10 @@ bool StarDict::open(const QString &directory, const QString &id, QString *error)
     data = std::move(next);
     return true;
 }
+void StarDict::setHungarianSource(bool enabled) {
+    if (data)
+        data->hungarianSource = enabled;
+}
 DictionaryResult StarDict::lookup(const QString &word) {
     DictionaryResult result;
     result.word = word;
@@ -328,7 +333,7 @@ DictionaryResult StarDict::lookup(const QString &word) {
     result.source = data->source;
     // CPHUN-224 priority order: canonical lemmas, exact, direct possessives,
     // dictionary-authored synonyms, then bounded Hungarian morphology.
-    const bool hungarian = data->id == "hu-hu";
+    const bool hungarian = data->hungarianSource || data->id == "hu-hu";
     QString normalized = word.normalized(QString::NormalizationForm_C).toLower();
     if (hungarian) {
         // CPHUN-163 edge punctuation handling; retain inner hyphens in compounds.
