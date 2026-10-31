@@ -37,6 +37,20 @@ QString folder(const QString &root, const QString &id) {
     return QDir(root).filePath(id);
 }
 
+QString dictionarySourceLanguage(const QString &root, const QString &id, const QVector<DownloadDictionary> &entries) {
+    // Existing installs may predate language metadata; keep catalog fallback.
+    const auto metadata = storage::readJson(folder(folder(root, id), "installed.json"));
+    const QString declared = metadata["language"].toString().trimmed().toLower();
+    if (declared == QStringLiteral("hu"))
+        return declared;
+    if (!declared.isEmpty())
+        return normalizeLanguage(declared);
+    for (const auto &entry : entries)
+        if (entry.id == id)
+            return normalizeLanguage(entry.language);
+    return id == QStringLiteral("hu-hu") ? QStringLiteral("hu") : QString();
+}
+
 bool importHungarianDictionary(const QString &root) {
     const QString id = QStringLiteral("hu-hu");
     const QString logPath = QStringLiteral("/mnt/onboard/kobalt-hu-dictionary-import.log");
@@ -96,7 +110,7 @@ bool importHungarianDictionary(const QString &root) {
     }
     log(QStringLiteral("StarDict index prepared"));
     if (!storage::writeJson(folder(staging.path(), "installed.json"),
-           qt::object({{"id", id}, {"name", QStringLiteral("Magyar értelmező szótár")}}))) {
+           qt::object({{"id", id}, {"name", QStringLiteral("Magyar értelmező szótár")}, {"language", QStringLiteral("hu")}, {"target", QStringLiteral("hu")}}))) {
         log(QStringLiteral("Metadata write failed"));
         return false;
     }
@@ -214,11 +228,7 @@ bool DictionaryManager::select(const QString &book, const QString &id, QString *
             auto active = std::make_unique<StarDict>();
             if (!active->open(folder(data->root, pair), pair, error))
                 return false;
-            for (const auto &entry : catalog())
-                if (entry.id == pair) {
-                    active->setHungarianSource(normalizeLanguage(entry.language) == QStringLiteral("hu"));
-                    break;
-                }
+            active->setHungarianSource(dictionarySourceLanguage(data->root, pair, catalog()) == QStringLiteral("hu"));
             data->active = std::move(active);
             data->activeId = pair;
         }
@@ -269,11 +279,7 @@ DictionaryResult DictionaryManager::lookup(const QString &book, const QString &w
             result.error = error;
             return result;
         }
-        for (const auto &entry : catalog())
-                if (entry.id == pair) {
-                    active->setHungarianSource(normalizeLanguage(entry.language) == QStringLiteral("hu"));
-                    break;
-                }
+        active->setHungarianSource(dictionarySourceLanguage(data->root, pair, catalog()) == QStringLiteral("hu"));
             data->active = std::move(active);
         data->activeId = pair;
     }
@@ -547,7 +553,7 @@ bool DictionaryManager::installArchive(const QString &directory, const DownloadD
     if (!storage::writeJson(
             folder(stage.path(), "installed.json"),
             qt::object(
-                {{"id", entry.id}, {"name", entry.name}, {"sha256", QString::fromLatin1(entry.sha256.toHex())}})))
+                {{"id", entry.id}, {"name", entry.name}, {"language", normalizeLanguage(entry.language)}, {"target", normalizeLanguage(entry.target)}, {"sha256", QString::fromLatin1(entry.sha256.toHex())}})))
         return fail(error, "Cannot save dictionary metadata.");
     if (cancelled && cancelled())
         return fail(error, "Installation cancelled.");
