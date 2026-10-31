@@ -214,6 +214,11 @@ bool DictionaryManager::select(const QString &book, const QString &id, QString *
             auto active = std::make_unique<StarDict>();
             if (!active->open(folder(data->root, pair), pair, error))
                 return false;
+            for (const auto &entry : catalog())
+                if (entry.id == pair) {
+                    active->setHungarianSource(normalizeLanguage(entry.language) == QStringLiteral("hu"));
+                    break;
+                }
             data->active = std::move(active);
             data->activeId = pair;
         }
@@ -264,7 +269,12 @@ DictionaryResult DictionaryManager::lookup(const QString &book, const QString &w
             result.error = error;
             return result;
         }
-        data->active = std::move(active);
+        for (const auto &entry : catalog())
+                if (entry.id == pair) {
+                    active->setHungarianSource(normalizeLanguage(entry.language) == QStringLiteral("hu"));
+                    break;
+                }
+            data->active = std::move(active);
         data->activeId = pair;
     }
     auto result = data->active->lookup(word);
