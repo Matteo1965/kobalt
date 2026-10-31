@@ -44,10 +44,10 @@ QString dictionarySourceLanguage(const QString &root, const QString &id, const Q
     if (declared == QStringLiteral("hu"))
         return declared;
     if (!declared.isEmpty())
-        return normalizeLanguage(declared);
+        return declared;
     for (const auto &entry : entries)
         if (entry.id == id)
-            return normalizeLanguage(entry.language);
+            return entry.language.trimmed().toLower();
     return id == QStringLiteral("hu-hu") ? QStringLiteral("hu") : QString();
 }
 
