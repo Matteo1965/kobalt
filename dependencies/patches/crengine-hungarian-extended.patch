@@ -391,7 +391,7 @@
 -                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
 +                        int added_width = huSpacingGlyphCount(word, fmt->m_pbuffer) * word->added_letter_spacing;
                          if ( i == frmline->word_count-1 ) {
-@@ -4402,7 +4681,32 @@ class LVFormatter {
+@@ -4402,8 +4681,31 @@ class LVFormatter {
                                  word->width = new_width;
                              }
                          }
@@ -452,7 +452,7 @@
     // lUInt16  padding;         /**< \brief not used */
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -1,7 +1,10 @@
+@@ -1,3 +1,6 @@
                      // Use the hyph method of the source node that contains wordpos
 -                    if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2) ) {
 +                    const bool ordinaryHyphenation = m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2);
