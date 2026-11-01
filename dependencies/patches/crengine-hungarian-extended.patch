@@ -452,9 +452,8 @@
     // lUInt16  padding;         /**< \brief not used */
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -1,3 +1,6 @@
-                     // Use the hyph method of the source node that contains wordpos
--                    if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2) ) {
+@@ -1,2 +1,5 @@
+ -                    if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2) ) {
 +                    const bool ordinaryHyphenation = m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2);
 +                    const bool extendedHungarian = m_srcs[wordpos]->lang_cfg->isHungarian() && TextLangMan::getHyphenationHungarianExtended()
 +                        && huAddExtendedHyphenation(m_text+wstart, len, m_flags+wstart, 2, 2);
