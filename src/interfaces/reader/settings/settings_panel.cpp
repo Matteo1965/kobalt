@@ -486,6 +486,9 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         check(stylingPage, "rrHideNonlinearFragments", strings::get("reader.hide_nonlinear_fragments"),
               strings::get("settings.hide_nonlinear_fragments_description"));
     stylingRows->addWidget(hideNonlinearOption);
+    opticalMarginOption = check(stylingPage, "rrOpticalMargin", strings::get("settings.optical_margin"),
+                                strings::get("settings.optical_margin_description"));
+    stylingRows->addWidget(opticalMarginOption);
     for (const auto &[button, icon] :
          {std::pair{beautifierButton, ui::ControlIcon::MagicWand},
           std::pair{wordSpacingButton, ui::ControlIcon::SpreadHorizontal},
@@ -671,7 +674,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         optionPage = 0;
     });
     settingsTabButtons.first()->setChecked(true);
-    QVector<ui::DescribedOption *> options = {avoidWastefulStylingOption,
+    QVector<ui::DescribedOption *> options = {opticalMarginOption, avoidWastefulStylingOption,
                                               hideNonlinearOption,
                                               linkIndicatorOption,
                                               darkOption,
@@ -731,7 +734,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     settingsTabs->setAlignment(Qt::AlignTop);
     for (auto *button : settingsTabButtons) {
         button->setText(button->property("reader_tab_label").toString().toUpper());
-        button->setFixedHeight(c::railRowHeight);
+        button->setFixedHeight(c::railRowHeight + ui::px(10));
         if (auto *tab = dynamic_cast<ui::Button *>(button); tab && button->property("reader_tab_icon").isValid()) {
             ui::buttonIcon(button, ui::ControlIcon(button->property("reader_tab_icon").toInt()));
             button->setIconSize(QSize(c::tabIcon, c::tabIcon));
