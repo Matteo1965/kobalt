@@ -459,7 +459,7 @@
     // lUInt16  padding;         /**< \brief not used */
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -1,2 +1,4 @@
+@@ -1,2 +1,6 @@
  -                    if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2) ) {
 +                    const bool ordinaryHyphenation = m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2);
 +                    const bool extendedHungarian = m_srcs[wordpos]->lang_cfg->isHungarian() && TextLangMan::getHyphenationHungarianExtended()
