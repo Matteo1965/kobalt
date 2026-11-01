@@ -1168,3 +1168,7 @@
 "settings.beautifier_active" = "On · %1 of 3 rules";
 
 "common.done" = "Done";
+
+/* Hungarian Edition: optical margin control */
+"settings.optical_margin" = "Optical margin";
+"settings.optical_margin_description" = "Allow punctuation to hang into the margin.";
