@@ -20,6 +20,10 @@ while IFS= read -r name || [[ -n "$name" ]]; do
     [[ -n "$name" ]] || continue
     file="$root/dependencies/patches/$name"
     test -f "$file" || { echo "Missing patch: $file" >&2; exit 1; }
+    if [[ "$name" == "crengine-hungarian-width.patch" ]]; then
+        echo "Pre-width CRengine candidate sites:"
+        grep -n -C 5 -E "hyphen found, but max width reached|widths\\[i\\].*_hyphen_width|LCHAR_ALLOW_HYPH_WRAP_AFTER" "$source_dir/crengine/src/lvtextfm.cpp" | tail -100 || true
+    fi
     echo "Applying CRengine patch: $name"
     (cd "$source_dir" && patch --batch --forward -p1 -i "$file") || {
         echo "FAIL: CRengine patch does not apply: $name" >&2
