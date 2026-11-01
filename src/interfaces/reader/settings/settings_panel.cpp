@@ -746,7 +746,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
             QString(
                 "QPushButton{font-size:%1px;min-height:%2px;max-height:%2px;border:0;border-bottom:%5px solid %3;border-right:%5px solid palette(window-text);border-radius:0;text-align:left;padding:0 %4px;background:palette(window);color:palette(window-text);} QPushButton:checked,QPushButton:pressed{background:palette(window-text);color:palette(window);}")
                 .arg(int(c::tabText))
-                .arg(int(c::railRowHeight))
+                .arg(int(c::railRowHeight + ui::px(10)))
                 .arg("palette(light)")
                 .arg(int(c::railInset))
                 .arg(int(m::control::border)));
@@ -1547,8 +1547,9 @@ void SettingsPanel::fitRail(int availableHeight) {
         if (!button->isHidden())
             ++visible;
     // The rail uses the full panel height, independently of the list pager.
-    const int rowHeight = availableHeight > 0 ? qMin<int>(c::railRowHeight, qMax(1, availableHeight) / qMax(1, visible))
-                                              : int(c::railRowHeight);
+    const int desiredRowHeight = c::railRowHeight + ui::px(10);
+    const int rowHeight = availableHeight > 0 ? qMin(desiredRowHeight, qMax(1, availableHeight) / qMax(1, visible))
+                                              : desiredRowHeight;
     int widest = c::tabIcon;
     for (auto *button : settingsTabButtons)
         if (!button->isHidden()) {
@@ -1559,8 +1560,10 @@ void SettingsPanel::fitRail(int availableHeight) {
                               "\\1:" + QString::number(rowHeight) + "px");
                 ui::readerStyle(button, style);
                 button->setFixedHeight(rowHeight);
+                // Reserve sufficient space below the caption: Qt's icon-over-label
+                // layout needs more room than the nominal font pixel size.
                 button->setIconSize(
-                    QSize(c::tabIcon, qMax(1, qMin<int>(c::tabIcon, rowHeight - c::tabText - c::tabGap - ui::px(8)))));
+                    QSize(c::tabIcon, qMax(1, qMin<int>(c::tabIcon, rowHeight - c::tabText - c::tabGap - ui::px(22)))));
             }
             button->ensurePolished();
             widest = qMax(widest, ui::interfaceTextWidth(button->text(), button->font()));
