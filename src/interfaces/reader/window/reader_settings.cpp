@@ -277,7 +277,7 @@ void Reader::openSettings() {
     darkOption->setChecked(model->state().value("dark_mode").toBool(false));
     inheritTextLayoutOption->setChecked(preferences.value(appearance::inheritTextLayoutKey).toBool(true));
     hideNonlinearOption->setChecked(model->state().value("hide_nonlinear_fragments").toBool(false));
-    static_cast<SettingsPanel *>(general)->opticalMarginOption->setChecked(model->state().value("hanging_punctuation").toBool(true));
+    static_cast<SettingsPanel *>(general)->opticalMarginOption->setChecked(preferences.value("hanging_punctuation", model->state().value("hanging_punctuation", true)).toBool());
     avoidWastefulStylingOption->setChecked(model->state().value("avoid_wasteful_styling").toBool(true));
     auto *displaySettings = static_cast<SettingsPanel *>(general);
     settingsVerticalSpacing = appearance::verticalSpacingMode(model->state().value("vertical_justification"));
