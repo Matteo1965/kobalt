@@ -52,6 +52,9 @@ int main() {
         int len=std::char_traits<char32_t>::length(c.word);
         std::vector<lUInt16> flags(len,0);
         // Simulate a neighboring incorrect base-engine candidate.
+        // Model a base hyphenator proposing both the erroneous compact
+        // digraph restoration and a neighboring ordinary break.
+        flags[c.split-1] = LCHAR_ALLOW_HYPH_WRAP_AFTER | LCHAR_HUNGARIAN_HYPH_REPLACE;
         if(c.split<len) flags[c.split] = LCHAR_ALLOW_HYPH_WRAP_AFTER;
         huAddExtendedHyphenation(c.word,len,flags.data(),2,2);
         bool good=(flags[c.split-1] & LCHAR_ALLOW_HYPH_WRAP_AFTER)
