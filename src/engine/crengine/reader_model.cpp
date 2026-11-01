@@ -762,6 +762,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const bool styled = beautifierInitials != beautifierInitials_ || beautifierSpacing != beautifierSpacing_ ||
         beautifierIndent != beautifierIndent_ || fallbackFaces != fallbackFaces_ || avoidWastefulStyling != avoidWastefulStyling_ ||
                         wordSpacing != wordSpacing_ || tracking != justificationTracking_ || widowsOrphans != widowsOrphans_ ||
+                         hangingPunctuation != hangingPunctuation_ ||
                         bionicChanged || axisChanged || opticalChanged || pixels != pixels_ || spacing != spacing_ ||
                         paragraphSpacing != paragraphSpacing_ ||
                         paragraphIndent != paragraphIndent_ ||
