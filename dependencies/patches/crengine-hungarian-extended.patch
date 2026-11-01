@@ -237,6 +237,13 @@
 +    const int curatedPrefix = huCuratedPrefixBoundary(text, len);
 +    const int compound = ordinaryCompound ? ordinaryCompound : curatedPrefix;
 +    const bool specialAzutan = huIsAzutanOrEzutan(text, len);
++    // The compound boundary takes priority over pattern-generated breaks.
++    if ( compound > 0 && compound < len ) {
++        for ( int split=compound-1; split<=compound+2 && split<len; ++split ) {
++            if ( split > 0 && split != compound )
++                flags[split-1] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER | LCHAR_HUNGARIAN_HYPH_REPLACE);
++        }
++    }
 +    for ( int i=0; i<len; i++ ) {
 +        lChar32 replacement[2];
 +        const int replacement_len = huHyphenReplacement(text, len, i, replacement);
@@ -455,7 +462,10 @@
 @@ -1,2 +1,6 @@
  -                    if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2) ) {
 +                    const bool ordinaryHyphenation = m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2);
-+                    const bool extendedHungarian = m_srcs[wordpos]->lang_cfg->isHungarian() && TextLangMan::getHyphenationHungarianExtended()
++                    // Recognized Hungarian compounds also need correct boundaries in untagged EPUBs.
++                    const bool knownHuCompound = huCompoundBoundary(m_text+wstart, len) || huCuratedPrefixBoundary(m_text+wstart, len);
++                    const bool extendedHungarian = TextLangMan::getHyphenationHungarianExtended()
++                        && (m_srcs[wordpos]->lang_cfg->isHungarian() || knownHuCompound)
 +                        && huAddExtendedHyphenation(m_text+wstart, len, m_flags+wstart, 2, 2);
 +                    if ( ordinaryHyphenation || extendedHungarian ) {
                          // We need to reset the flag for the multiple hyphenation
