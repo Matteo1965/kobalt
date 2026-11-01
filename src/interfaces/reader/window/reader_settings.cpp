@@ -277,7 +277,7 @@ void Reader::openSettings() {
     darkOption->setChecked(model->state().value("dark_mode").toBool(false));
     inheritTextLayoutOption->setChecked(preferences.value(appearance::inheritTextLayoutKey).toBool(true));
     hideNonlinearOption->setChecked(model->state().value("hide_nonlinear_fragments").toBool(false));
-    opticalMarginOption->setChecked(model->state().value("hanging_punctuation").toBool(true));
+    static_cast<SettingsPanel *>(general)->opticalMarginOption->setChecked(model->state().value("hanging_punctuation").toBool(true));
     avoidWastefulStylingOption->setChecked(model->state().value("avoid_wasteful_styling").toBool(true));
     auto *displaySettings = static_cast<SettingsPanel *>(general);
     settingsVerticalSpacing = appearance::verticalSpacingMode(model->state().value("vertical_justification"));
@@ -527,7 +527,7 @@ void Reader::applySettings() {
     next["dark_mode"] = darkOption->isChecked();
     next[appearance::inheritTextLayoutKey] = inheritTextLayoutOption->isChecked();
     next["hide_nonlinear_fragments"] = hideNonlinearOption->isChecked();
-    next["hanging_punctuation"] = opticalMarginOption->isChecked();
+    next["hanging_punctuation"] = static_cast<SettingsPanel *>(general)->opticalMarginOption->isChecked();
     next["avoid_wasteful_styling"] = avoidWastefulStylingOption->isChecked();
     next["vertical_justification"] = settingsVerticalSpacing;
     next["vertical_spacing_scope"] = settingsVerticalSpacingScope;
@@ -583,7 +583,7 @@ void Reader::applySettings() {
         settings[key] = preferences.value(key).toString();
     settings["dark_mode"] = darkOption->isChecked();
     settings["hide_nonlinear_fragments"] = hideNonlinearOption->isChecked();
-    settings["hanging_punctuation"] = opticalMarginOption->isChecked();
+    settings["hanging_punctuation"] = static_cast<SettingsPanel *>(general)->opticalMarginOption->isChecked();
     settings["avoid_wasteful_styling"] = avoidWastefulStylingOption->isChecked();
     settings["vertical_justification"] = preferences.value("vertical_justification");
     settings["vertical_spacing_scope"] = preferences.value("vertical_spacing_scope");
