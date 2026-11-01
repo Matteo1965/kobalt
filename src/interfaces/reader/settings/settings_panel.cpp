@@ -738,7 +738,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
         if (auto *tab = dynamic_cast<ui::Button *>(button); tab && button->property("reader_tab_icon").isValid()) {
             ui::buttonIcon(button, ui::ControlIcon(button->property("reader_tab_icon").toInt()));
             button->setIconSize(QSize(c::tabIcon, c::tabIcon));
-            tab->setIconLabelGap(c::tabGap);
+            tab->setIconLabelGap(ui::px(4));
             tab->setIconAboveLabel(true);
         }
         ui::readerStyle(
@@ -1563,7 +1563,7 @@ void SettingsPanel::fitRail(int availableHeight) {
                 // Reserve sufficient space below the caption: Qt's icon-over-label
                 // layout needs more room than the nominal font pixel size.
                 button->setIconSize(
-                    QSize(c::tabIcon, qMax(1, qMin<int>(c::tabIcon, rowHeight - c::tabText - c::tabGap - ui::px(22)))));
+                    QSize(c::tabIcon, qMax(1, qMin<int>(c::tabIcon, rowHeight - c::tabText - ui::px(4) - ui::px(22)))));
             }
             button->ensurePolished();
             widest = qMax(widest, ui::interfaceTextWidth(button->text(), button->font()));
