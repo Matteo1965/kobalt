@@ -484,15 +484,11 @@
 
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -1,3 +1,7 @@
--                                if ( widths[i] + _hyphen_width > max_width ) {
-+                                int huCandidateWidth = widths[i] + _hyphen_width;
-+                                if (huFont && (m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE))
-+                                    huCandidateWidth += huReplacementWidth(huFont, m_text+wstart, len, i,
-+                                        m_srcs[wordpos]->letter_spacing, m_srcs[wordpos]->lang_cfg);
-+                                if ( huCandidateWidth > max_width ) {
-                                     TR("hyphen found, but max width reached at char %d", i);
+@@ -1,3 +1,3 @@
+                                 if ( widths[i] + _hyphen_width > max_width ) {
+-                                    TR("hyphen found, but max width reached at char %d", i);
 -                                    m_flags[wstart+i] &= ~LCHAR_ALLOW_HYPH_WRAP_AFTER; // reset flag
++                                    TR("hyphen found, but max width reached at char %d", i);
 +                                    m_flags[wstart+i] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER | LCHAR_HUNGARIAN_HYPH_REPLACE);
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
