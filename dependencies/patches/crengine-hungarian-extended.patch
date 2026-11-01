@@ -481,7 +481,7 @@
 +                    }
 +                    if ( ordinaryHyphenation || extendedHungarian ) {
                          // We need to reset the flag for the multiple hyphenation
-@@ -5497,8 +5516,12 @@
+@@ -5497,7 +5516,10 @@
                          for ( int i=0; i<len; i++ ) {
                              if ( m_flags[wstart+i] & LCHAR_ALLOW_HYPH_WRAP_AFTER ) {
 -                                if ( widths[i] + _hyphen_width > max_width ) {
