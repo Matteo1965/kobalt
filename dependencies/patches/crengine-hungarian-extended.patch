@@ -82,7 +82,7 @@
  void TextLangMan::uninit() {
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -43,6 +43,285 @@
+@@ -43,6 +43,292 @@
  #define MAX_ADDED_LETTER_SPACING_PERCENT 0
  #define CJK_WIDTH_SCALE_PERCENT 100
  
