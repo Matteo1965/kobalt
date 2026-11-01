@@ -481,6 +481,19 @@
 +                    }
 +                    if ( ordinaryHyphenation || extendedHungarian ) {
                          // We need to reset the flag for the multiple hyphenation
+@@ -5497,8 +5516,12 @@
+                         for ( int i=0; i<len; i++ ) {
+                             if ( m_flags[wstart+i] & LCHAR_ALLOW_HYPH_WRAP_AFTER ) {
+-                                if ( widths[i] + _hyphen_width > max_width ) {
++                                int candidateWidth = widths[i] + _hyphen_width;
++                                if (huFont && (m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE))
++                                    candidateWidth += huReplacementWidth(huFont, m_text+wstart, len, i, m_srcs[wordpos]->letter_spacing, m_srcs[wordpos]->lang_cfg);
++                                if ( candidateWidth > max_width ) {
+                                     TR("hyphen found, but max width reached at char %d", i);
+-                                    m_flags[wstart+i] &= ~LCHAR_ALLOW_HYPH_WRAP_AFTER; // reset flag
++                                    m_flags[wstart+i] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER | LCHAR_HUNGARIAN_HYPH_REPLACE);
+                                 }
+                                 else if ( wstart + i > pos+1 ) {
 
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
