@@ -443,6 +443,7 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
         hyphenation_ = "off";
     weight_ = qBound(0, saved.value("weight_steps").toInt(0), 12);
     bionic_ = saved.value("bold_reading").toString("off");
+    hangingPunctuation_ = saved.value("hanging_punctuation").toBool(true);
     const auto beautifier = appearance::beautifierSettings(saved);
     beautifierInitials_ = beautifier.value("beautifier_initials").toBool();
     beautifierSpacing_ = beautifier.value("beautifier_spacing").toBool();
@@ -497,7 +498,7 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     properties->setInt(PROP_FORMAT_MIN_SPACE_CONDENSING_PERCENT, 100);
     properties->setInt(PROP_FORMAT_SPACE_WIDTH_SCALE_PERCENT, wordSpacing_);
     properties->setInt(PROP_FORMAT_MAX_ADDED_LETTER_SPACING_PERCENT, justificationTracking_);
-    properties->setInt(PROP_FLOATING_PUNCTUATION, 0);
+    properties->setInt(PROP_FLOATING_PUNCTUATION, hangingPunctuation_ ? 1 : 0);
     properties->setInt(PROP_RENDER_BLOCK_RENDERING_FLAGS,
                        avoidWastefulStyling_
                            ? DEF_RENDER_BLOCK_RENDERING_FLAGS
@@ -703,6 +704,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const int bottomMargin = settings.value("bottom_margin_pixels").toInt(bottomMargin_);
     const int weight = settings.value("weight_steps").toInt(weight_);
     const auto bionic = settings.value("bold_reading").toString(bionic_);
+    const bool hangingPunctuation = settings.value("hanging_punctuation").toBool(hangingPunctuation_);
     const auto face = settings.value("font_face").toString(face_);
     const auto defaultFace = settings.value("default_font_face").toString(defaultFace_);
     auto fallbackFaces = fallbackFaces_;
@@ -793,6 +795,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     axisWeight_ = axisWeight;
     opticalSize_ = opticalSize;
     bionic_ = bionic;
+    hangingPunctuation_ = hangingPunctuation;
     darkMode_ = dark;
     activateFontParameters();
     hideNonlinearFragments_ = hideNonlinear;
@@ -807,6 +810,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
         setExtraFontWeight(0);
         auto properties = LVCreatePropsContainer();
         properties->setInt(PROP_FONT_BASE_WEIGHT, LVRendGetBaseFontWeight());
+        properties->setInt(PROP_FLOATING_PUNCTUATION, hangingPunctuation_ ? 1 : 0);
         properties->setInt(PROP_FORMAT_SPACE_WIDTH_SCALE_PERCENT, wordSpacing_);
         properties->setInt(PROP_FORMAT_MAX_ADDED_LETTER_SPACING_PERCENT, justificationTracking_);
         properties->setInt(PROP_RENDER_BLOCK_RENDERING_FLAGS,
@@ -1389,6 +1393,7 @@ QJsonObject ReaderModel::state() const {
                                {"font_weight", axisWeight_},
                                {"font_optical_size", opticalSize_},
                                {"bold_reading", bionic_},
+                               {"hanging_punctuation", hangingPunctuation_},
                                {"hyphenation", hyphenation_},
                                {"dark_mode", darkMode_},
                                {"hide_nonlinear_fragments", hideNonlinearFragments_},
