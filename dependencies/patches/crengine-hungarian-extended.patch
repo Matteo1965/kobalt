@@ -481,17 +481,6 @@
 +                    }
 +                    if ( ordinaryHyphenation || extendedHungarian ) {
                          // We need to reset the flag for the multiple hyphenation
---- a/crengine/src/lvtextfm.cpp
-+++ b/crengine/src/lvtextfm.cpp
-@@ -1,7 +1,7 @@
-                             x0,
-                             y0,
-                             str,
--                            word->t.len,
-+                            draw_len,
-                             '?',
-                             NULL,
-                             flgHyphen,
 
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
@@ -505,3 +494,14 @@
                                      TR("hyphen found, but max width reached at char %d", i);
 -                                    m_flags[wstart+i] &= ~LCHAR_ALLOW_HYPH_WRAP_AFTER; // reset flag
 +                                    m_flags[wstart+i] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER | LCHAR_HUNGARIAN_HYPH_REPLACE);
+--- a/crengine/src/lvtextfm.cpp
++++ b/crengine/src/lvtextfm.cpp
+@@ -1,7 +1,7 @@
+                             x0,
+                             y0,
+                             str,
+-                            word->t.len,
++                            draw_len,
+                             '?',
+                             NULL,
+                             flgHyphen,
