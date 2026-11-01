@@ -34,7 +34,7 @@ jobs:
       - name: Build beta5 Qt5 with Extended HU Hyphenation
         env:
           CONTAINER_ENGINE: docker
-          KOBALT_RELEASE_VERSION: 0.4.0-beta5-HU-HYPH-TEST
+          KOBALT_RELEASE_VERSION: v0.4.0-beta5-HU-HYPH-TEST
         run: bash platforms/ci/build.sh qt5
       - uses: actions/upload-artifact@v4
         with:
