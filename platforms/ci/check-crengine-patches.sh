@@ -21,7 +21,7 @@ while IFS= read -r name || [[ -n "$name" ]]; do
     file="$root/dependencies/patches/$name"
     test -f "$file" || { echo "Missing patch: $file" >&2; exit 1; }
     echo "Applying CRengine patch: $name"
-    (cd "$source_dir" && patch --batch --forward -p1 --fuzz=0 -i "$file") || {
+    (cd "$source_dir" && patch --batch --forward -p1 -i "$file") || {
         echo "FAIL: CRengine patch does not apply: $name" >&2
         exit 1
     }
