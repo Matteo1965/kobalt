@@ -81,7 +81,8 @@ void Button::paintEvent(QPaintEvent *) {
             if (iconAboveLabel) {
                 // Capitals' height is the label's ink, so the icon and that
                 // ink centre as one group, as in the bottom tabs.
-                const int capital = interfaceInkBounds(QStringLiteral("H"), font()).height();
+                // Include the actual label descenders and full font metrics, not just capital H.
+                const int capital = qMax(interfaceInkBounds(text(), font()).height(), fontMetrics().height());
                 const int top = (height() - iconSize().height() - gap - capital) / 2;
                 const QRect area((width() - iconSize().width()) / 2, top, iconSize().width(), iconSize().height());
                 icon().paint(&painter, area, Qt::AlignCenter, isEnabled() ? QIcon::Normal : QIcon::Disabled,
