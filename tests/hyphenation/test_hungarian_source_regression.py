@@ -39,7 +39,7 @@ class HungarianSourceRegression(unittest.TestCase):
 
     def test_curated_compounds_are_present(self):
         section = self.patch.split("static const HuCompoundFamily huCompoundFamilies[] =", 1)[1].split("};", 1)[0]
-        families = re.findall(r'\\{U"([^"]+)", U"([^"]+)"\\}', section)
+        families = re.findall(r'\{U"([^"]+)", U"([^"]+)"\}', section)
         for (left, right), expected in CASES.items():
             word = left + right
             self.assertEqual(expected, left + "-" + right)
