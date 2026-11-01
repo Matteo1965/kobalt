@@ -1,4 +1,4 @@
-name: Hungarian Edition beta 5 Extended Hyphenation Qt5 Test
+name: Hungarian Edition beta 5 UI Optical Margin Qt5 Test
 
 on:
   push:
@@ -34,11 +34,11 @@ jobs:
       - name: Build beta5 Qt5 with Extended HU Hyphenation
         env:
           CONTAINER_ENGINE: docker
-          KOBALT_RELEASE_VERSION: v0.4.0-beta5-HU-HYPH-TEST
+          KOBALT_RELEASE_VERSION: v0.4.0-beta5-HU-UI-OPTICAL-TEST
         run: bash platforms/ci/build.sh qt5
       - uses: actions/upload-artifact@v4
         with:
-          name: kobalt-hu-0.4.0-beta5-extended-hyph-${{ github.run_number }}-qt5
+          name: kobalt-hu-0.4.0-beta5-ui-optical-${{ github.run_number }}-qt5
           path: build/release/*
           if-no-files-found: error
           compression-level: 0
