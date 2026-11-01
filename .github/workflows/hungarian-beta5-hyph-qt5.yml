@@ -21,7 +21,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Validate beta5 source
-        run: bash platforms/ci/test.sh
+        run: |
+          python3 -m unittest discover -s tests/hyphenation -p 'test_*.py' -v
+          bash platforms/ci/test.sh
 
   build-qt5:
     needs: validation
