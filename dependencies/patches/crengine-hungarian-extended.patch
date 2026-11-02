@@ -82,7 +82,7 @@
  void TextLangMan::uninit() {
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -43,6 +43,295 @@
+@@ -43,6 +43,298 @@
  #define MAX_ADDED_LETTER_SPACING_PERCENT 0
  #define CJK_WIDTH_SCALE_PERCENT 100
  
@@ -239,7 +239,10 @@
 +    const bool specialAzutan = huIsAzutanOrEzutan(text, len);
 +    // The compound boundary takes priority over pattern-generated breaks.
 +    if ( compound > 0 && compound < len ) {
-+        for ( int split=compound-1; split<=compound+2 && split<len; ++split ) {
++        // Only suppress immediate seam-adjacent artifacts. A split two
++        // positions after the seam may be a valid second-member syllable
++        // boundary (rossz-in-du-la-tu), so it must be preserved.
++        for ( int split=compound-1; split<=compound+1 && split<len; ++split ) {
 +            if ( split > 0 && split != compound )
 +                flags[split-1] &= ~(LCHAR_ALLOW_HYPH_WRAP_AFTER | LCHAR_HUNGARIAN_HYPH_REPLACE);
 +        }
