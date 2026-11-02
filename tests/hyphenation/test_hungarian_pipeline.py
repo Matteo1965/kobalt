@@ -27,6 +27,12 @@ class HungarianPipelineContract(unittest.TestCase):
         self.assertIn("if ( flgHyphen && word->hungarian_replace", HELPERS)
         self.assertIn("draw_len += replacement_len", HELPERS)
 
+    def test_compound_preserves_second_member_syllable_boundaries(self):
+        # rossz-in-du-la-tu: the legal break after "in" is
+        # two characters after the first compound member.
+        self.assertIn("split<=compound+1 && split<len", HELPERS)
+        self.assertNotIn("split<=compound+2 && split<len", HELPERS)
+
     def test_width_patch_checks_formatted_text_flags(self):
         self.assertIn("bool huReplacement = (fmt->m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE)", WIDTH)
         self.assertIn("if (huCompound == i + 1) huReplacement = false;", WIDTH)
