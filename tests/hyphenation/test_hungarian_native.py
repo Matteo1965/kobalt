@@ -45,6 +45,7 @@ int main() {
     const Compound compounds[] = {
         {U"meggyullad",3},{U"meggyaláz",3},{U"meggyón",3},
         {U"arccsont",3},{U"kisszék",3},{U"színnyomás",4},
+        {U"cipősszekrény",5},{U"gyorsszolgálat",5},
         {U"okosszemüveg",4},{U"tánccsoport",4},
     };
     int failed=0;
@@ -80,6 +81,9 @@ int main() {
     struct Expected { const char32_t *word; int split; const char32_t *left; const char32_t *right; };
     const Expected expected[] = {
         {U"meggyaláz", 3, U"meg", U"gyaláz"},
+        {U"meggyón", 3, U"meg", U"gyón"},
+        {U"cipősszekrény", 5, U"cipős", U"szekrény"},
+        {U"gyorsszolgálat", 5, U"gyors", U"szolgálat"},
         {U"kisszék", 3, U"kis", U"szék"},
         {U"arccsont", 3, U"arc", U"csont"},
         {U"színnyomás", 4, U"szín", U"nyomás"},
