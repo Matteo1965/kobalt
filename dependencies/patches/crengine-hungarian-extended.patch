@@ -459,30 +459,25 @@
     // lUInt16  padding;         /**< \brief not used */
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -5491,3 +5491,21 @@
-                     // Use the hyph method of the source node that contains wordpos
--                    if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2) ) {
-+                    HyphMethod * huMethod = m_srcs[wordpos]->lang_cfg->getHyphMethod();
-+                    const bool ordinaryHyphenation = huMethod->hyphenate(m_text+wstart, len, widths, flags, _hyphen_width, max_width, 2);
-+                    const bool huEnabled = m_srcs[wordpos]->lang_cfg->isHungarian() && TextLangMan::getHyphenationHungarianExtended();
-+                    int huLeftMin = HyphMan::getLeftHyphenMin();
-+                    int huRightMin = HyphMan::getRightHyphenMin();
-+                    if (!huLeftMin) huLeftMin = huMethod->getLeftHyphenMin();
-+                    if (!huRightMin) huRightMin = huMethod->getRightHyphenMin();
-+                    const bool extendedHungarian = huEnabled
-+                        && huAddExtendedHyphenation(m_text+wstart, len, m_flags+wstart, huLeftMin, huRightMin);
-+                    LVFont * huFont = NULL;
-+                    if (huEnabled) {
-+                        for (int k=wstart; k<wend; ++k) {
-+                            if (!(m_srcs[k]->flags & LTEXT_SRC_IS_OBJECT)) {
-+                                huFont = (LVFont*)m_srcs[k]->t.font;
-+                                break;
-+                            }
-+                        }
-+                    }
-+                    if ( ordinaryHyphenation || extendedHungarian ) {
-                         // We need to reset the flag for the multiple hyphenation
-
+@@ -5394,5 +5394,22 @@
+         // Use the hyph method of the source node that contains wordpos
+-        if ( fmt->m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(
+-                fmt->m_text+wstart, len, widths, flags, _hyphen_width, max_extent, 2) ) {
++        HyphMethod * huMethod = fmt->m_srcs[wordpos]->lang_cfg->getHyphMethod();
++        const bool ordinaryHyphenation = huMethod->hyphenate(
++                fmt->m_text+wstart, len, widths, flags, _hyphen_width, max_extent, 2);
++        const bool huEnabled = fmt->m_srcs[wordpos]->lang_cfg->isHungarian()
++                && TextLangMan::getHyphenationHungarianExtended();
++        int huLeftMin = HyphMan::getLeftHyphenMin();
++        int huRightMin = HyphMan::getRightHyphenMin();
++        if (!huLeftMin) huLeftMin = huMethod->getLeftHyphenMin();
++        if (!huRightMin) huRightMin = huMethod->getRightHyphenMin();
++        const bool extendedHungarian = huEnabled
++                && huAddExtendedHyphenation(fmt->m_text+wstart, len,
++                                          fmt->m_flags+wstart, huLeftMin, huRightMin);
++        if (ordinaryHyphenation || extendedHungarian) {
+             // We need to reset the flag for the multiple hyphenation
+             // opportunities we will not be using (or they could cause
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
 @@ -1,7 +1,7 @@
