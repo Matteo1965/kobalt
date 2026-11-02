@@ -473,7 +473,7 @@
                          word->min_width = word->width;
                          word->flags |= LTEXT_WORD_CAN_HYPH_BREAK_LINE_AFTER;
                      }
-@@ -6634,6 +6976,25 @@ void LFormattedText::Draw( LVDrawBuf * buf, int x, int y, ldomMarkedRangeList *
+@@ -6634,6 +6976,39 @@ void LFormattedText::Draw( LVDrawBuf * buf, int x, int y, ldomMarkedRangeList *
                      }
                      font = (LVFont *) srcline->t.font;
                      str = srcline->t.text + word->t.start;
@@ -483,6 +483,20 @@
 +                    // explicitly recognized compound seam must render unchanged.
 +                    const int huDrawCompound = huCompoundBoundary(
 +                            str, srcline->t.len - word->t.start);
++                    // Log actual line geometry on a compound-seam hyphen.
++                    // This records layout coordinates, not an inferred glyph edge.
++                    if (flgHyphen && huDrawCompound == word->t.len) {
++                        FILE *huLine = fopen("/mnt/onboard/.adds/kobalt/hu-hyphen-diagnostic.log", "a");
++                        if (huLine) {
++                            fprintf(huLine, "HU-LINE lineWidth=%d lineX=%d wordX=%d wordWidth=%d "
++                                    "wordEnd=%d lineEnd=%d lastWord=%d hyphenWidth=%d replace=%d\\n",
++                                frmline->width, frmline->x, word->x, word->width,
++                                word->x + word->width, frmline->width,
++                                j == frmline->word_count - 1 ? 1 : 0,
++                                font->getHyphenWidth(), word->hungarian_replace);
++                            fclose(huLine);
++                        }
++                    }
 +                    if ( flgHyphen && word->hungarian_replace
 +                         && huDrawCompound != word->t.len ) {
 +                        lChar32 replacement[2];
