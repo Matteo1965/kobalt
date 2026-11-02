@@ -15,7 +15,7 @@ ORDER = (ROOT / "dependencies/crengine-patches.txt").read_text(encoding="utf-8")
 class HungarianPipelineContract(unittest.TestCase):
     def test_normal_hyphenation_precedes_hungarian_correction(self):
         start = HELPERS.index("const bool ordinaryHyphenation")
-        end = HELPERS.index("if ( ordinaryHyphenation || extendedHungarian )", start)
+        end = HELPERS.index("if (ordinaryHyphenation || extendedHungarian)", start)
         block = HELPERS[start:end]
         self.assertLess(block.index("huMethod->hyphenate("), block.index("huAddExtendedHyphenation("))
         self.assertIn("m_flags+wstart", block)
