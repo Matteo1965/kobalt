@@ -459,7 +459,7 @@
     // lUInt16  padding;         /**< \brief not used */
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -5394,5 +5394,22 @@
+@@ -5394,5 +5394,16 @@
          // Use the hyph method of the source node that contains wordpos
 -        if ( fmt->m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(
 -                fmt->m_text+wstart, len, widths, flags, _hyphen_width, max_extent, 2) ) {
