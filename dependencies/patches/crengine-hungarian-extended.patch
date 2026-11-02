@@ -404,7 +404,7 @@
 -                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
 +                        int added_width = huSpacingGlyphCount(word, fmt->m_pbuffer) * word->added_letter_spacing;
                          if ( i == frmline->word_count-1 ) {
-@@ -4402,8 +4681,49 @@ class LVFormatter {
+@@ -4402,8 +4681,58 @@ class LVFormatter {
                                  word->width = new_width;
                              }
                          }
@@ -414,6 +414,9 @@
 +                        // Re-measure the actual unmodified left compound member.
 +                        // The accumulated widths may still include shaping of
 +                        // the compact consonant sequence across this seam.
++                        // Diagnostic only: compare cached width with measured prefix.
++                        // Keep the production width path unchanged.
++                        const int huWidthBefore = word->width;
 +                        if (huCompoundAtWord == word->t.len &&
 +                            word->t.len > 0 && word->t.len <= 127) {
 +                            lUInt16 huWidths[128] = {0};
@@ -422,8 +425,13 @@
 +                                srcline->t.text + word->t.start, word->t.len,
 +                                huWidths, huFlags, 0x7FFF, '?',
 +                                srcline->lang_cfg, srcline->letter_spacing, false);
-+                            if (huMeasured == word->t.len)
++                            if (huMeasured == word->t.len) {
++                                CRLog::info("HU-SEAM prefix=%d cached=%d measured=%d delta=%d replacementFlag=%d",
++                                    word->t.len, huWidthBefore, huWidths[word->t.len - 1],
++                                    huWidthBefore - (int)huWidths[word->t.len - 1],
++                                    (fmt->m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE) ? 1 : 0);
 +                                word->width = huWidths[word->t.len - 1];
++                            }
 +                        }
 +                        if ( (fmt->m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE)
 +                             && huCompoundAtWord != word->t.len ) {
