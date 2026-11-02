@@ -46,6 +46,10 @@ class HungarianPipelineContract(unittest.TestCase):
         self.assertIn('huDrawCompound == word->t.len', HELPERS)
         self.assertIn('fclose(huLine)', HELPERS)
 
+    def test_hungarian_word_flag_is_initialized(self):
+        self.assertIn("word->hungarian_replace = 0; // Do not inherit uninitialized word storage.", HELPERS)
+        self.assertIn("if (huCompoundAtWord == word->t.len) word->hungarian_replace = 0;", HELPERS)
+
     def test_width_patch_checks_formatted_text_flags(self):
         self.assertIn("bool huReplacement = (fmt->m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE)", WIDTH)
         self.assertIn("if (huCompound == i + 1) huReplacement = false;", WIDTH)
