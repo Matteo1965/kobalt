@@ -74,6 +74,42 @@ int main() {
         }
         if(!found) { std::cerr<<"no restored double-consonant break\\n"; ++failed; }
     }
+
+    // Exercise break-selection and rendered-prefix reconstruction with
+    // deterministic character-cell widths. This is NOT CRengine layout.
+    struct Expected { const char32_t *word; int split; const char32_t *left; const char32_t *right; };
+    const Expected expected[] = {
+        {U"meggyaláz", 3, U"meg", U"gyaláz"},
+        {U"kisszék", 3, U"kis", U"szék"},
+        {U"arccsont", 3, U"arc", U"csont"},
+        {U"színnyomás", 4, U"szín", U"nyomás"},
+        {U"okosszemüveg", 4, U"okos", U"szemüveg"},
+        {U"tánccsoport", 4, U"tánc", U"csoport"},
+        {U"asszonnyal", 2, U"asz", U"szonnyal"},
+        {U"könnyek", 3, U"köny", U"nyek"},
+    };
+    for (const auto &e: expected) {
+        int len=std::char_traits<char32_t>::length(e.word);
+        std::vector<lUInt16> flags(len, 0);
+        huAddExtendedHyphenation(e.word, len, flags.data(), 2, 2);
+        int pick=-1;
+        // A synthetic line limit picks the rightmost allowed position that
+        // fits; it is deliberately set to the expected source prefix length.
+        for(int i=0; i<len; ++i)
+            if((flags[i]&LCHAR_ALLOW_HYPH_WRAP_AFTER) && i+1<=e.split)
+                pick=i;
+        if(pick!=e.split-1) { std::cerr<<"wrong selected break\\n"; ++failed; continue; }
+        std::u32string left(e.word,e.word+e.split);
+        if(flags[pick]&LCHAR_HUNGARIAN_HYPH_REPLACE) {
+            lChar32 restore[2];
+            int count=huHyphenReplacement(e.word,len,pick,restore);
+            for(int i=0;i<count;++i)left+=restore[i];
+        }
+        std::u32string right(e.word+e.split,e.word+len);
+        if(left!=e.left || right!=e.right) {
+            std::cerr<<"wrong reconstructed pieces\\n"; ++failed;
+        }
+    }
     return failed ? 1 : 0;
 }
 """
