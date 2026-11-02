@@ -40,6 +40,12 @@ class HungarianPipelineContract(unittest.TestCase):
         self.assertIn('fclose(huDiag)', HELPERS)
         self.assertIn('HU-SEAM prefix=', HELPERS)
 
+    def test_persistent_line_geometry_diagnostic(self):
+        self.assertIn('HU-LINE lineWidth=', HELPERS)
+        self.assertIn('wordX=%d wordWidth=%d', HELPERS)
+        self.assertIn('huDrawCompound == word->t.len', HELPERS)
+        self.assertIn('fclose(huLine)', HELPERS)
+
     def test_width_patch_checks_formatted_text_flags(self):
         self.assertIn("bool huReplacement = (fmt->m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE)", WIDTH)
         self.assertIn("if (huCompound == i + 1) huReplacement = false;", WIDTH)
