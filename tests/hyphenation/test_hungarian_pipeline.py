@@ -28,7 +28,8 @@ class HungarianPipelineContract(unittest.TestCase):
         self.assertIn("draw_len += replacement_len", HELPERS)
 
     def test_width_patch_checks_formatted_text_flags(self):
-        self.assertIn("fmt->m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE", WIDTH)
+        self.assertIn("bool huReplacement = (fmt->m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE)", WIDTH)
+        self.assertIn("if (huCompound == i + 1) huReplacement = false;", WIDTH)
         self.assertIn("huCandidateWidth += huReplacementWidth(", WIDTH)
         self.assertIn("huCandidateWidth > max_extent", WIDTH)
         self.assertIn("fmt->m_text+wstart", WIDTH)
