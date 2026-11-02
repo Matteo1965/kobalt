@@ -437,13 +437,18 @@
                          word->min_width = word->width;
                          word->flags |= LTEXT_WORD_CAN_HYPH_BREAK_LINE_AFTER;
                      }
-@@ -6634,6 +6976,20 @@ void LFormattedText::Draw( LVDrawBuf * buf, int x, int y, ldomMarkedRangeList *
+@@ -6634,6 +6976,24 @@ void LFormattedText::Draw( LVDrawBuf * buf, int x, int y, ldomMarkedRangeList *
                      }
                      font = (LVFont *) srcline->t.font;
                      str = srcline->t.text + word->t.start;
 +                    int draw_len = word->t.len;
 +                    lString32 hungarian_hyphenated_word;
-+                    if ( flgHyphen && (word->hungarian_replace) ) {
++                    // Even if a stale replacement bit survives line breaking, an
++                    // explicitly recognized compound seam must render unchanged.
++                    const int huDrawCompound = huCompoundBoundary(
++                            str, srcline->t.len - word->t.start);
++                    if ( flgHyphen && word->hungarian_replace
++                         && huDrawCompound != word->t.len ) {
 +                        lChar32 replacement[2];
 +                        int source_len = srcline->t.len - word->t.start;
 +                        int replacement_len = huHyphenReplacement(str, source_len, word->t.len-1, replacement);
