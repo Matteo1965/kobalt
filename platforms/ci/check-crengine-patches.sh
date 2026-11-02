@@ -61,5 +61,5 @@ if grep -Fq 'if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(' "$engi
     exit 1
 fi
 require_one 'huCandidateWidth > max_extent' 'formatted-text width gate includes HU replacement'
-require_one 'if ( flgHyphen && (word->hungarian_replace) )' 'renderer consumes HU replacement flag'
+require_one 'if ( flgHyphen && word->hungarian_replace' 'renderer consumes HU replacement flag'
 echo "PASS: all pinned CRengine patches apply in production order"
