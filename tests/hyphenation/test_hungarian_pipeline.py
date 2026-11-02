@@ -33,6 +33,13 @@ class HungarianPipelineContract(unittest.TestCase):
         self.assertIn("split<=compound+1 && split<len", HELPERS)
         self.assertNotIn("split<=compound+2 && split<len", HELPERS)
 
+    def test_persistent_kobo_seam_diagnostic(self):
+        self.assertIn('/mnt/onboard/.adds/kobalt/hu-hyphen-diagnostic.log', HELPERS)
+        self.assertIn('fopen(', HELPERS)
+        self.assertIn('fprintf(huDiag,', HELPERS)
+        self.assertIn('fclose(huDiag)', HELPERS)
+        self.assertIn('HU-SEAM prefix=', HELPERS)
+
     def test_width_patch_checks_formatted_text_flags(self):
         self.assertIn("bool huReplacement = (fmt->m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE)", WIDTH)
         self.assertIn("if (huCompound == i + 1) huReplacement = false;", WIDTH)
