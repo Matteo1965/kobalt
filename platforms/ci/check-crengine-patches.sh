@@ -22,7 +22,8 @@ while IFS= read -r name || [[ -n "$name" ]]; do
     test -f "$file" || { echo "Missing patch: $file" >&2; exit 1; }
     if [[ "$name" == "crengine-hungarian-extended.patch" ]]; then
         echo "Pre-Hungarian active hyphenation call sites:"
-        sed -n '5670,5760p' "$source_dir/crengine/src/lvtextfm.cpp"
+        grep -n -F -C 12 'getHyphMethod()->hyphenate' "$source_dir/crengine/src/lvtextfm.cpp" || true
+        grep -n -F -C 12 'hyphenate(fmt->m_text' "$source_dir/crengine/src/lvtextfm.cpp" || true
     fi
     if [[ "$name" == "crengine-hungarian-width.patch" ]]; then
         echo "Pre-width CRengine candidate sites:"
