@@ -1,11 +1,18 @@
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -5729,6 +5729,12 @@
+@@ -5729,6 +5729,19 @@
              for ( int i = 0; i < len; i++ ) {
                  if ( fmt->m_flags[wstart+i] & LCHAR_ALLOW_HYPH_WRAP_AFTER ) {
 -                    if ( widths[i] + _hyphen_width > max_extent ) {
 +                    int huCandidateWidth = widths[i] + _hyphen_width;
-+                    if (fmt->m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE) {
++                    // Match renderer/word-assembly logic: a recognized compound
++                    // seam never paints a restored Hungarian digraph tail.
++                    bool huReplacement = (fmt->m_flags[wstart+i] & LCHAR_HUNGARIAN_HYPH_REPLACE) != 0;
++                    if (huReplacement) {
++                        const int huCompound = huCompoundBoundary(fmt->m_text+wstart, len);
++                        if (huCompound == i + 1) huReplacement = false;
++                    }
++                    if (huReplacement) {
 +                        src_text_fragment_t * huSrc = fmt->m_srcs[wstart+i];
 +                        huCandidateWidth += huReplacementWidth((LVFont*)huSrc->t.font,
 +                            fmt->m_text+wstart, len, i, huSrc->letter_spacing, huSrc->lang_cfg);
