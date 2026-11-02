@@ -24,7 +24,7 @@ class HungarianPipelineContract(unittest.TestCase):
     def test_compound_flags_and_renderer_use_same_marker(self):
         self.assertIn("flags[compound - 1] &= ~LCHAR_HUNGARIAN_HYPH_REPLACE", HELPERS)
         self.assertIn("word->hungarian_replace = 1", HELPERS)
-        self.assertIn("if ( flgHyphen && (word->hungarian_replace) )", HELPERS)
+        self.assertIn("if ( flgHyphen && word->hungarian_replace", HELPERS)
         self.assertIn("draw_len += replacement_len", HELPERS)
 
     def test_width_patch_checks_formatted_text_flags(self):
