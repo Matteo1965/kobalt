@@ -404,7 +404,7 @@
 -                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
 +                        int added_width = huSpacingGlyphCount(word, fmt->m_pbuffer) * word->added_letter_spacing;
                          if ( i == frmline->word_count-1 ) {
-@@ -4402,8 +4681,58 @@ class LVFormatter {
+@@ -4402,8 +4681,57 @@ class LVFormatter {
                                  word->width = new_width;
                              }
                          }
