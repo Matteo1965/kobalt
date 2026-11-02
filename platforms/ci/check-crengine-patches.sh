@@ -43,6 +43,8 @@ require_one() {
     fi
     echo "PASS: $description (line $(grep -F -n "$pattern" "$engine" | cut -d: -f1))"
 }
+echo "CRengine hyphenation call-site inventory:"
+grep -n -C 7 -E 'getHyphMethod\\(\\)|hyphen_found|huAddExtendedHyphenation|max_extent reached' "$engine" | tail -170 || true
 require_one 'huAddExtendedHyphenation(m_text+wstart' 'HU helper integrated in line breaking'
 require_one 'huCandidateWidth > max_extent' 'formatted-text width gate includes HU replacement'
 require_one 'if ( flgHyphen && (word->hungarian_replace) )' 'renderer consumes HU replacement flag'
