@@ -257,7 +257,10 @@
 +             !huIsVowel(text[i - 1]) || !huIsVowel(text[i + compact_len]) ) continue;
 +        // CPHUN-34/35: do not apply replacement inside the first compound member,
 +        // nor at the morphological boundary; those are ordinary breaks.
-+        if ( compound && split <= compound ) continue;
++        // The compact doubled consonant may straddle the compound boundary:
++        // e.g. meg+gyón and arc+csont. Never re-add this bad candidate
++        // after clearing the base hyphenator flags above.
++        if ( compound && split <= compound + 1 ) continue;
 +        if ( !huHasVowel(text, 0, split) || !huHasVowel(text, split, len) ) continue;
 +        flags[i] |= LCHAR_ALLOW_HYPH_WRAP_AFTER | LCHAR_HUNGARIAN_HYPH_REPLACE;
 +        found = true;
