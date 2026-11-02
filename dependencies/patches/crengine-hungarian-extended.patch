@@ -401,13 +401,21 @@
 -                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
 +                        int added_width = huSpacingGlyphCount(word, fmt->m_pbuffer) * word->added_letter_spacing;
                          if ( i == frmline->word_count-1 ) {
-@@ -4402,8 +4681,35 @@ class LVFormatter {
+@@ -4402,8 +4681,43 @@ class LVFormatter {
                                  word->width = new_width;
                              }
                          }
 +                        // A compound seam is an ordinary break, not a restored digraph.
 +                        // Guard again at word assembly in case stale pattern flags survive.
 +                        const int huCompoundAtWord = huCompoundBoundary(srcline->t.text + word->t.start, srcline->t.len - word->t.start);
++                        // Re-measure the actual unmodified left compound member.
++                        // The accumulated widths may still include shaping of
++                        // the compact consonant sequence across this seam.
++                        if (huCompoundAtWord == word->t.len) {
++                            int huActualWidth;
++                            if (measureWord(word, huActualWidth))
++                                word->width = huActualWidth;
++                        }
 +                        if ( (fmt->m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE)
 +                             && huCompoundAtWord != word->t.len ) {
 +                            word->width += huReplacementWidth(font, fmt->m_text+wstart, end-wstart, i-1-wstart, srcline->letter_spacing, srcline->lang_cfg);
