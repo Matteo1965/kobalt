@@ -50,7 +50,7 @@ class HungarianSourceRegression(unittest.TestCase):
         section = self.patch.split("static bool huAddExtendedHyphenation(", 1)[1].split("return found;", 1)[0]
         self.assertLess(section.index("const int compound ="), section.index("for ( int i=0; i<len; i++ )"))
         self.assertIn("flags[compound - 1] &= ~LCHAR_HUNGARIAN_HYPH_REPLACE", section)
-        self.assertIn("if ( compound && split <= compound ) continue;", section)
+        self.assertIn("if ( compound && split <= compound + 1 ) continue;", section)
 
     def test_restoration_reference_data(self):
         for word, form in RESTORATIONS.items():
