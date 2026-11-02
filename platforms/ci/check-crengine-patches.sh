@@ -46,6 +46,15 @@ require_one() {
 echo "CRengine hyphenation call-site inventory:"
 grep -n -C 7 -E 'getHyphMethod\\(\\)|hyphen_found|huAddExtendedHyphenation|max_extent reached' "$engine" | tail -170 || true
 require_one 'huAddExtendedHyphenation(m_text+wstart' 'HU helper integrated in line breaking'
+hu_line="$(grep -F -n 'huAddExtendedHyphenation(m_text+wstart' "$engine" | cut -d: -f1)"
+if [[ "$hu_line" -lt 5000 ]]; then
+    echo "FAIL: HU integration landed outside active CRengine line breaker (line $hu_line)" >&2
+    exit 1
+fi
+if grep -Fq 'if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(' "$engine"; then
+    echo "FAIL: original direct hyphenation call remains, HU override is inactive" >&2
+    exit 1
+fi
 require_one 'huCandidateWidth > max_extent' 'formatted-text width gate includes HU replacement'
 require_one 'if ( flgHyphen && (word->hungarian_replace) )' 'renderer consumes HU replacement flag'
 echo "PASS: all pinned CRengine patches apply in production order"
