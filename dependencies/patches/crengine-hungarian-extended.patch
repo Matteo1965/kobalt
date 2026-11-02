@@ -435,7 +435,7 @@
 +                                        fprintf(huDiag, "%04X", (unsigned int)huCh);
 +                                        if (huK + 1 < word->t.len) fputc(',', huDiag);
 +                                    }
-+                                    fprintf(huDiag, " len=%d cached=%d measured=%d delta=%d replacementFlag=%d\\n",
++                                    fprintf(huDiag, " len=%d cached=%d measured=%d delta=%d replacementFlag=%d\n",
 +                                        word->t.len, huWidthBefore, huWidths[word->t.len - 1],
 +                                        huWidthBefore - (int)huWidths[word->t.len - 1],
 +                                        (fmt->m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE) ? 1 : 0);
@@ -489,7 +489,7 @@
 +                        FILE *huLine = fopen("/mnt/onboard/.adds/kobalt/hu-hyphen-diagnostic.log", "a");
 +                        if (huLine) {
 +                            fprintf(huLine, "HU-LINE lineWidth=%d lineX=%d wordX=%d wordWidth=%d "
-+                                    "wordEnd=%d lineEnd=%d lastWord=%d hyphenWidth=%d replace=%d\\n",
++                                    "wordEnd=%d lineEnd=%d lastWord=%d hyphenWidth=%d replace=%d\n",
 +                                frmline->width, frmline->x, word->x, word->width,
 +                                word->x + word->width, frmline->width,
 +                                j == frmline->word_count - 1 ? 1 : 0,
