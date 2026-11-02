@@ -404,13 +404,14 @@
 -                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
 +                        int added_width = huSpacingGlyphCount(word, fmt->m_pbuffer) * word->added_letter_spacing;
                          if ( i == frmline->word_count-1 ) {
-@@ -4402,8 +4681,68 @@ class LVFormatter {
+@@ -4402,8 +4681,69 @@ class LVFormatter {
                                  word->width = new_width;
                              }
                          }
 +                        // A compound seam is an ordinary break, not a restored digraph.
 +                        // Guard again at word assembly in case stale pattern flags survive.
 +                        const int huCompoundAtWord = huCompoundBoundary(srcline->t.text + word->t.start, srcline->t.len - word->t.start);
++                        if (huCompoundAtWord == word->t.len) word->hungarian_replace = 0;
 +                        // Re-measure the actual unmodified left compound member.
 +                        // The accumulated widths may still include shaping of
 +                        // the compact consonant sequence across this seam.
@@ -519,6 +520,13 @@
     lInt16   _baseline_to_bottom;     /* when valign top or bottom */
 +   lUInt8   hungarian_replace;       /* independent of TCY 0x8000 word flag */
     // lUInt16  padding;         /**< \brief not used */
+--- a/crengine/src/lvtextfm.cpp
++++ b/crengine/src/lvtextfm.cpp
+@@ -1,3 +1,4 @@
+                 formatted_word_t * word = lvtextAddFormattedWord(frmline);
++                word->hungarian_replace = 0; // Do not inherit uninitialized word storage.
+                 src_text_fragment_t * srcline = m_srcs[wstart]; // should be identical to lastSrc
+                 word->src_text_index = srcline->index;
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
 @@ -5394,5 +5394,16 @@
