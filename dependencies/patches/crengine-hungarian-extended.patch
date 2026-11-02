@@ -401,11 +401,15 @@
 -                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
 +                        int added_width = huSpacingGlyphCount(word, fmt->m_pbuffer) * word->added_letter_spacing;
                          if ( i == frmline->word_count-1 ) {
-@@ -4402,8 +4681,31 @@ class LVFormatter {
+@@ -4402,8 +4681,35 @@ class LVFormatter {
                                  word->width = new_width;
                              }
                          }
-+                        if ( fmt->m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE ) {
++                        // A compound seam is an ordinary break, not a restored digraph.
++                        // Guard again at word assembly in case stale pattern flags survive.
++                        const int huCompoundAtWord = huCompoundBoundary(fmt->m_text+wstart, end-wstart);
++                        if ( (fmt->m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE)
++                             && huCompoundAtWord != i-wstart ) {
 +                            word->width += huReplacementWidth(font, fmt->m_text+wstart, end-wstart, i-1-wstart, srcline->letter_spacing, srcline->lang_cfg);
 +                            word->hungarian_replace = 1;
 +                        }
