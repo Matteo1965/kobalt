@@ -407,7 +407,7 @@
                          }
 +                        // A compound seam is an ordinary break, not a restored digraph.
 +                        // Guard again at word assembly in case stale pattern flags survive.
-+                        const int huCompoundAtWord = huCompoundBoundary(fmt->m_text+wstart, end-wstart);
++                        const int huCompoundAtWord = huCompoundBoundary(fmt->m_text+wstart, fmt->m_length-wstart);
 +                        if ( (fmt->m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE)
 +                             && huCompoundAtWord != i-wstart ) {
 +                            word->width += huReplacementWidth(font, fmt->m_text+wstart, end-wstart, i-1-wstart, srcline->letter_spacing, srcline->lang_cfg);
