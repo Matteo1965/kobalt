@@ -30,4 +30,20 @@ while IFS= read -r name || [[ -n "$name" ]]; do
         exit 1
     }
 done < dependencies/crengine-patches.txt
+# Validate the patched engine source, not only the text of separate patches.
+# The primary line breaker must call the HU helper once; the formatted-text
+# width gate and the renderer must consume its replacement marker.
+engine="$source_dir/crengine/src/lvtextfm.cpp"
+require_one() {
+    local pattern="$1" description="$2" count
+    count="$(grep -F -c "$pattern" "$engine" || true)"
+    if [[ "$count" -ne 1 ]]; then
+        echo "FAIL: $description: expected 1 occurrence, got $count" >&2
+        exit 1
+    fi
+    echo "PASS: $description (line $(grep -F -n "$pattern" "$engine" | cut -d: -f1))"
+}
+require_one 'huAddExtendedHyphenation(m_text+wstart' 'HU helper integrated in line breaking'
+require_one 'huCandidateWidth > max_extent' 'formatted-text width gate includes HU replacement'
+require_one 'if ( flgHyphen && (word->hungarian_replace) )' 'renderer consumes HU replacement flag'
 echo "PASS: all pinned CRengine patches apply in production order"
