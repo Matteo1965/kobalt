@@ -50,8 +50,8 @@ require_one() {
 }
 echo "CRengine hyphenation call-site inventory:"
 grep -n -C 7 -E 'getHyphMethod\\(\\)|hyphen_found|huAddExtendedHyphenation|max_extent reached' "$engine" | tail -170 || true
-require_one 'huAddExtendedHyphenation(m_text+wstart' 'HU helper integrated in line breaking'
-hu_line="$(grep -F -n 'huAddExtendedHyphenation(m_text+wstart' "$engine" | cut -d: -f1)"
+require_one 'huAddExtendedHyphenation(fmt->m_text+wstart' 'HU helper integrated in line breaking'
+hu_line="$(grep -F -n 'huAddExtendedHyphenation(fmt->m_text+wstart' "$engine" | cut -d: -f1)"
 if [[ "$hu_line" -lt 5000 ]]; then
     echo "FAIL: HU integration landed outside active CRengine line breaker (line $hu_line)" >&2
     exit 1
