@@ -50,7 +50,18 @@ int main() {
     require(appearance::same({}, dictionary), "Dictionary UI preferences invalidated the book layout");
     // Appearance settings decide the layout. The list must stay complete, because a
     // missing key would let a retained layout survive a changed setting.
-    require(appearance::keys.size() == 34, "The appearance keys changed without this check");
+    require(appearance::keys.size() == 35, "The appearance keys changed without this check");
+    const QJsonObject opticalOn{{"hanging_punctuation", true}};
+    const QJsonObject opticalOff{{"hanging_punctuation", false}};
+    require(!appearance::same(opticalOn, opticalOff), "Optical margin setting failed to invalidate layout");
+    auto opticalCopy = opticalOn;
+    appearance::copy(opticalCopy, opticalOff);
+    require(opticalCopy.value("hanging_punctuation").isBool() &&
+            !opticalCopy.value("hanging_punctuation").toBool(),
+            "Optical margin OFF was dropped while copying appearance settings");
+    require(appearance::bookDefaults({{"hanging_punctuation", false}})
+                .value("hanging_punctuation").toBool(true) == false,
+            "Optical margin OFF was not applied to book defaults");
     require(appearance::bookDefaults({}).value("paragraph_indent").toInt() == -1,
             "Paragraph indentation no longer defaults to Publisher");
     for (int percent : {-1, 0, 100, 300}) {
