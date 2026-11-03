@@ -134,7 +134,8 @@ ReaderHostServices readerHostServices() {
     result.colorDisplay = [] {
         return pageAnimationPanel() == AnimationPanel::Colour;
     };
-    result.downloadableDictionaries = false;
+    // Kobo keeps its native dictionary as fallback, while allowing local StarDict imports.
+    result.downloadableDictionaries = true;
     result.browserAvailable = nativeReaderBrowserAvailable;
     result.openBrowser = nativeReaderOpenBrowser;
     result.clock = nativeReaderClock;
