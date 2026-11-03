@@ -19,3 +19,4 @@ crengine-position-name-lookup.patch
 crengine-image-proportions.patch
 crengine-hungarian-extended.patch
 crengine-hungarian-width.patch
+crengine-hungarian-optical-hyphen.patch
