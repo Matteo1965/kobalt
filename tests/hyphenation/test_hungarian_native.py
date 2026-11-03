@@ -14,7 +14,7 @@ BEGIN = "+static lChar32 huAsciiLower("
 END = "+// Extra width of the *rendered prefix*"
 
 CASES = [
-    ("meggyullad", 3), ("meggyaláz", 3), ("meggyón", 3),
+    ("meggyullad", 3), ("meggyújtotta", 3), ("meggyaláz", 3), ("meggyón", 3),
     ("arccsont", 3), ("kisszék", 3), ("színnyomás", 4),
     ("okosszemüveg", 4), ("tánccsoport", 4),
 ]
@@ -43,7 +43,7 @@ constexpr lUInt16 LCHAR_HUNGARIAN_HYPH_REPLACE = 0x0080;
 int main() {
     struct Compound { const char32_t *word; int split; };
     const Compound compounds[] = {
-        {U"meggyullad",3},{U"meggyaláz",3},{U"meggyón",3},
+        {U"meggyullad",3},{U"meggyújtotta",3},{U"meggyaláz",3},{U"meggyón",3},
         {U"arccsont",3},{U"kisszék",3},{U"színnyomás",4},
         {U"cipősszekrény",5},{U"gyorsszolgálat",5},
         {U"okosszemüveg",4},{U"tánccsoport",4},
@@ -81,6 +81,7 @@ int main() {
     struct Expected { const char32_t *word; int split; const char32_t *left; const char32_t *right; };
     const Expected expected[] = {
         {U"meggyaláz", 3, U"meg", U"gyaláz"},
+        {U"meggyújtotta", 3, U"meg", U"gyújt"},
         {U"meggyón", 3, U"meg", U"gyón"},
         {U"cipősszekrény", 5, U"cipős", U"szekrény"},
         {U"gyorsszolgálat", 5, U"gyors", U"szolgálat"},
