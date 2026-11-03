@@ -51,7 +51,7 @@ class HungarianPipelineContract(unittest.TestCase):
 
     def test_hungarian_optical_hyphen_hanging_only(self):
         self.assertIn("if (isHungarian())", OPTICAL)
-        self.assertIn("return 35;", OPTICAL)
+        self.assertIn("return 100;", OPTICAL)
         self.assertIn("return 70; // 70%", OPTICAL)
         self.assertLess(ORDER.index("crengine-hungarian-width.patch"),
                         ORDER.index("crengine-hungarian-optical-hyphen.patch"))
