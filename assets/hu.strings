@@ -588,3 +588,21 @@
 "settings.vertical_spacing_scope_all_description" = "A majdnem teljes szövegoldalak szokásos oldaltörési hézagait is kiigazítja.";
 "settings.vertical_spacing_scope_protection" = "Csak árva-/fattyúsoroknál";
 "settings.vertical_spacing_scope_protection_description" = "Csak akkor igazít, ha az árva- és fattyúsorok védelme miatt egy egyébként elférő sor átkerül a következő oldalra.";
+
+/* RENDSZER: alvóképernyő, olvasási szakasz és időtartamok. */
+"settings.sleep_tile" = "Alvóképernyő stílusa";
+"settings.sleep_tile_card" = "Kártya";
+"settings.sleep_tile_card_description" = "Alapértelmezett. Kártya a bal alsó sarokban.";
+"settings.sleep_tile_band" = "Alsó sáv";
+"settings.sleep_tile_band_description" = "Sáv az alsó szélen. Felső vonala az olvasás előrehaladását jelzi.";
+"settings.sleep_tile_bookmark" = "Könyvjelző";
+"settings.sleep_tile_bookmark_description" = "A felső szélről lelógó szalag, amely az olvasási százalékot mutatja.";
+"settings.session_timeout" = "Új olvasási szakasz alvás után";
+"settings.session_timeout_description" = "A megadott idő elteltével a készülék felébresztése új olvasási szakaszt indít. Nem kell bezárni és újra megnyitni a könyvet.";
+"settings.session_timeout_15" = "15 perc";
+"settings.session_timeout_60" = "1 óra";
+"settings.session_timeout_240" = "4 óra";
+"settings.session_timeout_360" = "6 óra";
+"settings.session_timeout_720" = "12 óra";
+"settings.session_timeout_0" = "Soha";
+"settings.session_timeout_never_description" = "Az olvasási szakasz hosszabb tétlenség után is folytatódik a készülék felébresztésekor.";
