@@ -1,6 +1,6 @@
 --- a/crengine/src/textlang.cpp
 +++ b/crengine/src/textlang.cpp
-@@ -1335,3 +1335,6 @@ int TextLangCfg::getHyphenHangingPercent() {
+@@ -1336,2 +1336,6 @@ int TextLangCfg::getHyphenHangingPercent() {
 -    return 70; // 70%
 +    // Hungarian optical margin: hang about half of the standard amount.
 +    // Leave every other language at CREngine's original 70 percent.
