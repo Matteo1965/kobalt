@@ -561,3 +561,30 @@
 "dictionary_panel.try_another_word" = "Módosítsd fent a keresést egy másik szó kipróbálásához.";
 "dictionary_panel.dictionary_sources" = "Szótárforrások: %1";
 "dictionary_panel.source" = "Forrás";
+
+/* STÍLUS: bekezdések, oldaltörések és függőleges oldalkitöltés. */
+"settings.section_words_letters" = "SZAVAK ÉS BETŰK";
+"settings.section_paragraphs" = "BEKEZDÉSEK";
+"settings.section_page_breaks" = "OLDALTÖRÉSEK";
+"settings.paragraph_spacing" = "Bekezdés beállításai";
+"settings.paragraph_spacing_summary" = "Bekezdésköz és első sor behúzásának beállítása.";
+"settings.paragraph_spacing_description" = "Az értékek a betűméret százalékai: 12 pontos szövegnél a 100%-os behúzás 12 pont. Minden könyvre érvényes. A címsorok és a különleges szövegblokkok megtartják saját formázásukat.";
+"settings.paragraph_choices_description" = "A „Kiadói” beállítás az adott tulajdonságnál megtartja a könyv eredeti formázását. A ferde vonalak a bekezdések közötti többlet térközt jelzik.";
+"settings.paragraph_gap" = "Bekezdésköz";
+"settings.paragraph_indent" = "Első sor behúzása";
+"settings.vertical_spacing" = "Függőleges oldalkitöltés";
+"settings.vertical_spacing_mode" = "Oldalkitöltés";
+"settings.vertical_spacing_apply_to" = "Érintett oldalak";
+"settings.vertical_spacing_description" = "A majdnem teljes oldalak üres helyének elosztása.";
+"settings.vertical_spacing_off" = "Normál";
+"settings.vertical_spacing_off_description" = "A szokásos sorköz és felső igazítás megtartása.";
+"settings.vertical_spacing_expand" = "Sorköz növelése";
+"settings.vertical_spacing_expand_description" = "A fennmaradó hely elosztása a sorok között. Az első sor helye nem változik.";
+"settings.vertical_spacing_center" = "Majdnem teljes oldalak középre";
+"settings.vertical_spacing_center_description" = "A legalább 90%-ban kitöltött szövegoldalak függőleges középre igazítása, a sorköz megtartásával.";
+"settings.vertical_spacing_scope" = "Érintett oldalak";
+"settings.vertical_spacing_scope_description" = "Válaszd ki, mely oldalakon történjen helykiigazítás.";
+"settings.vertical_spacing_scope_all" = "Minden alkalmas oldal";
+"settings.vertical_spacing_scope_all_description" = "A majdnem teljes szövegoldalak szokásos oldaltörési hézagait is kiigazítja.";
+"settings.vertical_spacing_scope_protection" = "Csak árva-/fattyúsoroknál";
+"settings.vertical_spacing_scope_protection_description" = "Csak akkor igazít, ha az árva- és fattyúsorok védelme miatt egy egyébként elférő sor átkerül a következő oldalra.";
