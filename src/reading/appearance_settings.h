@@ -60,11 +60,11 @@ inline QJsonObject beautifierSettings(const QJsonObject &settings) {
         result[key] = (!legacy || enabled) && settings.value(key).toBool(legacy && enabled);
     return result;
 }
-inline constexpr std::array<const char *, 34> keys{
+inline constexpr std::array<const char *, 35> keys{
     "line_spacing_version",   "font_pixels",     "line_spacing", "paragraph_spacing", "paragraph_indent", "font_face",
     "default_font_face",      "margin_pixels",   "top_margin_pixels", "bottom_margin_pixels",
     "text_alignment",         "bold_reading",    "weight_steps",      "font_weight",
-    "font_optical_size",      "hyphenation",     "dark_mode",         "hide_nonlinear_fragments",
+    "font_optical_size",      "hyphenation",     "hanging_punctuation", "dark_mode", "hide_nonlinear_fragments",
     "beautifier_initials", "beautifier_spacing", "beautifier_indent", "avoid_wasteful_styling", "serif_font_face", "sans_font_face",    "monospace_font_face",
     "vertical_justification", "vertical_spacing_scope", "column_spacing", "columns", "two_columns_landscape", "column_spacing_percent", "word_spacing", "justification_tracking", "widows_orphans"};
 // Preserve the Boolean used by early development builds of page filling.
