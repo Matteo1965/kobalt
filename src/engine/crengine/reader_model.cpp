@@ -697,9 +697,11 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     for (const auto *key : appearance::beautifierKeys)
         if (settings.contains(key) && !settings.value(key).isBool()) return false;
     const bool beautifierInitials = settings.value("beautifier_initials").toBool(beautifierInitials_);
-    // The beta4 repair changes the in-memory DOM, which a stylesheet reflow
-    // cannot undo. Switching normalization must parse the original EPUB again.
-    if (beautifierInitials != beautifierInitials_ && source_ && !source_->parent) {
+    // Reparse the original EPUB when either drop-cap normalization or optical
+    // margin changes. Both alter paragraph geometry and cached formatted lines;
+    // simple reflow cannot undo the beta4 drop-cap DOM edits.
+    if ((beautifierInitials != beautifierInitials_ ||
+         hangingPunctuation != hangingPunctuation_) && source_ && !source_->parent) {
         QJsonObject freshSettings = state();
         for (auto it = settings.constBegin(); it != settings.constEnd(); ++it)
             freshSettings.insert(it.key(), it.value());
@@ -856,7 +858,9 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
         if (!cacheFingerprint_.isEmpty())
             engine_->getDocProps()->setHex(
                 DOC_PROP_FILE_CRC32,
-                documentCacheChecksum(documentCachePolicy() + ":bionic-v3:hu-dropcap-port-v2:" + (beautifierInitials_ ? "normal:" : "decorated:") + bionic_.toUtf8(), domVersion_));
+                documentCacheChecksum(documentCachePolicy() + ":bionic-v3:hu-dropcap-port-v3:" +
+                    (beautifierInitials_ ? "normal:" : "decorated:") +
+                    (hangingPunctuation_ ? "optical-on:" : "optical-off:") + bionic_.toUtf8(), domVersion_));
         engine_->getDocument()->getProps()->setInt("kobalt.bionic.mode", bionic_ == "bold" ? 1 : 0);
         engine_->requestRender();
     }
