@@ -36,15 +36,19 @@ static void appendBE32(QByteArray &out, quint32 v) {
 static void fixture(const QString &root, const QString &id) {
     const QString dir = QDir(root).filePath(id);
     require(QDir().mkpath(dir), "fixture directory");
-    const QByteArray word = QStringLiteral("kabát").toUtf8();
+    const QByteArray house = QStringLiteral("ház").toUtf8();
+    const QByteArray coat = QStringLiteral("kabát").toUtf8();
     const QByteArray html = "<p>test dictionary definition</p>";
-    QByteArray index = word + QByteArray(1, '\0');
+    QByteArray index = house + QByteArray(1, '\0');
     appendBE32(index, 0);
+    appendBE32(index, quint32(html.size()));
+    index += coat + QByteArray(1, '\0');
+    appendBE32(index, quint32(html.size()));
     appendBE32(index, quint32(html.size()));
     const QString prefix = QDir(dir).filePath(id);
     save(prefix + ".idx", index);
-    save(prefix + ".dict", html);
-    save(prefix + ".ifo", "StarDict's dict ifo file\nversion=2.4.2\nwordcount=1\nidxfilesize=" +
+    save(prefix + ".dict", html + html);
+    save(prefix + ".ifo", "StarDict's dict ifo file\nversion=2.4.2\nwordcount=2\nidxfilesize=" +
                           QByteArray::number(index.size()) + "\nsametypesequence=h\n");
     QString error;
     require(kobalt::StarDict::prepare(dir, id, &error), qPrintable(error));
@@ -63,12 +67,18 @@ int main(int argc, char **argv) {
                 "exact dictionary lookup must work");
         require(dictionary.lookup(QStringLiteral("kabátja")).html.isEmpty(),
                 "Hungarian possessive fallback must be absent before source enablement");
+        require(dictionary.lookup(QStringLiteral("házak")).html.isEmpty(),
+                "Hungarian plural morphology must be absent before source enablement");
         dictionary.setHungarianSource(true);
         require(dictionary.lookup(QStringLiteral("kabátja")).html == "<p>test dictionary definition</p>",
                 "Hungarian-source possessive lookup must resolve via lemma");
+        require(dictionary.lookup(QStringLiteral("házak")).html == "<p>test dictionary definition</p>",
+                "Hungarian source must resolve regular plural morphology");
         dictionary.setHungarianSource(false);
         require(dictionary.lookup(QStringLiteral("kabátja")).html.isEmpty(),
                 "disabling Hungarian source must remove morphology fallback");
+        require(dictionary.lookup(QStringLiteral("házak")).html.isEmpty(),
+                "disabling Hungarian source must also remove plural stemming");
     }
     for (const char *source : {"de", "es"}) {
         const QString id = QString::fromLatin1(source) + QStringLiteral("-hu");
