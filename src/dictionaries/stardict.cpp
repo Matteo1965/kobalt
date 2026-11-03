@@ -303,7 +303,10 @@ bool StarDict::prepare(const QString &directory, const QString &id, QString *err
     }
     bool valid = false;
     const quint32 words = values["wordcount"].toUInt(&valid);
-    if (!valid || !words || values["version"] != "2.4.2" || (values["sametypesequence"] != "h" && values["sametypesequence"] != "m"))
+    const bool supportedVersion = values["version"] == "2.4.2" || values["version"] == "3.0.0";
+    const bool supportedIndex = values.value("idxoffsetbits", "32") == "32";
+    if (!valid || !words || !supportedVersion || !supportedIndex ||
+        (values["sametypesequence"] != "h" && values["sametypesequence"] != "m"))
         return fail(error, "Unsupported StarDict format.");
     const auto indexSize = values["idxfilesize"].toULongLong(&valid);
     if (!valid || indexSize != quint64(QFile(prefix + ".idx").size()))
