@@ -436,13 +436,20 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
     applyPublisherFontFallbacks();
     engine_->getDocument()->getProps()->setInt("kobalt.bionic.mode", bionic_ == "bold" ? 1 : 0);
     openingTimes_["model_parse_ms"] = double(phase.restart());
-    // The package language selects hyphenation patterns and line-breaking
-    // rules for text without its own lang attribute.
-    if (const auto language = engine_->getLanguage().trim(); !language.empty()) {
-        auto properties = LVCreatePropsContainer();
-        properties->setString(PROP_TEXTLANG_MAIN_LANG, language);
-        engine_->propsApply(properties);
-    }
+    // Resolve the original EPUB language before applying the optical margin.
+    // The user switch is Hungarian-only; other languages retain CREngine's
+    // standard hanging-punctuation setting.
+    const auto language = engine_->getLanguage().trim();
+    const QString languageCode = qstring(language).toLower();
+    const bool hungarianBook = languageCode == QStringLiteral("hu") ||
+        languageCode.startsWith(QStringLiteral("hu-")) ||
+        languageCode.startsWith(QStringLiteral("hu_"));
+    auto languageProperties = LVCreatePropsContainer();
+    if (!language.empty())
+        languageProperties->setString(PROP_TEXTLANG_MAIN_LANG, language);
+    languageProperties->setInt(PROP_FLOATING_PUNCTUATION,
+                               !hungarianBook || hangingPunctuation_ ? 1 : 0);
+    engine_->propsApply(languageProperties);
     // A cached book was saved with these markers and its styles. Marking it
     // again would discard the cached pages.
     if (!openedFromCache_) {
