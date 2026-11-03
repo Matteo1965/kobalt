@@ -37,6 +37,93 @@ bool fail(QString *error, const QString &message) {
 QString folder(const QString &root, const QString &id) {
     return QDir(root).filePath(id);
 }
+
+QString dictionarySourceLanguage(const QString &root, const QString &id, const QVector<DownloadDictionary> &entries) {
+    // Existing installs may predate language metadata; keep catalog fallback.
+    const auto metadata = storage::readJson(folder(folder(root, id), "installed.json"));
+    const QString declared = metadata["language"].toString().trimmed().toLower();
+    if (declared == QStringLiteral("hu"))
+        return declared;
+    if (!declared.isEmpty())
+        return declared;
+    for (const auto &entry : entries)
+        if (entry.id == id)
+            return entry.language.trimmed().toLower();
+    return id == QStringLiteral("hu-hu") ? QStringLiteral("hu") : QString();
+}
+
+bool importHungarianDictionary(const QString &root) {
+    const QString id = QStringLiteral("hu-hu");
+    const QString logPath = QStringLiteral("/mnt/onboard/kobalt-hu-dictionary-import.log");
+    const auto log = [&](const QString &message) {
+        QFile file(logPath);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+            file.write(message.toUtf8());
+            file.write("\\n");
+        }
+    };
+    log(QStringLiteral("HU import start"));
+    const QString archive = QStringLiteral("/mnt/onboard/.kobo/custom-dict/HU_HU_Merged_v3.zip");
+    const QString destination = folder(root, id);
+    if (QFileInfo::exists(folder(destination, "installed.json"))) {
+        log(QStringLiteral("Already installed"));
+        return true;
+    }
+    if (!QFileInfo(archive).isFile() || !QDir().mkpath(root) || QFileInfo::exists(destination)) {
+        log(QStringLiteral("Archive/root/destination check failed: ") + archive + QStringLiteral(" root=") + root);
+        return false;
+    }
+    QTemporaryDir staging(folder(root, ".hu-import-XXXXXX"));
+    if (!staging.isValid()) {
+        log(QStringLiteral("Cannot create staging directory"));
+        return false;
+    }
+    const QString prefix = QStringLiteral("hungarian-dictionary-merged-v3.");
+    for (const auto &ext : {QStringLiteral("ifo"), QStringLiteral("idx"), QStringLiteral("dict")}) {
+        ZipResource input;
+        if (!input.open(archive, prefix + ext, ext == "dict" ? 64LL * 1024 * 1024 : 8LL * 1024 * 1024)) {
+            log(QStringLiteral("ZIP open failed: ") + prefix + ext);
+            return false;
+        }
+        QFile output(folder(staging.path(), id + "." + ext));
+        if (!output.open(QIODevice::WriteOnly)) {
+            log(QStringLiteral("Output open failed: ") + output.fileName());
+            return false;
+        }
+        while (input.valid() && !input.finished()) {
+            const auto chunk = input.next();
+            if (output.write(chunk) != chunk.size()) {
+                log(QStringLiteral("Write failed: ") + ext);
+                return false;
+            }
+        }
+        if (!input.valid()) {
+            log(QStringLiteral("ZIP CRC/stream failed: ") + ext);
+            return false;
+        }
+        output.close();
+        log(QStringLiteral("Extracted ") + ext);
+    }
+    QString error;
+    if (!StarDict::prepare(staging.path(), id, &error)) {
+        log(QStringLiteral("StarDict prepare failed: ") + error);
+        return false;
+    }
+    log(QStringLiteral("StarDict index prepared"));
+    if (!storage::writeJson(folder(staging.path(), "installed.json"),
+           qt::object({{"id", id}, {"name", QStringLiteral("Magyar értelmező szótár")}, {"language", QStringLiteral("hu")}, {"target", QStringLiteral("hu")}}))) {
+        log(QStringLiteral("Metadata write failed"));
+        return false;
+    }
+    if (!QDir().rename(staging.path(), destination)) {
+        log(QStringLiteral("Install rename failed"));
+        return false;
+    }
+    log(QStringLiteral("Import complete"));
+    staging.setAutoRemove(false);
+    return true;
+}
+
 class InstallJob final : public QThread {
 public:
     QString root, zip, error;
@@ -69,6 +156,7 @@ DictionaryManager::DictionaryManager(QString directory, std::unique_ptr<Dictiona
                                      QNetworkAccessManager *network)
     : QObject(parent), data(std::make_unique<Data>()) {
     data->root = std::move(directory);
+    importHungarianDictionary(data->root);
     data->fallback = std::move(fallback);
     if (network)
         data->requests = network;
@@ -120,6 +208,10 @@ QVector<DictionaryChoice> DictionaryManager::choices() const {
                                           false};
             (choice.language == data->language ? current : other).append(choice);
         }
+    if (installed("hu-hu")) {
+        const DictionaryChoice choice{"downloaded:hu-hu", QStringLiteral("Magyar értelmező szótár"), QStringLiteral("hu"), false};
+        (data->language == "hu" ? current : other).append(choice);
+    }
     for (auto choice : data->fallback->choices()) {
         choice.fallback = true;
         choice.language = normalizeLanguage(choice.language);
@@ -137,6 +229,7 @@ bool DictionaryManager::select(const QString &book, const QString &id, QString *
             auto active = std::make_unique<StarDict>();
             if (!active->open(folder(data->root, pair), pair, error))
                 return false;
+            active->setHungarianSource(dictionarySourceLanguage(data->root, pair, catalog()) == QStringLiteral("hu"));
             data->active = std::move(active);
             data->activeId = pair;
         }
@@ -187,11 +280,16 @@ DictionaryResult DictionaryManager::lookup(const QString &book, const QString &w
             result.error = error;
             return result;
         }
-        data->active = std::move(active);
+        active->setHungarianSource(dictionarySourceLanguage(data->root, pair, catalog()) == QStringLiteral("hu"));
+            data->active = std::move(active);
         data->activeId = pair;
     }
     auto result = data->active->lookup(word);
     result.dictionaryId = id;
+    if (pair == "hu-hu") {
+        result.dictionary = QStringLiteral("Magyar értelmező szótár");
+        result.language = QStringLiteral("hu");
+    }
     for (const auto &entry : catalog())
         if (entry.id == pair) {
             result.dictionary = entry.name;
@@ -457,7 +555,7 @@ bool DictionaryManager::installArchive(const QString &directory, const DownloadD
     if (!storage::writeJson(
             folder(stage.path(), "installed.json"),
             qt::object(
-                {{"id", entry.id}, {"name", entry.name}, {"sha256", QString::fromLatin1(entry.sha256.toHex())}})))
+                {{"id", entry.id}, {"name", entry.name}, {"language", normalizeLanguage(entry.language)}, {"target", normalizeLanguage(entry.target)}, {"sha256", QString::fromLatin1(entry.sha256.toHex())}})))
         return fail(error, "Cannot save dictionary metadata.");
     if (cancelled && cancelled())
         return fail(error, "Installation cancelled.");
