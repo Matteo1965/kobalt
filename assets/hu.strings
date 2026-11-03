@@ -606,3 +606,14 @@
 "settings.session_timeout_720" = "12 óra";
 "settings.session_timeout_0" = "Soha";
 "settings.session_timeout_never_description" = "Az olvasási szakasz hosszabb tétlenség után is folytatódik a készülék felébresztésekor.";
+
+/* Könyv normalizálása: szabályok és magyarázatok. */
+"settings.beautifier_summary" = "A kezdőbetűk és a szokásos bekezdések megjelenésének egységesítése.";
+"settings.beautifier_description" = "Kísérleti funkció. A bejelölt szabályok minden könyvre érvényesek. Az összes jelölés törlésével kikapcsolható. A könyvfájlokat nem módosítja.";
+"settings.beautifier_initials" = "Kezdőbetűk normalizálása";
+"settings.beautifier_initials_description" = "A felismert szöveges iniciálékat normál betűkké alakítja, minden karaktert megőrizve.";
+"settings.beautifier_spacing" = "Bekezdésközök eltávolítása";
+"settings.beautifier_spacing_description" = "Eltávolítja a szokásos szövegbekezdések utáni többlet térközt. A felismert jelenetváltások és különleges szövegrészek megmaradnak.";
+"settings.beautifier_indent" = "Első sorok behúzásának egységesítése";
+"settings.beautifier_indent_description" = "Egységes behúzást alkalmaz a szokásos szövegbekezdésekre. A külön megadott bekezdésbeállítások elsőbbséget élveznek.";
+"settings.beautifier_active" = "Be · 3 szabályból %1";
