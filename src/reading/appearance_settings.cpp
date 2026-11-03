@@ -162,6 +162,7 @@ QJsonObject bookDefaults(const QJsonObject &preferences) {
     defaults["paragraph_indent"] = paragraphIndent(preferences.value("paragraph_indent"));
     defaults["justification_tracking"] = preferences.value("justification_tracking").toInt(0);
     defaults["widows_orphans"] = preferences.value("widows_orphans").toString("publisher");
+    defaults["hanging_punctuation"] = preferences.value("hanging_punctuation").toBool(true);
     if (!preferences.value(inheritTextLayoutKey).toBool(true)) {
         return defaults;
     }
@@ -208,6 +209,7 @@ void applyBookDefaults(QJsonObject &saved, const QJsonObject &defaults) {
     saved["paragraph_indent"] = paragraphIndent(defaults.value("paragraph_indent"));
     saved["justification_tracking"] = defaults.value("justification_tracking").toInt(0);
     saved["widows_orphans"] = defaults.value("widows_orphans").toString("publisher");
+    saved["hanging_punctuation"] = defaults.value("hanging_punctuation").toBool(true);
 }
 void rememberTextLayout(QJsonObject &preferences, const QJsonObject &state) {
     QJsonObject last;
