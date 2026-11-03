@@ -697,6 +697,27 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     for (const auto *key : appearance::beautifierKeys)
         if (settings.contains(key) && !settings.value(key).isBool()) return false;
     const bool beautifierInitials = settings.value("beautifier_initials").toBool(beautifierInitials_);
+    // The beta4 drop-cap repair moves DOM children into a preceding paragraph.
+    // Reformatting that mutated document cannot undo the structural edit.
+    // Reopen from the original publication whenever initial normalization changes.
+    if (beautifierInitials != beautifierInitials_ && source_ && !source_->parent) {
+        QJsonObject freshSettings = state();
+        for (auto it = settings.constBegin(); it != settings.constEnd(); ++it)
+            freshSettings.insert(it.key(), it.value());
+        freshSettings.insert("position", position());
+        QString reopenError;
+        if (source_->resources) {
+            const auto resources = source_->resources;
+            const auto sizes = source_->sizes;
+            return openResources(resources, sizes, size.isValid() ? size : size_, freshSettings,
+                                 &reopenError, std::move(progress));
+        }
+        if (!source_->bytes.isEmpty()) {
+            const auto bytes = source_->bytes;
+            return open(bytes, size.isValid() ? size : size_, freshSettings, &reopenError, std::move(progress));
+        }
+        return false;
+    }
     const bool beautifierSpacing = settings.value("beautifier_spacing").toBool(beautifierSpacing_);
     const bool beautifierIndent = settings.value("beautifier_indent").toBool(beautifierIndent_);
     const int margin = settings.value("margin_pixels").toInt(margin_);
@@ -830,7 +851,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
         if (!cacheFingerprint_.isEmpty())
             engine_->getDocProps()->setHex(
                 DOC_PROP_FILE_CRC32,
-                documentCacheChecksum(documentCachePolicy() + ":bionic-v3:" + bionic_.toUtf8(), domVersion_));
+                documentCacheChecksum(documentCachePolicy() + ":bionic-v3:hu-dropcap-port-v1:" + bionic_.toUtf8(), domVersion_));
         engine_->getDocument()->getProps()->setInt("kobalt.bionic.mode", bionic_ == "bold" ? 1 : 0);
         engine_->requestRender();
     }
