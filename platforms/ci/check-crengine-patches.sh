@@ -62,4 +62,18 @@ if grep -Fq 'if ( m_srcs[wordpos]->lang_cfg->getHyphMethod()->hyphenate(' "$engi
 fi
 require_one 'huCandidateWidth > max_extent' 'formatted-text width gate includes HU replacement'
 require_one 'if ( flgHyphen && word->hungarian_replace' 'renderer consumes HU replacement flag'
+# Guard the production Hungarian optical-margin rule after every upstream
+# CRengine upgrade. Do not silently regress to the upstream 70% in Hungarian.
+language_source="$source_dir/crengine/src/textlang.cpp"
+test -f "$language_source" || { echo "FAIL: patched language rules are missing" >&2; exit 1; }
+if ! grep -Fq 'if (isHungarian())' "$language_source" ||
+   ! grep -Fq 'return 100;' "$language_source"; then
+    echo "FAIL: Hungarian 100% hyphen hanging patch is missing" >&2
+    exit 1
+fi
+if grep -R -F -q 'hu-hyphen-diagnostic.log' "$source_dir/crengine/src"; then
+    echo "FAIL: persistent Hungarian hyphenation diagnostics reappeared" >&2
+    exit 1
+fi
+echo "PASS: Hungarian 100% optical hyphen hanging and no persistent log writes"
 echo "PASS: all pinned CRengine patches apply in production order"
