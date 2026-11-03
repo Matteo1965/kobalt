@@ -697,6 +697,7 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     for (const auto *key : appearance::beautifierKeys)
         if (settings.contains(key) && !settings.value(key).isBool()) return false;
     const bool beautifierInitials = settings.value("beautifier_initials").toBool(beautifierInitials_);
+    const bool hangingPunctuation = settings.value("hanging_punctuation").toBool(hangingPunctuation_);
     // Reparse the original EPUB when either drop-cap normalization or optical
     // margin changes. Both alter paragraph geometry and cached formatted lines;
     // simple reflow cannot undo the beta4 drop-cap DOM edits.
@@ -732,7 +733,6 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
     const int bottomMargin = settings.value("bottom_margin_pixels").toInt(bottomMargin_);
     const int weight = settings.value("weight_steps").toInt(weight_);
     const auto bionic = settings.value("bold_reading").toString(bionic_);
-    const bool hangingPunctuation = settings.value("hanging_punctuation").toBool(hangingPunctuation_);
     const auto face = settings.value("font_face").toString(face_);
     const auto defaultFace = settings.value("default_font_face").toString(defaultFace_);
     auto fallbackFaces = fallbackFaces_;
