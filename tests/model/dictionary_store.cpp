@@ -452,6 +452,53 @@ int main(int argc, char **argv) {
                 "Dictionary lookup did not resolve a complete phrase entry");
         require(dictionary.lookup("ice").html.isEmpty(), "Phrase lookup silently used only its first word");
     }
+    // Synthetic language-direction fixtures. No HU-DE/HU-ES archives are needed:
+    // the source language (not the target) must enable Hungarian morphology.
+    {
+        const auto base = temp.path() + "/language-fixtures";
+        const auto dictionaryDir = base + "/en-en";
+        require(QDir().mkpath(dictionaryDir), "make synthetic language dictionary");
+        const QByteArray lemma = QStringLiteral("kabát").toUtf8();
+        const QByteArray meaning("<p>synthetic multilingual definition</p>");
+        QByteArray lemmaIndex = lemma + QByteArray(1, '\0');
+        be32(lemmaIndex, 0);
+        be32(lemmaIndex, meaning.size());
+        save(dictionaryDir + "/en-en.ifo",
+             "StarDict's dict ifo file\nversion=2.4.2\nwordcount=1\nidxfilesize=" +
+             QByteArray::number(lemmaIndex.size()) + "\nsametypesequence=h\n");
+        save(dictionaryDir + "/en-en.idx", lemmaIndex);
+        save(dictionaryDir + "/en-en.dict.dz", dictzip(meaning));
+        QString languageError;
+        require(StarDict::prepare(dictionaryDir, "en-en", &languageError), qPrintable(languageError));
+        StarDict direct;
+        require(direct.open(dictionaryDir, "en-en", &languageError), qPrintable(languageError));
+        require(direct.lookup(QStringLiteral("kabátja")).html.isEmpty(),
+                "A non-Hungarian source must not use Hungarian possessive lookup");
+        direct.setHungarianSource(true);
+        require(direct.lookup(QStringLiteral("kabátja")).html.toUtf8() == meaning,
+                "Hungarian source must resolve possessive forms to lemmas");
+        direct.setHungarianSource(false);
+        require(direct.lookup(QStringLiteral("kabátja")).html.isEmpty(),
+                "Switching away from Hungarian must disable morphology");
+
+        // This catalogued fixture id allows testing the real DictionaryManager
+        // metadata path, without changing or distributing a real dictionary.
+        for (const auto &target : {QStringLiteral("de"), QStringLiteral("es")}) {
+            save(dictionaryDir + "/installed.json",
+                 QByteArray("{\"id\":\"en-en\",\"language\":\"hu\",\"target\":\"") +
+                 target.toUtf8() + "\"}");
+            DictionaryManager manager(base, std::make_unique<Empty>());
+            manager.setLanguage("en");
+            require(manager.lookup("book", QStringLiteral("kabátja")).html.toUtf8() == meaning,
+                    "Hungarian source metadata must enable morphology for either target language");
+        }
+        save(dictionaryDir + "/installed.json",
+             "{\"id\":\"en-en\",\"language\":\"en\",\"target\":\"hu\"}");
+        DictionaryManager reverse(base, std::make_unique<Empty>());
+        reverse.setLanguage("en");
+        require(reverse.lookup("book", QStringLiteral("kabátja")).html.isEmpty(),
+                "Hungarian target alone must not enable Hungarian morphology");
+    }
     QByteArray idx("CAT\0", 4);
     be32(idx, first.size());
     be32(idx, second.size());
