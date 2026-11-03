@@ -500,6 +500,36 @@ int main(int argc, char **argv) {
         require(reverse.lookup("book", QStringLiteral("kabátja")).html.isEmpty(),
                 "Hungarian target alone must not enable Hungarian morphology");
     }
+    // A local StarDict folder outside the built-in catalog is discovered at
+    // startup, indexed once, and offered by its own human-readable name.
+    {
+        const auto root = temp.path() + "/user-stardict";
+        const auto dir = root + "/hu-en-wiktionary";
+        require(QDir().mkpath(dir), "create local StarDict folder");
+        const QByteArray word = QStringLiteral("kabát").toUtf8();
+        const QByteArray definition("<p>coat</p>");
+        QByteArray localIndex = word + QByteArray(1, '\0');
+        be32(localIndex, 0);
+        be32(localIndex, definition.size());
+        save(dir + "/hu-en-wiktionary.idx", localIndex);
+        save(dir + "/hu-en-wiktionary.dict.dz", dictzip(definition));
+        save(dir + "/hu-en-wiktionary.ifo", "StarDict's dict ifo file\nversion=3.0.0\n"
+             "bookname=Hungarian-English Wiktionary\nwordcount=1\nidxfilesize=" +
+             QByteArray::number(localIndex.size()) + "\nsametypesequence=h\n");
+        DictionaryManager discovered(root, std::make_unique<Empty>());
+        discovered.setLanguage("hu");
+        const auto options = discovered.choices();
+        require(options.size() == 1 && options.first().id == "downloaded:hu-en-wiktionary" &&
+                options.first().name == "Hungarian-English Wiktionary",
+                "locally copied 3.0.0 StarDict must appear without catalog edits");
+        require(discovered.installed("hu-en-wiktionary"), "local StarDict generated installed metadata");
+        require(discovered.lookup("book", QStringLiteral("kabátja")).html.toUtf8() == definition,
+                "local Hungarian source uses CPHUN224 morphology");
+        require(discovered.installedSizes().contains("hu-en-wiktionary"),
+                "local StarDict must be counted in dictionary storage");
+        DictionaryManager reopened(root, std::make_unique<Empty>());
+        require(reopened.choices().size() == 1, "reopen must not duplicate a local dictionary");
+    }
     QByteArray idx("CAT\0", 4);
     be32(idx, first.size());
     be32(idx, second.size());
