@@ -26,6 +26,17 @@ jobs:
         run: |
           python3 -m unittest discover -s tests/hyphenation -p 'test_*.py' -v
           bash platforms/ci/test.sh
+      - name: Build and execute native HU dictionary language-direction fixtures
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qt6-base-dev pkg-config zlib1g-dev
+          mkdir -p build/hu-dictionary-smoke
+          g++ -std=c++17 -O2 -fPIC -Wall -Wextra -Werror \
+            -I src -I . \
+            tests/dictionaries/hu_source_smoke.cpp src/dictionaries/stardict.cpp \
+            -o build/hu-dictionary-smoke/test \
+            $(pkg-config --cflags --libs Qt6Core) -lz
+          build/hu-dictionary-smoke/test
 
   build-qt5:
     needs: validation
