@@ -41,14 +41,12 @@ QString folder(const QString &root, const QString &id) {
 QString dictionarySourceLanguage(const QString &root, const QString &id, const QVector<DownloadDictionary> &entries) {
     // Existing installs may predate language metadata; keep catalog fallback.
     const auto metadata = storage::readJson(folder(folder(root, id), "installed.json"));
-    const QString declared = metadata["language"].toString().trimmed().toLower();
-    if (declared == QStringLiteral("hu"))
-        return declared;
+    const QString declared = DictionaryManager::normalizeLanguage(metadata["language"].toString());
     if (!declared.isEmpty())
         return declared;
     for (const auto &entry : entries)
         if (entry.id == id)
-            return entry.language.trimmed().toLower();
+            return DictionaryManager::normalizeLanguage(entry.language);
     return id == QStringLiteral("hu-hu") ? QStringLiteral("hu") : QString();
 }
 
@@ -230,7 +228,7 @@ bool DictionaryManager::select(const QString &book, const QString &id, QString *
             if (!active->open(folder(data->root, pair), pair, error))
                 return false;
             active->setHungarianSource(dictionarySourceLanguage(data->root, pair, catalog()) == QStringLiteral("hu"));
-            data->active = std::move(active);
+        data->active = std::move(active);
             data->activeId = pair;
         }
     } else if (!data->fallback->select(book, id, error))
