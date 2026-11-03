@@ -467,7 +467,7 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
     // Experimental, narrowly scoped two-pass correction for an oversized
     // initial followed by a separate paragraph. Only edit the in-memory DOM.
     // Avoid modifying bookmarked/linked paragraphs or structured content.
-    if (!openedFromCache_ && !beautifierInitials_) {
+    if (!openedFromCache_ && !beautifierInitials_ && !source_->parent) {
         auto *doc = engine_->getDocument();
         const auto dropAttr = doc->getAttrNameIndex("data-kobalt-dropcap");
         const auto idAttr = doc->getAttrNameIndex("id");
