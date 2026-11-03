@@ -47,7 +47,7 @@
 "reader.justify" = "Sorkizárt";
 "reader.landscape" = "Fekvő";
 "reader.line_spacing" = "Sorköz: ";
-"reader.link_indicator_description" = "Jelölés a hivatkozásokat tartalmazó oldalakon. Érintéssel felfedhetők a hivatkozások.";
+"reader.link_indicator_description" = "A hivatkozásokat tartalmazó oldalakon érintéssel felfedhetők a hivatkozások.";
 "reader.margins" = "Oldalmargó: ";
 "reader.optical_size" = "Optikai méret";
 "reader.page_layout" = "Oldalelrendezés";
@@ -290,11 +290,11 @@
 "settings.refresh_every_page" = "Minden oldalon";
 "settings.refresh_manually_description" = "Érintsd meg kétszer az oldal közepét: előbb a menü megnyitásához, majd bezárásához.";
 "settings.inherit_text_layout" = "Utolsó könyv szövegstílusának öröklése";
-"settings.inherit_text_layout_description" = "Az új könyvek az előző könyv szövegstílusával indulnak. Az elrendezési beállítások minden könyvre érvényesek.";
+"settings.inherit_text_layout_description" = "Az új könyvek az előző könyv stílusával indulnak. Az elrendezési beállítások minden könyvre érvényesek.";
 "settings.inherit_header_footer" = "Fejléc és lábléc öröklése";
 "settings.inherit_header_footer_description" = "Az új könyvek az előző könyv fejlécét és láblécét használják. A mentett beállítások megmaradnak.";
 "settings.avoid_wasteful_styling" = "Intelligens formázás";
-"settings.avoid_wasteful_styling_description" = "A Kobalt automatikusan javítja a könyv megjelenítését. Az eredeti könyvstílus használatához kapcsold ki.";
+"settings.avoid_wasteful_styling_description" = "A Kobalt automatikusan javítja a könyv megjelenítését. Az eredeti stílus használatához kapcsold ki.";
 "settings.minimal_annotation_mode" = "Egyszerű jegyzetmód";
 "settings.minimal_annotation_mode_description" = "Elrejti a jelöléssávot. A kiemelés befejezéséhez érints meg egy szövegrészt vagy üres területet.";
 "settings.default_menu_view" = "Alapértelmezett menünézet";
@@ -317,7 +317,7 @@
 "settings.hide_tab_labels" = "Fülnevek elrejtése";
 "settings.hide_tab_labels_description" = "A füleken csak az ikonok láthatók, ha ez be van kapcsolva.";
 "settings.justification_tracking_summary" = "A túl nagy szóközöket betűköz növelésével csökkenti. Csak sorkizárt szövegnél.";
-"settings.widows_orphans_summary" = "Kerülje az egysoros bekezdésrészeket az oldalak tetején és alján.";
+"settings.widows_orphans_summary" = "Kerülje az egysoros bekezdéseket az oldalak tetején és alján";
 "settings.justification_tracking_off_description" = "Normál betűköz használata.";
 "settings.justification_tracking_subtle_description" = "Kis mértékű betűköznövelés engedélyezése.";
 "settings.justification_tracking_more_description" = "Nagyobb betűköznövelés engedélyezése.";
@@ -617,3 +617,10 @@
 "settings.beautifier_indent" = "Első sorok behúzásának egységesítése";
 "settings.beautifier_indent_description" = "Egységes behúzást alkalmaz a szokásos szövegbekezdésekre. A külön megadott bekezdésbeállítások elsőbbséget élveznek.";
 "settings.beautifier_active" = "Be · 3 szabályból %1";
+
+/* STÍLUS 3/3 és KIJELZŐ 1/2 kiegészítő magyarítás. */
+"settings.avoid_wasteful_styling_changes" = "Mit változtat meg:";
+"settings.avoid_wasteful_styling_margins" = "Figyelmen kívül hagyja a könyv saját oldalmargóit és térközeit, így az Elrendezés lapon beállított margók érvényesülnek.";
+"settings.avoid_wasteful_styling_breaks" = "Eltávolítja a könyv által az új oldalra kerülő szöveg, például a fejezetkezdés fölé tett üres helyet.";
+"settings.avoid_wasteful_styling_illustrations" = "Megőrzi a könyv által a fejezetkezdő illusztrációk fölé beállított térközt.";
+"reader.bionic_description" = "A szavak elejét félkövérrel emeli ki. Bekapcsolva a vonalvastagság és a változó betűvastagság nem állítható.";
