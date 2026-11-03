@@ -555,3 +555,9 @@
 "kosync.time_unavailable" = "A szinkronizálás ideje nem ismert";
 "kosync.synced_at" = "Szinkronizálva: %1";
 "settings.paragraph_adjustments_value" = "Térköz %1 · Behúzás %2";
+/* Szótárpanel: a %1 keresett szó vagy szótárforrás. */
+"dictionary_panel.no_definition_for" = "Nincs találat a(z) „%1” szóra.";
+"dictionary_panel.try_another_dictionary" = "Módosítsd fent a keresést, vagy válassz másik szótárat.";
+"dictionary_panel.try_another_word" = "Módosítsd fent a keresést egy másik szó kipróbálásához.";
+"dictionary_panel.dictionary_sources" = "Szótárforrások: %1";
+"dictionary_panel.source" = "Forrás";
