@@ -402,7 +402,7 @@ bool ReaderModel::openSource(std::shared_ptr<ReaderSource> source, QSize size, c
                               Utf8ToUnicode(lString8(documentCacheName(cacheFingerprint_).toUtf8().constData())));
         properties->setHex(
             DOC_PROP_FILE_CRC32,
-            documentCacheChecksum(documentCachePolicy() + ":bionic-v3:hu-dropcap-port-v1:" + bionic_.toUtf8(), domVersion_));
+            documentCacheChecksum(documentCachePolicy() + ":bionic-v3:hu-dropcap-port-v2:" + (beautifierInitials_ ? "normal:" : "decorated:") + bionic_.toUtf8(), domVersion_));
         properties->setString(DOC_PROP_FILE_SIZE, lString32::itoa(int(cacheBytes_ < 0         ? 0
                                                                       : cacheBytes_ > INT_MAX ? INT_MAX
                                                                                               : cacheBytes_)));
