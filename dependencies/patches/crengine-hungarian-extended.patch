@@ -404,7 +404,7 @@
 -                        int added_width = word->distinct_glyphs * word->added_letter_spacing;
 +                        int added_width = huSpacingGlyphCount(word, fmt->m_pbuffer) * word->added_letter_spacing;
                          if ( i == frmline->word_count-1 ) {
-@@ -4402,8 +4681,69 @@ class LVFormatter {
+@@ -4402,8 +4681,51 @@ class LVFormatter {
                                  word->width = new_width;
                              }
                          }
@@ -415,9 +415,6 @@
 +                        // Re-measure the actual unmodified left compound member.
 +                        // The accumulated widths may still include shaping of
 +                        // the compact consonant sequence across this seam.
-+                        // Diagnostic only: compare cached width with measured prefix.
-+                        // Keep the production width path unchanged.
-+                        const int huWidthBefore = word->width;
 +                        if (huCompoundAtWord == word->t.len &&
 +                            word->t.len > 0 && word->t.len <= 127) {
 +                            lUInt16 huWidths[128] = {0};
@@ -427,21 +424,6 @@
 +                                huWidths, huFlags, 0x7FFF, '?',
 +                                srcline->lang_cfg, srcline->letter_spacing, false);
 +                            if (huMeasured == word->t.len) {
-+                                // Persistent Kobo diagnostic: directly readable over USB.
-+                                FILE *huDiag = fopen("/mnt/onboard/.adds/kobalt/hu-hyphen-diagnostic.log", "a");
-+                                if (huDiag) {
-+                                    fprintf(huDiag, "HU-SEAM prefix=");
-+                                    for (int huK = 0; huK < word->t.len; ++huK) {
-+                                        lChar32 huCh = srcline->t.text[word->t.start + huK];
-+                                        fprintf(huDiag, "%04X", (unsigned int)huCh);
-+                                        if (huK + 1 < word->t.len) fputc(',', huDiag);
-+                                    }
-+                                    fprintf(huDiag, " len=%d cached=%d measured=%d delta=%d replacementFlag=%d\n",
-+                                        word->t.len, huWidthBefore, huWidths[word->t.len - 1],
-+                                        huWidthBefore - (int)huWidths[word->t.len - 1],
-+                                        (fmt->m_flags[i-1] & LCHAR_HUNGARIAN_HYPH_REPLACE) ? 1 : 0);
-+                                    fclose(huDiag);
-+                                }
 +                                word->width = huWidths[word->t.len - 1];
 +                            }
 +                        }
@@ -474,7 +456,7 @@
                          word->min_width = word->width;
                          word->flags |= LTEXT_WORD_CAN_HYPH_BREAK_LINE_AFTER;
                      }
-@@ -6634,6 +6976,39 @@ void LFormattedText::Draw( LVDrawBuf * buf, int x, int y, ldomMarkedRangeList *
+@@ -6634,6 +6958,25 @@ void LFormattedText::Draw( LVDrawBuf * buf, int x, int y, ldomMarkedRangeList *
                      }
                      font = (LVFont *) srcline->t.font;
                      str = srcline->t.text + word->t.start;
@@ -484,20 +466,6 @@
 +                    // explicitly recognized compound seam must render unchanged.
 +                    const int huDrawCompound = huCompoundBoundary(
 +                            str, srcline->t.len - word->t.start);
-+                    // Log actual line geometry on a compound-seam hyphen.
-+                    // This records layout coordinates, not an inferred glyph edge.
-+                    if (flgHyphen && huDrawCompound == word->t.len) {
-+                        FILE *huLine = fopen("/mnt/onboard/.adds/kobalt/hu-hyphen-diagnostic.log", "a");
-+                        if (huLine) {
-+                            fprintf(huLine, "HU-LINE lineWidth=%d lineX=%d wordX=%d wordWidth=%d "
-+                                    "wordEnd=%d lineEnd=%d lastWord=%d hyphenWidth=%d replace=%d\n",
-+                                frmline->width, frmline->x, word->x, word->width,
-+                                word->x + word->width, frmline->width,
-+                                j == frmline->word_count - 1 ? 1 : 0,
-+                                font->getHyphenWidth(), word->hungarian_replace);
-+                            fclose(huLine);
-+                        }
-+                    }
 +                    if ( flgHyphen && word->hungarian_replace
 +                         && huDrawCompound != word->t.len ) {
 +                        lChar32 replacement[2];
