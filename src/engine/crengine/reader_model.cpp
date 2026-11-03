@@ -47,6 +47,11 @@ bool fontFacesReady = false, fontCatalogReady = false;
 QString qstring(const lString32 &s) {
     return QString::fromUtf8(UnicodeToUtf8(s).c_str());
 }
+bool isHungarianBookLanguage(const lString32 &language) {
+    const QString code = qstring(language).trimmed().toLower();
+    return code == QStringLiteral("hu") || code.startsWith(QStringLiteral("hu-")) ||
+           code.startsWith(QStringLiteral("hu_"));
+}
 lString32 cre(const QString &s) {
     return Utf8ToUnicode(s.toUtf8().constData());
 }
@@ -498,7 +503,9 @@ void ReaderModel::configure(QSize size, const QJsonObject &settings) {
     properties->setInt(PROP_FORMAT_MIN_SPACE_CONDENSING_PERCENT, 100);
     properties->setInt(PROP_FORMAT_SPACE_WIDTH_SCALE_PERCENT, wordSpacing_);
     properties->setInt(PROP_FORMAT_MAX_ADDED_LETTER_SPACING_PERCENT, justificationTracking_);
-    properties->setInt(PROP_FLOATING_PUNCTUATION, hangingPunctuation_ ? 1 : 0);
+    // The EPUB language is not yet known during configure(). Preserve CREngine's
+    // original optical-margin behavior until openSource() reads the language.
+    properties->setInt(PROP_FLOATING_PUNCTUATION, 1);
     properties->setInt(PROP_RENDER_BLOCK_RENDERING_FLAGS,
                        avoidWastefulStyling_
                            ? DEF_RENDER_BLOCK_RENDERING_FLAGS
@@ -839,7 +846,11 @@ bool ReaderModel::applyAppearance(const QJsonObject &settings, QSize size, Openi
         setExtraFontWeight(0);
         auto properties = LVCreatePropsContainer();
         properties->setInt(PROP_FONT_BASE_WEIGHT, LVRendGetBaseFontWeight());
-        properties->setInt(PROP_FLOATING_PUNCTUATION, hangingPunctuation_ ? 1 : 0);
+        // The user preference only controls Hungarian publications.
+        // All other languages retain the original CREngine behavior.
+        const bool opticalEnabled = !engine_ || !isHungarianBookLanguage(engine_->getLanguage()) ||
+                                    hangingPunctuation_;
+        properties->setInt(PROP_FLOATING_PUNCTUATION, opticalEnabled ? 1 : 0);
         properties->setInt(PROP_FORMAT_SPACE_WIDTH_SCALE_PERCENT, wordSpacing_);
         properties->setInt(PROP_FORMAT_MAX_ADDED_LETTER_SPACING_PERCENT, justificationTracking_);
         properties->setInt(PROP_RENDER_BLOCK_RENDERING_FLAGS,
