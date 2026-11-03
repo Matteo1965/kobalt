@@ -33,18 +33,20 @@ class HungarianPipelineContract(unittest.TestCase):
         self.assertIn("split<=compound+1 && split<len", HELPERS)
         self.assertNotIn("split<=compound+2 && split<len", HELPERS)
 
-    def test_persistent_kobo_seam_diagnostic(self):
-        self.assertIn('/mnt/onboard/.adds/kobalt/hu-hyphen-diagnostic.log', HELPERS)
-        self.assertIn('fopen(', HELPERS)
-        self.assertIn('fprintf(huDiag,', HELPERS)
-        self.assertIn('fclose(huDiag)', HELPERS)
-        self.assertIn('HU-SEAM prefix=', HELPERS)
+    def test_persistent_hyphenation_logging_is_disabled(self):
+        # The production firmware must not continuously write a Kobo USB log.
+        self.assertNotIn("hu-hyphen-diagnostic.log", HELPERS)
+        self.assertNotIn("HU-SEAM prefix=", HELPERS)
+        self.assertNotIn("HU-LINE lineWidth=", HELPERS)
+        self.assertNotIn("fopen(", HELPERS)
+        self.assertNotIn("fprintf(", HELPERS)
 
-    def test_persistent_line_geometry_diagnostic(self):
-        self.assertIn('HU-LINE lineWidth=', HELPERS)
-        self.assertIn('wordX=%d wordWidth=%d', HELPERS)
-        self.assertIn('huDrawCompound == word->t.len', HELPERS)
-        self.assertIn('fclose(huLine)', HELPERS)
+    def test_compound_width_remeasurement_remains_enabled(self):
+        # Removing diagnostics must not remove the actual rendered-width fix.
+        self.assertIn("const int huMeasured = font->measureText(", HELPERS)
+        self.assertIn("word->width = huWidths[word->t.len - 1];", HELPERS)
+        self.assertIn("hu252RenderedPrefixWidth(", HELPERS)
+        self.assertIn("word->width = painted + hyphen_width;", HELPERS)
 
     def test_hungarian_word_flag_is_initialized(self):
         self.assertIn("word->hungarian_replace = 0; // Do not inherit uninitialized word storage.", HELPERS)
