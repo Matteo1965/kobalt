@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 HELPERS = (ROOT / "dependencies/patches/crengine-hungarian-extended.patch").read_text(encoding="utf-8")
 WIDTH = (ROOT / "dependencies/patches/crengine-hungarian-width.patch").read_text(encoding="utf-8")
 ORDER = (ROOT / "dependencies/crengine-patches.txt").read_text(encoding="utf-8").splitlines()
+OPTICAL = (ROOT / "dependencies/patches/crengine-hungarian-optical-hyphen.patch").read_text(encoding="utf-8")
 
 class HungarianPipelineContract(unittest.TestCase):
     def test_normal_hyphenation_precedes_hungarian_correction(self):
@@ -47,6 +48,13 @@ class HungarianPipelineContract(unittest.TestCase):
         self.assertIn("word->width = huWidths[word->t.len - 1];", HELPERS)
         self.assertIn("hu252RenderedPrefixWidth(", HELPERS)
         self.assertIn("word->width = painted + hyphen_width;", HELPERS)
+
+    def test_hungarian_optical_hyphen_hanging_only(self):
+        self.assertIn("if (isHungarian())", OPTICAL)
+        self.assertIn("return 35;", OPTICAL)
+        self.assertIn("return 70; // 70%", OPTICAL)
+        self.assertLess(ORDER.index("crengine-hungarian-width.patch"),
+                        ORDER.index("crengine-hungarian-optical-hyphen.patch"))
 
     def test_hungarian_word_flag_is_initialized(self):
         self.assertIn("word->hungarian_replace = 0; // Do not inherit uninitialized word storage.", HELPERS)
