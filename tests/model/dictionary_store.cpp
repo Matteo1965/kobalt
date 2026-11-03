@@ -485,8 +485,9 @@ int main(int argc, char **argv) {
         // metadata path, without changing or distributing a real dictionary.
         for (const auto &target : {QStringLiteral("de"), QStringLiteral("es")}) {
             save(dictionaryDir + "/installed.json",
-                 QByteArray("{\"id\":\"en-en\",\"language\":\"hu\",\"target\":\"") +
-                 target.toUtf8() + "\"}");
+                 QByteArray("{\"id\":\"en-en\",\"language\":\"") +
+                 (target == QStringLiteral("de") ? QByteArray("hu-HU") : QByteArray("hu")) +
+                 "\",\"target\":\"" + target.toUtf8() + "\"}");
             DictionaryManager manager(base, std::make_unique<Empty>());
             manager.setLanguage("en");
             require(manager.lookup("book", QStringLiteral("kabátja")).html.toUtf8() == meaning,
