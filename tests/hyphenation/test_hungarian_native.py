@@ -81,7 +81,7 @@ int main() {
     struct Expected { const char32_t *word; int split; const char32_t *left; const char32_t *right; };
     const Expected expected[] = {
         {U"meggyaláz", 3, U"meg", U"gyaláz"},
-        {U"meggyújtotta", 3, U"meg", U"gyújt"},
+        {U"meggyújtotta", 3, U"meg", U"gyújtotta"},
         {U"meggyón", 3, U"meg", U"gyón"},
         {U"cipősszekrény", 5, U"cipős", U"szekrény"},
         {U"gyorsszolgálat", 5, U"gyors", U"szolgálat"},
