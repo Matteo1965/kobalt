@@ -171,7 +171,7 @@
 +}
 +
 +static const HuCompoundFamily huCompoundFamilies[] = {
-+    {U"meg", U"gyull"}, {U"meg", U"gyón"}, {U"meg", U"győz"},
++    {U"meg", U"gyull"}, {U"meg", U"gyújt"}, {U"meg", U"gyón"}, {U"meg", U"győz"},
 +    {U"meg", U"gyaláz"}, {U"kis", U"szék"}, {U"kis", U"szoba"},
 +    {U"kis", U"szekrény"}, {U"ruhás", U"szekrény"}, {U"vas", U"szeg"},
 +    {U"cipős", U"szekrény"}, {U"hús", U"szelet"}, {U"ideg", U"gyógyász"},
