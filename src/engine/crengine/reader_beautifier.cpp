@@ -30,7 +30,7 @@ bool initial(ldomNode *node) {
     // Match the beta4 initials (inic/initial/initiale/dropcap/drop-cap) without
     // accidentally recognizing unrelated class names containing these fragments.
     static const QRegularExpression name(
-        "(?:^|[\\\\s_-])(?:inic|initial|initiale|dropcap|drop-cap)(?:$|[\\\\s_-])",
+        "(?:^|[\\s_-])(?:inic|initial|initiale|dropcap|drop-cap)(?:$|[\\s_-])",
         QRegularExpression::CaseInsensitiveOption);
     const auto style = node->getStyle();
     // Some publishers use generic names such as "big". A floated
