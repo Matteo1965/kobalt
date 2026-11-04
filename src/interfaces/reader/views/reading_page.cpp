@@ -667,7 +667,7 @@ QImage ReadingPage::stripSnapshot(bool footer) const {
     const QRect ribbon = renderedRibbon.translated(0, -top);
     if (!strip.isNull() && ribbon.intersects(strip.rect())) {
         QPainter painter(&strip);
-        ui::paintBookmarkRibbon(painter, ribbon, palette().color(QPalette::WindowText));
+        ui::paintBookmarkRibbon(painter, ribbon, QColor(128, 128, 128));
     }
     return strip;
 }
@@ -778,7 +778,7 @@ void ReadingPage::paintContents(QPainter &painter, bool sleeping) const {
         painter.drawImage(0, 0, headerPixels);
         painter.drawImage(0, height() - bottomHeight(), footerPixels);
     }
-    ui::paintBookmarkRibbon(painter, renderedRibbon, palette().color(QPalette::WindowText));
+    ui::paintBookmarkRibbon(painter, renderedRibbon, QColor(128, 128, 128));
 }
 
 bool ReadingPage::annotationCenter(QPointF point) const {
