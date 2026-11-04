@@ -45,6 +45,7 @@ public:
                          const QString &emptyLabel, std::function<void(const QString &)> chosen,
                          std::function<void(const QStringList &)> prepareFonts = {});
     void dismissFontChoices();
+    void showLanguageChoices(std::function<void(const QString &)> chosen);
     void showHeaderFooterWeights(int current, const QFont &sampleFont, std::function<void(int)> chosen);
     void showDictionaryFontSizes(int current, const QString &family, bool customFont, std::function<void(int)> chosen);
     static QString dictionaryFontSizeLabel(int percent);
@@ -95,7 +96,7 @@ public:
     ui::CaptionButton *verticalSpacingButton = nullptr, *verticalSpacingScopeButton = nullptr;
     ui::CaptionButton *wordSpacingButton = nullptr, *trackingButton = nullptr, *widowsOrphansButton = nullptr;
     ui::CaptionButton *paragraphSpacingButton = nullptr, *beautifierButton = nullptr;
-    ui::CaptionButton *sleepScreenButton = nullptr, *sessionTimeoutButton = nullptr, *sleepTileButton = nullptr, *menuViewButton = nullptr;
+    ui::CaptionButton *sleepScreenButton = nullptr, *sessionTimeoutButton = nullptr, *sleepTileButton = nullptr, *menuViewButton = nullptr, *languageButton = nullptr;
     ui::CaptionButton *pageNavigationButton = nullptr, *tapZonesButton = nullptr, *navigationBarButton = nullptr,
                       *tappableLinksButton = nullptr;
     ui::DescribedOption *bionicOption = nullptr;
