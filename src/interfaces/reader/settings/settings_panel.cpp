@@ -605,7 +605,12 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     version->setAlignment(Qt::AlignCenter);
     build->addWidget(version);
     // Derived from the actual release version; never show a stale beta4 version.
-    auto *hungarianEdition = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition · ") + release, aboutPage);
+    // Keep the About line short even when CI adds a long test-build suffix.
+    const auto editionMatch = QRegularExpression(
+        QStringLiteral("^([0-9]+\\.[0-9]+\\.[0-9]+-beta[0-9]+)(?:-HU.*)?$")).match(release);
+    const auto editionVersion = editionMatch.hasMatch() ? editionMatch.captured(1) + QStringLiteral("-HU")
+                                                          : release;
+    auto *hungarianEdition = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition ") + editionVersion, aboutPage);
     hungarianEdition->setObjectName("rrAboutHungarianEditionVersion");
     hungarianEdition->setAlignment(Qt::AlignCenter);
     readerStyle(hungarianEdition, styles::font(m::text::secondary));
@@ -719,7 +724,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     for (auto *button :
          {resetDefaults, refreshButton, columnSpacingButton, sleepScreenButton, sleepTileButton, sessionTimeoutButton, pageNavigationButton,
           tapZonesButton, tappableLinksButton, navigationBarButton,
-          menuViewButton, uiFontButton, uiMonoFontButton, headerFooterFontButton, headerFooterWeightButton,
+          menuViewButton, languageButton, uiFontButton, uiMonoFontButton, headerFooterFontButton, headerFooterWeightButton,
           dictionaryFontButton, dictionaryFontSizeButton,
           defaultFontButton, serifFontButton, sansFontButton, monoFontButton, beautifierButton, wordSpacingButton, paragraphSpacingButton, trackingButton, widowsOrphansButton, verticalSpacingButton, verticalSpacingScopeButton}) {
         button->setRule(Qt::BottomEdge);
