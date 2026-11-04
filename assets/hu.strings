@@ -624,3 +624,22 @@
 "settings.avoid_wasteful_styling_breaks" = "Eltávolítja a könyv által az új oldalra kerülő szöveg, például a fejezetkezdés fölé tett üres helyet.";
 "settings.avoid_wasteful_styling_illustrations" = "Megőrzi a könyv által a fejezetkezdő illusztrációk fölé beállított térközt.";
 "reader.bionic_description" = "A szavak elejét félkövérrel emeli ki. Bekapcsolva a vonalvastagság és a változó betűvastagság nem állítható.";
+
+/* Hungarian Edition: LOOKUP / local and downloadable dictionaries */
+"settings.lookup" = "SZÓTÁRAK";
+"dictionaries.download" = "Letöltés";
+"dictionaries.download_title" = "Letöltöd ezt a szótárat: %1?";
+"dictionaries.download_description" = "Letöltés mérete: %1.\nA szótár licence: %2.";
+"dictionaries.remove" = "Eltávolítás";
+"dictionaries.stop" = "Leállítás";
+"dictionaries.get" = "Letöltés";
+"dictionaries.section_installed" = "Telepített szótárak";
+"dictionaries.section_available" = "Elérhető szótárak";
+"dictionaries.installed_book" = "Telepítve ehhez a könyvhöz · %1";
+"dictionaries.installed_other" = "Telepített · más nyelvek";
+"dictionaries.available_book" = "Elérhető ehhez a könyvhöz · %1";
+"dictionaries.available_other" = "Elérhető · más nyelvek";
+"dictionaries.storage_used" = "%1 foglalt";
+"dictionaries.storage_free" = "%1 szabad";
+"dictionaries.remove_title" = "Eltávolítod ezt a szótárat: %1?";
+"dictionaries.remove_description" = "%1 tárhely szabadul fel. Később újra letöltheted a listából.";
