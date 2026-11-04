@@ -171,6 +171,8 @@ Reader::Reader(std::unique_ptr<kobalt::ReadingBook> openedBook, kobalt::ReaderOr
         kobalt::diagnostic("settings-unreadable", {{"status", kobalt::storage::readStatusName(savedSettings.status)}},
                            false);
     preferences = appearance::readerPreferences(savedSettings.object, book->layoutPreferences());
+    // Interface language belongs to the global profile, not the EPUB language.
+    strings::selectLanguage(preferences.value("interface_language").toString("hu"));
     // Migrate layout once into the shared profile. A damaged settings file is
     // left for the next explicit settings save to replace.
     const bool settingsReadable = savedSettings.status == kobalt::storage::ReadStatus::Ok ||
@@ -1148,6 +1150,21 @@ void Reader::buildSettings() {
             return;
         guardExit();
         applySettings();
+    });
+    connect(settings->languageButton, &QPushButton::clicked, this, [this, settings] {
+        settings->showLanguageChoices([this, settings](const QString &code) {
+            const auto previous = preferences.value("interface_language").toString("hu");
+            if (previous == code)
+                return;
+            auto next = preferences;
+            next["interface_language"] = code;
+            if (!writePreferences(next))
+                return;
+            preferences = next;
+            // Existing widgets remain in their original language until restart.
+            // Indicate the saved choice while keeping all UI strings unchanged.
+            settings->languageButton->setCaption(code == "en" ? QStringLiteral("English") : QStringLiteral("Magyar"));
+        });
     });
     settings->showDictionaries(services.downloadableDictionaries &&
                                !(services.devicePreview && services.devicePreview()));
