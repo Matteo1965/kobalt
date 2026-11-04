@@ -26,6 +26,7 @@ jobs:
         run: |
           python3 -m unittest discover -s tests/hyphenation -p 'test_*.py' -v
           bash platforms/ci/test.sh
+          python3 tests/dictionaries/test_local_stardict_source.py
 
   build-qt5:
     needs: validation
