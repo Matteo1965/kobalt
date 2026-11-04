@@ -16,6 +16,12 @@ assert 'meta["name"].toString(id)' in manager
 assert 'meta["language"].toString(id.section' in manager
 assert 'values["version"] == "3.0.0"' in engine
 assert 'values.value("idxoffsetbits", "32") == "32"' in engine
+# Import remains functional, but must never recreate the obsolete root log file.
+assert "importHungarianDictionary(data->root);" in manager
+assert 'HU_HU_Merged_v3.zip' in manager
+assert "StarDict::prepare(staging.path(), id, &error)" in manager
+assert "kobalt-hu-dictionary-import.log" not in manager
+assert "QIODevice::Append" not in manager
 assert "hu-en-wiktionary" in fixture
 assert "locally copied 3.0.0 StarDict must appear without catalog edits" in fixture
 assert "local Hungarian source uses CPHUN224 morphology" in fixture
