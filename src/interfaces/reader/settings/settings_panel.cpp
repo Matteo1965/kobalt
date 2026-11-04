@@ -598,28 +598,21 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     auto *build = new QVBoxLayout;
     build->setSpacing(m::about::buildGap);
     aboutRows->addLayout(build);
-    // "Version 0.4 (Qt6)", then the short commit with "*" for uncommitted changes.
+    // Display only the compact Hungarian Edition name and build version.
+    // CI-specific suffixes are intentionally omitted on the Kobo display.
     const auto release = inputs.release;
-    auto *version = new ui::InterfaceLabel(strings::get("about.version").arg(release).arg(inputs.qtMajor), aboutPage);
-    version->setObjectName("rrAboutVersion");
-    version->setAlignment(Qt::AlignCenter);
-    build->addWidget(version);
-    // Derived from the actual release version; never show a stale beta4 version.
-    // Keep the About line short even when CI adds a long test-build suffix.
     const auto editionMatch = QRegularExpression(
         QStringLiteral("^([0-9]+\\.[0-9]+\\.[0-9]+-beta[0-9]+)(?:-HU.*)?$")).match(release);
     const auto editionVersion = editionMatch.hasMatch() ? editionMatch.captured(1) + QStringLiteral("-HU")
                                                           : release;
-    auto *hungarianEdition = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition ") + editionVersion, aboutPage);
-    hungarianEdition->setObjectName("rrAboutHungarianEditionVersion");
-    hungarianEdition->setAlignment(Qt::AlignCenter);
-    readerStyle(hungarianEdition, styles::font(m::text::secondary));
-    build->addWidget(hungarianEdition);
-    auto *commit = new ui::InterfaceLabel(inputs.commit, aboutPage);
-    commit->setObjectName("rrAboutCommit");
-    commit->setAlignment(Qt::AlignCenter);
-    build->addWidget(commit);
-    commit->setVisible(inputs.commitVisible);
+    auto *editionTitle = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition"), aboutPage);
+    editionTitle->setObjectName("rrAboutHungarianEditionTitle");
+    editionTitle->setAlignment(Qt::AlignCenter);
+    build->addWidget(editionTitle);
+    auto *version = new ui::InterfaceLabel(editionVersion, aboutPage);
+    version->setObjectName("rrAboutHungarianEditionVersion");
+    version->setAlignment(Qt::AlignCenter);
+    build->addWidget(version);
     buildRule("rrAboutBuildBottom");
     aboutRows->addSpacing(m::about::sectionGap);
     auto *description = new ui::InterfaceLabel(strings::get("about.description"), aboutPage);
@@ -769,8 +762,8 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     }
     fitRail();
     ui::readerStyle(description, ui::styles::font(c::labelText));
+    ui::readerStyle(editionTitle, ui::styles::font(c::labelText));
     ui::readerStyle(version, ui::styles::font(c::labelText));
-    ui::readerStyle(commit, ui::styles::font(m::about::commitText));
     // The same outlined button as the password field's Show and Hide.
     ui::readerStyle(openAcknowledgments, ui::styles::outlined() + "QPushButton{" + ui::styles::font(c::labelText) + "}");
     hide();
