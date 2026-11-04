@@ -537,6 +537,11 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                                                 strings::get("settings.session_timeout"), [] {});
     systemRows->addWidget(sessionTimeoutButton);
     section(systemPage, systemRows, "rrSystemInterfaceSection", strings::get("settings.section_user_interface"));
+    // Beta4 Hungarian Edition language preference; selection takes effect after restart.
+    languageButton = ui::makeCaptionButton(systemPage, nullptr, "rrInterfaceLanguage",
+                                           strings::get("settings.interface_language"), [] {});
+    languageButton->setCaption(strings::language() == "en" ? QStringLiteral("English") : QStringLiteral("Magyar"));
+    systemRows->addWidget(languageButton);
     uiFontButton = ui::makeCaptionButton(systemPage, nullptr, "rrUiFont", strings::get("settings.ui_font"), [] {});
     uiMonoFontButton =
         ui::makeCaptionButton(systemPage, nullptr, "rrUiMonoFont", strings::get("settings.ui_mono_font"), [] {});
@@ -599,6 +604,12 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     version->setObjectName("rrAboutVersion");
     version->setAlignment(Qt::AlignCenter);
     build->addWidget(version);
+    // Derived from the actual release version; never show a stale beta4 version.
+    auto *hungarianEdition = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition · ") + release, aboutPage);
+    hungarianEdition->setObjectName("rrAboutHungarianEditionVersion");
+    hungarianEdition->setAlignment(Qt::AlignCenter);
+    readerStyle(hungarianEdition, styles::font(m::text::secondary));
+    build->addWidget(hungarianEdition);
     auto *commit = new ui::InterfaceLabel(inputs.commit, aboutPage);
     commit->setObjectName("rrAboutCommit");
     commit->setAlignment(Qt::AlignCenter);
@@ -1569,6 +1580,37 @@ void SettingsPanel::fitRail(int availableHeight) {
             widest = qMax(widest, ui::interfaceTextWidth(button->text(), button->font()));
         }
     tabRail->setFixedWidth(widest + 2 * c::railInset);
+}
+
+void SettingsPanel::showLanguageChoices(std::function<void(const QString &)> chosen) {
+    if (fontDialog) return;
+    fontDialog = new ui::ModalOverlay(parentWidget());
+    fontDialog->setObjectName("rrLanguagePopup");
+    fontDialog->setDimmed(true);
+    fontDialog->setGeometry(parentWidget()->rect());
+    fontDialog->dismissed = [this] { dismissFontChoices(); };
+    auto *card = fontDialog->card();
+    auto *rows = card->rows();
+    rows->setSpacing(0);
+    card->title(strings::get("settings.interface_language"));
+    card->message(strings::get("settings.interface_language_restart"));
+    auto *choices = new ui::RadioList(card);
+    choices->setMinimumRowHeight(c::listActionHeight);
+    choices->add("rrLanguageHU", QStringLiteral("Magyar"));
+    choices->add("rrLanguageEN", QStringLiteral("English"));
+    choices->setCurrent(strings::language() == "en" ? 1 : 0);
+    choices->chosen = [this, chosen](int index) {
+        dismissFontChoices();
+        chosen(index == 1 ? QStringLiteral("en") : QStringLiteral("hu"));
+    };
+    rows->addWidget(choices);
+    const int cardWidth = qMin<int>(m::notice::cardWidth, parentWidget()->width() - 2 * m::notice::sideClearance);
+    choices->setFixedHeight(choices->heightForWidth(cardWidth - 2 * m::control::border));
+    card->fitToWidth(cardWidth);
+    fontDialog->centerCard();
+    fontDialog->show();
+    fontDialog->raise();
+    fontDialog->setFocus();
 }
 
 }
