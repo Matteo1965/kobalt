@@ -1,4 +1,4 @@
-name: Hungarian Edition beta 5 UI Optical Margin Qt5 Test
+name: Hungarian Edition beta 5 Stable Qt5 and Qt6
 
 on:
   push:
@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: kobalt-hu-beta5-hyph-${{ github.ref }}
-  cancel-in-progress: false
+  group: kobalt-hu-beta5-stable-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validation:
@@ -26,6 +26,7 @@ jobs:
         run: |
           python3 -m unittest discover -s tests/hyphenation -p 'test_*.py' -v
           bash platforms/ci/test.sh
+          python3 tests/dictionaries/test_local_stardict_source.py
 
   build-qt5:
     needs: validation
@@ -38,11 +39,31 @@ jobs:
       - name: Build beta5 Qt5 with Extended HU Hyphenation
         env:
           CONTAINER_ENGINE: docker
-          KOBALT_RELEASE_VERSION: v0.4.0-beta5-HU-UI-OPTICAL-TEST
+          KOBALT_RELEASE_VERSION: v0.4.0-beta5-HU
         run: bash platforms/ci/build.sh qt5
       - uses: actions/upload-artifact@v4
         with:
-          name: kobalt-hu-0.4.0-beta5-ui-optical-${{ github.run_number }}-qt5
+          name: kobalt-hu-0.4.0-beta5-stable-${{ github.run_number }}-qt5
+          path: build/release/*
+          if-no-files-found: error
+          compression-level: 0
+
+  build-qt6:
+    needs: validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build Hungarian Edition beta5 Qt6
+        env:
+          CONTAINER_ENGINE: docker
+          KOBALT_RELEASE_VERSION: v0.4.0-beta5-HU-LANGUAGE-ABOUT-TEST
+        run: bash platforms/ci/build.sh qt6
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kobalt-hu-0.4.0-beta5-stable-${{ github.run_number }}-qt6
           path: build/release/*
           if-no-files-found: error
           compression-level: 0
