@@ -1172,3 +1172,7 @@
 /* Hungarian Edition: optical margin control */
 "settings.optical_margin" = "Optical margin";
 "settings.optical_margin_description" = "Allow punctuation to hang into the margin.";
+
+/* Hungarian Edition: interface language selection */
+"settings.interface_language" = "Interface language";
+"settings.interface_language_restart" = "Restart Kobalt to apply the selected language.";
