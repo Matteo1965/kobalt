@@ -50,6 +50,7 @@ struct Frame
     int child = 0;
     bool blocked = false, words = false, protectedChild = false, blockChild = false, block = false;
     bool paragraphBlocked = false;
+    bool initialLetter = false;
 };
 } // namespace
 
@@ -59,6 +60,7 @@ void markBodyAlignment(ldomDocument *document)
         return;
     const auto attribute = document->getAttrNameIndex("data-kobalt-prose");
     const auto paragraphAttribute = document->getAttrNameIndex("data-kobalt-paragraph");
+    const auto dropcapAttribute = document->getAttrNameIndex("data-kobalt-dropcap");
     static const QSet<QString> blocks{ "p",          "li",  "dt",      "dd",
                                        "blockquote", "div", "section", "article" };
     std::vector<Frame> stack{ { document->getRootNode() } };
@@ -68,6 +70,12 @@ void markBodyAlignment(ldomDocument *document)
         if (!frame.child && node->isElement()) {
             const auto name = text(node->getNodeName());
             frame.block = blocks.contains(name);
+            if (name == "span") {
+                static const QRegularExpression initialClass(
+                        "(?:^|[\\s_-])(?:inic|initial|initiale|dropcap|drop-cap)(?:$|[\\s_-])",
+                        QRegularExpression::CaseInsensitiveOption);
+                frame.initialLetter = initialClass.match(text(node->getAttributeValue("class"))).hasMatch();
+            }
             frame.blocked = frame.blocked || preserve(node, name);
             // Paragraph gaps must not flatten verse, quotations, lists or notes.
             // Alignment has a broader scope, so keep this safeguard separate.
@@ -114,6 +122,8 @@ void markBodyAlignment(ldomDocument *document)
         if (node->isText())
             frame.words = !text(node->getText()).trimmed().isEmpty();
         const bool block = frame.block;
+        if (node->isElement() && text(node->getNodeName()) == "p" && frame.initialLetter)
+            node->setAttributeValue(0, dropcapAttribute, U"1");
         if (block && frame.words && !frame.blocked && !frame.protectedChild && !frame.blockChild)
             node->setAttributeValue(0, attribute, U"1");
         if (node->isElement() && text(node->getNodeName()) == "p" && frame.words
@@ -124,6 +134,7 @@ void markBodyAlignment(ldomDocument *document)
         if (!stack.empty()) {
             auto &parent = stack.back();
             parent.words |= finished.words;
+            parent.initialLetter |= finished.initialLetter;
             parent.protectedChild |= finished.blocked || finished.protectedChild;
             parent.blockChild |= block || finished.blockChild;
         }
