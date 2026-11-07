@@ -22,3 +22,4 @@ crengine-render-overflow.patch
 crengine-embedded-font-limit.patch
 crengine-hungarian-extended.patch
 crengine-hungarian-width.patch
+crengine-hungarian-optical-hyphen.patch
