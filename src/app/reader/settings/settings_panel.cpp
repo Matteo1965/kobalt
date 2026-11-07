@@ -754,7 +754,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     editionTitle->setAlignment(Qt::AlignCenter);
     build->addWidget(editionTitle);
     auto *version = new ui::InterfaceLabel(editionVersion, aboutPage);
-    version->setObjectName("rrAboutHungarianEditionVersion");
+    version->setObjectName("rrAboutVersion");
     version->setAlignment(Qt::AlignCenter);
     build->addWidget(version);
     buildRule("rrAboutBuildBottom");
