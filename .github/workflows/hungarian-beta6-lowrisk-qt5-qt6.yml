@@ -33,7 +33,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Native test suite
+      - name: Native test suite (upstream English baseline)
+        env:
+          KOBALT_TEST_INTERFACE_LANGUAGE: en
         run: bash platforms/ci/native-tests.sh
 
   build-kobo:
