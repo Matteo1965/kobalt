@@ -25,6 +25,7 @@ mkdir -p "$cache"
 jobs=${JOBS:-$(getconf _NPROCESSORS_ONLN)}
 [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || { echo 'JOBS must be positive' >&2; exit 2; }
 "$engine" run --rm --pull=never --user "$(id -u):$(id -g)" -e HOME=/tmp -e KOBALT_TEST_ALL_VARIANTS="$variants" \
+    -e KOBALT_TEST_INTERFACE_LANGUAGE="${KOBALT_TEST_INTERFACE_LANGUAGE:-}" \
     --volume "$root:/work" --volume "$cache:/dependency-cache" \
     --workdir /work/platforms/desktop "$image" bash -euc '
         cmake --preset linux -DKOBALT_DEPENDENCY_CACHE=/dependency-cache -DKOBALT_DEPENDENCY_JOBS="$1"
