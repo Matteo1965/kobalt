@@ -2123,9 +2123,12 @@ void SettingsPanel::fitRail(int availableHeight)
         if (!button->isHidden())
             ++visible;
     // The rail uses the full panel height, independently of the list pager.
+    // Beta5 Hungarian Edition rail fix: reserve extra room for the label
+    // under the icon, while fitting all visible tabs above the bottom edge.
+    const int desiredRowHeight = int(chrome::railRowHeight) + ui::px(10);
     const int rowHeight = availableHeight > 0
-            ? qMin<int>(chrome::railRowHeight, qMax(1, availableHeight) / qMax(1, visible))
-            : int(chrome::railRowHeight);
+            ? qMin(desiredRowHeight, qMax(1, availableHeight) / qMax(1, visible))
+            : desiredRowHeight;
     int widest = chrome::tabIcon;
     for (auto *button : settingsTabButtons)
         if (!button->isHidden()) {
@@ -2140,7 +2143,7 @@ void SettingsPanel::fitRail(int availableHeight)
                         chrome::tabIcon,
                         qMax(1,
                              qMin<int>(chrome::tabIcon,
-                                       rowHeight - chrome::tabText - chrome::tabGap - ui::px(8)))));
+                                       rowHeight - chrome::tabText - ui::px(4) - ui::px(22)))));
             }
             button->ensurePolished();
             widest = qMax(widest,
