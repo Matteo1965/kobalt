@@ -243,6 +243,7 @@ Reader::Reader(std::unique_ptr<kobalt::ReadingBook> openedBook,
                            { { "status", kobalt::storage::readStatusName(savedSettings.status) } },
                            false);
     preferences = appearance::readerPreferences(savedSettings.object, book->layoutPreferences());
+    strings::selectLanguage(preferences.value("interface_language").toString("hu"));
     // Remember this book's layout as the last layout in the shared profile.
     // A damaged settings file is left for the next explicit settings save to
     // replace.
@@ -1479,6 +1480,19 @@ void Reader::buildSettings()
     refreshButton = settings->refreshButton;
     resetDefaults = settings->resetDefaults;
     settingsError = settings->settingsError;
+    connect(settings->languageButton, &QPushButton::clicked, this, [this, settings] {
+        settings->showLanguageChoices([this, settings](const QString &code) {
+            if (preferences.value("interface_language").toString("hu") == code)
+                return;
+            auto next = preferences;
+            next["interface_language"] = code;
+            if (!writePreferences(next))
+                return;
+            preferences = next;
+            settings->languageButton->setCaption(code == "en" ? QStringLiteral("English")
+                                                             : QStringLiteral("Magyar"));
+        });
+    });
     connect(settings->uiFontButton, &QPushButton::clicked, this,
             [this] { openSettingsFont("ui_font_face"); });
     connect(settings->dictionaryFontButton, &QPushButton::clicked, this,
