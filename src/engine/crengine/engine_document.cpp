@@ -1217,6 +1217,19 @@ void EngineDocument::applyStyleSheet()
             overrides +=
                     "p[data-kobalt-beautify=\"first-letter\"]::first-letter, [data-kobalt-first-letter=\"1\"]::first-letter, span[data-kobalt-initial=\"1\"] { font-size:1em !important; font-family:inherit !important; font-weight:inherit !important; font-style:inherit !important; float:none !important; line-height:inherit !important; margin:0 !important; padding:0 !important; initial-letter:normal !important; }\n";
     }
+    // Keep a publisher drop cap and its compact continuation in one flow.
+    // Book normalization takes precedence over the publisher's decorated initial.
+    if (!beautifierInitials_) {
+        overrides +=
+                "p[data-kobalt-dropcap=\\\"1\\\"] { margin-bottom:0 !important; text-indent:0 !important; }\\n"
+                "p[data-kobalt-dropcap=\\\"1\\\"] + p { margin-top:0 !important; text-indent:0 !important; }\\n"
+                "p[data-kobalt-dropcap=\\\"1\\\"] > span.inic, "
+                "p[data-kobalt-dropcap=\\\"1\\\"] > span.initial, "
+                "p[data-kobalt-dropcap=\\\"1\\\"] > span.initiale, "
+                "p[data-kobalt-dropcap=\\\"1\\\"] > span.dropcap, "
+                "p[data-kobalt-dropcap=\\\"1\\\"] > span.drop-cap "
+                "{ float:left !important; }\\n";
+    }
     if (paragraphSpacing_ >= 0)
         overrides +=
                 QString("p[data-kobalt-paragraph=\"1\"] { margin-top:0 !important; margin-bottom:%1em !important; padding-top:0 !important; padding-bottom:0 !important; }\n")
@@ -1224,6 +1237,10 @@ void EngineDocument::applyStyleSheet()
     if (paragraphIndent_ >= 0)
         overrides += QString("p[data-kobalt-paragraph=\"1\"] { text-indent:%1em !important; }\n")
                              .arg(paragraphIndent_ / 100.0, 0, 'f', 2);
+    // Explicit paragraph indentation must not push a carried initial's next line.
+    if (!beautifierInitials_)
+        overrides += "p[data-kobalt-dropcap=\\\"1\\\"] { text-indent:0 !important; }\\n"
+                     "p[data-kobalt-dropcap=\\\"1\\\"] + p { text-indent:0 !important; }\\n";
     // Only marked text blocks override publisher alignment; decorative blocks keep it.
     if (alignment_ != "publisher")
         overrides +=
