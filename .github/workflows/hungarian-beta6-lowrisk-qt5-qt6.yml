@@ -1,0 +1,61 @@
+name: Hungarian Edition beta6 Low-risk Qt5 Qt6 Baseline
+
+on:
+  push:
+    branches: [hungarian-edition-beta6-lowrisk-test]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hu-beta6-lowrisk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify selected beta6 features and preserved bookmark shade
+        run: python3 tests/integration/test_hu_beta6_lowrisk.py
+      - name: Validate upstream release tooling
+        run: bash platforms/ci/test.sh
+
+  native-tests:
+    needs: validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Native test suite
+        run: bash platforms/ci/native-tests.sh
+
+  build-kobo:
+    needs: [validation, native-tests]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [qt5, qt6]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build Kobo beta6 test package
+        env:
+          CONTAINER_ENGINE: docker
+          KOBALT_RELEASE_VERSION: v1.0-beta6-HU-PORT-BASE-TEST
+        run: bash platforms/ci/build.sh "${{ matrix.target }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kobalt-beta6-port-base-${{ github.run_number }}-${{ matrix.target }}
+          path: build/release/*
+          if-no-files-found: error
+          compression-level: 0
