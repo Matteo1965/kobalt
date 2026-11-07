@@ -331,6 +331,29 @@ int main(int argc, char **argv)
                         && decorated.image(0) == before,
                 "Initial normalization did not restore publisher styling");
     }
+    // Hungarian Edition beta5: detect publisher initials marked as a complete
+    // "inic" class token and restore their original appearance when disabled.
+    {
+        QMap<QString, qint64> initialSizes;
+        const QByteArray initialBody =
+                "<p><span class='inic'>Á</span>rnyékos kertek között kezdődött a történet.</p>";
+        EngineDocument decorated(test::readerFonts()), plain(test::readerFonts());
+        require(decorated.openResources(
+                        fixture(initialBody, initialSizes, ".inic{float:left;font-size:3em}"),
+                        initialSizes, { 1072, 1448 }, {}, &error),
+                qPrintable(error));
+        const auto original = decorated.image(0);
+        require(plain.openResources(fixture(initialBody, initialSizes), initialSizes,
+                                    { 1072, 1448 }, {}, &error),
+                qPrintable(error));
+        require(original != plain.image(0), "Hungarian initial fixture is not decorated");
+        require(decorated.applyAppearance({ { "beautifier_initials", true } })
+                        && decorated.image(0) == plain.image(0),
+                "Hungarian inic initial did not normalize");
+        require(decorated.applyAppearance({ { "beautifier_initials", false } })
+                        && decorated.image(0) == original,
+                "Hungarian inic initial did not restore its original styling");
+    }
     // Explicit paragraph controls take precedence over beautifier defaults.
     QMap<QString, qint64> sizes;
     const auto ordinary =
