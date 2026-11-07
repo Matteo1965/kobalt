@@ -54,6 +54,7 @@ public:
                          const QString &current, const QString &emptyLabel,
                          std::function<void(const QString &)> chosen);
     void dismissFontChoices();
+    void showLanguageChoices(std::function<void(const QString &)> chosen);
     void showHeaderFooterWeights(int current, const QFont &sampleFont,
                                  std::function<void(int)> chosen);
     void showDictionaryFontSizes(int current, const QString &family, bool customFont,
@@ -115,7 +116,7 @@ public:
                         *denseGraphOption = nullptr;
     ui::DescribedOption *linkIndicatorOption = nullptr, *hideNonlinearOption = nullptr;
     ui::DescribedOption *automaticOpeningOption = nullptr, *minimalAnnotationOption = nullptr;
-    ui::CaptionButton *defaultFontButton = nullptr, *uiFontButton = nullptr,
+    ui::CaptionButton *defaultFontButton = nullptr, *languageButton = nullptr, *uiFontButton = nullptr,
                       *uiMonoFontButton = nullptr, *headerFooterFontButton = nullptr,
                       *headerFooterWeightButton = nullptr;
     ui::CaptionButton *serifFontButton = nullptr, *sansFontButton = nullptr,
