@@ -29,13 +29,13 @@ inline const Entry *hungarianEntries(int *count) {
 inline QString &currentLanguage() {
     // Native upstream regression tests assert English UI text. An explicit
     // test-only override leaves production Kobo devices Hungarian by default.
-    static QString selected = qEnvironmentVariable("KOBALT_TEST_INTERFACE_LANGUAGE") == "en"
+    static QString selected = qgetenv("KOBALT_TEST_INTERFACE_LANGUAGE") == "en"
             ? QStringLiteral("en") : QStringLiteral("hu");
     return selected;
 }
 inline QString language() { return currentLanguage(); }
 inline void selectLanguage(const QString &code) {
-    if (qEnvironmentVariable("KOBALT_TEST_INTERFACE_LANGUAGE") == "en") {
+    if (qgetenv("KOBALT_TEST_INTERFACE_LANGUAGE") == "en") {
         currentLanguage() = QStringLiteral("en");
         return;
     }
