@@ -904,7 +904,7 @@ QImage ReadingPage::stripSnapshot(bool footer) const
     const QRect ribbon = renderedRibbon.translated(0, -top);
     if (!strip.isNull() && ribbon.intersects(strip.rect())) {
         QPainter painter(&strip);
-        kobalt::render::paintBookmarkRibbon(painter, ribbon, palette().color(QPalette::WindowText));
+        kobalt::render::paintBookmarkRibbon(painter, ribbon, QColor(128, 128, 128));
     }
     return strip;
 }
@@ -1081,7 +1081,7 @@ void ReadingPage::paintContents(QPainter &painter, bool sleeping) const
     }
     if (!changingViewport)
         kobalt::render::paintBookmarkRibbon(painter, renderedRibbon,
-                                            palette().color(QPalette::WindowText));
+                                            QColor(128, 128, 128));
     if (viewportNoticeVisible && !sleeping) {
         painter.save();
         painter.setFont(ui::interfaceFont(metrics::chrome::captionText));
