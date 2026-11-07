@@ -237,7 +237,8 @@ ReaderHostServices readerHostServices()
     };
     result.deviceName = syncDeviceModel();
     result.colorDisplay = [] { return pageAnimationPanel() == AnimationPanel::Color; };
-    result.downloadableDictionaries = false;
+    // Preserve Nickel lookup as fallback while enabling the Beta 5 local StarDict imports.
+    result.downloadableDictionaries = true;
     result.browserAvailable = nativeReaderBrowserAvailable;
     result.openBrowser = nativeReaderOpenBrowser;
     result.clock = nativeReaderClock;
