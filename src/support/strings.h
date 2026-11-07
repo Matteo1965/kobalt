@@ -27,11 +27,18 @@ inline const Entry *hungarianEntries(int *count) {
     return values;
 }
 inline QString &currentLanguage() {
-    static QString selected = QStringLiteral("hu");
+    // Native upstream regression tests assert English UI text. An explicit
+    // test-only override leaves production Kobo devices Hungarian by default.
+    static QString selected = qEnvironmentVariable("KOBALT_TEST_INTERFACE_LANGUAGE") == "en"
+            ? QStringLiteral("en") : QStringLiteral("hu");
     return selected;
 }
 inline QString language() { return currentLanguage(); }
 inline void selectLanguage(const QString &code) {
+    if (qEnvironmentVariable("KOBALT_TEST_INTERFACE_LANGUAGE") == "en") {
+        currentLanguage() = QStringLiteral("en");
+        return;
+    }
     currentLanguage() = code == QLatin1String("en") ? QStringLiteral("en") : QStringLiteral("hu");
 }
 inline std::atomic_bool &keyDisplay() {
