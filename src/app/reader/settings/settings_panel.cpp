@@ -677,6 +677,10 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     }
     section(systemPage, systemRows, "rrSystemInterfaceSection",
             strings::get("settings.section_user_interface"));
+    languageButton = ui::makeCaptionButton(systemPage, nullptr, "rrInterfaceLanguage",
+                                            strings::get("settings.interface_language"), [] { });
+    languageButton->setCaption(strings::language() == "en" ? QStringLiteral("English") : QStringLiteral("Magyar"));
+    systemRows->addWidget(languageButton);
     uiFontButton = ui::makeCaptionButton(systemPage, nullptr, "rrUiFont",
                                          strings::get("settings.ui_font"), [] { });
     uiMonoFontButton = ui::makeCaptionButton(systemPage, nullptr, "rrUiMonoFont",
@@ -739,18 +743,20 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     auto *build = new QVBoxLayout;
     build->setSpacing(metrics::about::buildGap);
     aboutRows->addLayout(build);
-    // "Version 0.4 (Qt6)", then the short commit with "*" for uncommitted changes.
+    // Keep the two-line Hungarian Edition identity legible on narrow Kobo displays.
     const auto release = inputs.release;
-    auto *version = new ui::InterfaceLabel(
-            strings::get("about.version").arg(release).arg(inputs.qtMajor), aboutPage);
-    version->setObjectName("rrAboutVersion");
+    const auto editionMatch = QRegularExpression(
+            QStringLiteral("^v?([0-9]+\\.[0-9]+\\.[0-9]+-beta[0-9]+)(?:-HU.*)?$")).match(release);
+    const auto editionVersion = editionMatch.hasMatch() ? editionMatch.captured(1) + QStringLiteral("-HU")
+                                                        : release;
+    auto *editionTitle = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition"), aboutPage);
+    editionTitle->setObjectName("rrAboutHungarianEditionTitle");
+    editionTitle->setAlignment(Qt::AlignCenter);
+    build->addWidget(editionTitle);
+    auto *version = new ui::InterfaceLabel(editionVersion, aboutPage);
+    version->setObjectName("rrAboutHungarianEditionVersion");
     version->setAlignment(Qt::AlignCenter);
     build->addWidget(version);
-    auto *commit = new ui::InterfaceLabel(inputs.commit, aboutPage);
-    commit->setObjectName("rrAboutCommit");
-    commit->setAlignment(Qt::AlignCenter);
-    build->addWidget(commit);
-    commit->setVisible(inputs.commitVisible);
     buildRule("rrAboutBuildBottom");
     aboutRows->addSpacing(metrics::about::sectionGap);
     auto *description = new ui::InterfaceLabel(strings::get("about.description"), aboutPage);
@@ -862,6 +868,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                           tappableLinksButton,
                           navigationBarButton,
                           menuViewButton,
+                          languageButton,
                           uiFontButton,
                           uiMonoFontButton,
                           headerFooterFontButton,
@@ -909,7 +916,6 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     fitRail();
     ui::readerStyle(description, ui::styles::font(chrome::labelText));
     ui::readerStyle(version, ui::styles::font(chrome::labelText));
-    ui::readerStyle(commit, ui::styles::font(metrics::about::commitText));
     // The same outlined button as the password field's Show and Hide.
     ui::readerStyle(openAcknowledgments,
                     ui::styles::outlined() + "QPushButton{" + ui::styles::font(chrome::labelText)
@@ -2142,6 +2148,41 @@ void SettingsPanel::fitRail(int availableHeight)
                                   + (shortRail ? int(chrome::tabIcon) + int(chrome::inset) : 0));
         }
     tabRail->setFixedWidth(widest + 2 * chrome::railInset);
+}
+
+
+void SettingsPanel::showLanguageChoices(std::function<void(const QString &)> chosen)
+{
+    if (fontDialog)
+        return;
+    fontDialog = new ui::ModalOverlay(parentWidget());
+    fontDialog->setObjectName("rrLanguagePopup");
+    fontDialog->setDimmed(true);
+    fontDialog->setGeometry(parentWidget()->rect());
+    fontDialog->dismissed = [this] { dismissFontChoices(); };
+    auto *card = fontDialog->card();
+    auto *rows = card->rows();
+    rows->setSpacing(0);
+    card->title(strings::get("settings.interface_language"));
+    card->message(strings::get("settings.interface_language_restart"));
+    auto *choices = new ui::RadioList(card);
+    choices->setMinimumRowHeight(chrome::listActionHeight);
+    choices->add("rrLanguageHU", QStringLiteral("Magyar"));
+    choices->add("rrLanguageEN", QStringLiteral("English"));
+    choices->setCurrent(strings::language() == "en" ? 1 : 0);
+    choices->chosen = [this, chosen](int index) {
+        dismissFontChoices();
+        chosen(index == 1 ? QStringLiteral("en") : QStringLiteral("hu"));
+    };
+    rows->addWidget(choices);
+    const int cardWidth = qMin<int>(metrics::notice::cardWidth,
+                                    parentWidget()->width() - 2 * metrics::notice::sideClearance);
+    choices->setFixedHeight(choices->heightForWidth(cardWidth - 2 * metrics::control::border));
+    card->fitToWidth(cardWidth);
+    fontDialog->centerCard();
+    fontDialog->show();
+    fontDialog->raise();
+    fontDialog->setFocus();
 }
 
 } // namespace kobalt::reader
