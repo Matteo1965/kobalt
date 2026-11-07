@@ -1,7 +1,7 @@
 #include "manager.h"
 #include "support/main_thread.h"
 #include "stardict.h"
-#include <dictionary_catalog.h>
+#include "dictionary_catalog.h"
 #include "publication/zip_resource.h"
 #include "storage/reader_storage.h"
 #include "support/qt_compat.h"
@@ -26,40 +26,159 @@
 
 namespace kobalt {
 namespace {
-bool validId(const QString &id)
-{
-    return QRegularExpression("^[a-z]{2,3}-[a-z]{2,3}$").match(id).hasMatch();
+bool validId(const QString &id) {
+    return id.size() <= 64 && QRegularExpression("^[a-z]{2,3}-[a-z]{2,3}(?:-[a-z0-9]+)*$").match(id).hasMatch();
 }
-
-bool fail(QString *error, const QString &message)
-{
+bool fail(QString *error, const QString &message) {
     if (error)
         *error = message;
     return false;
 }
-
-QString folder(const QString &root, const QString &id)
-{
+QString folder(const QString &root, const QString &id) {
     return QDir(root).filePath(id);
 }
 
-class InstallJob final : public QThread
-{
+// Local StarDict packages can use a distinctive suffix (e.g. hu-en-wiktionary).
+// An archive must be extracted to one flat, safely named dictionary directory.
+QStringList localDictionaryIds(const QString &root) {
+    QStringList ids;
+    for (const QFileInfo &dir : QDir(root).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
+        if (!validId(dir.fileName()))
+            continue;
+        if (storage::readJson(folder(dir.absoluteFilePath(), "installed.json"))["id"].toString() == dir.fileName())
+            ids.append(dir.fileName());
+    }
+    ids.sort(Qt::CaseInsensitive);
+    return ids;
+}
+bool prepareLocalDictionary(const QString &root, const QString &id) {
+    const QString dir = folder(root, id);
+    const QFileInfo info(dir);
+    if (!validId(id) || info.isSymLink() || !info.isDir())
+        return false;
+    const QString prefix = folder(dir, id);
+    if (!QFileInfo(prefix + ".ifo").isFile() || !QFileInfo(prefix + ".idx").isFile() ||
+        (!QFileInfo(prefix + ".dict").isFile() && !QFileInfo(prefix + ".dict.dz").isFile()))
+        return false;
+    // Never overwrite a managed dictionary or a user-supplied metadata file.
+    if (QFileInfo::exists(folder(dir, "installed.json")))
+        return false;
+    QFile ifo(prefix + ".ifo");
+    if (!ifo.open(QIODevice::ReadOnly) || ifo.size() > 65536)
+        return false;
+    QString title;
+    for (const QByteArray &line : ifo.readAll().split('\n')) {
+        if (line.startsWith("bookname=")) {
+            title = QString::fromUtf8(line.mid(9)).trimmed();
+            break;
+        }
+    }
+    if (title.isEmpty()) title = id;
+    title = title.left(160);
+    QString error;
+    if (!StarDict::prepare(dir, id, &error))
+        return false;
+    const QStringList parts = id.split('-');
+    return storage::writeJson(folder(dir, "installed.json"), qt::object({
+        {"id", id}, {"name", title}, {"language", parts.at(0)}, {"target", parts.at(1)}, {"local", true}
+    }));
+}
+void discoverLocalDictionaries(const QString &root) {
+    const QFileInfo info(root);
+    if (info.isSymLink() || !info.isDir())
+        return;
+    for (const QFileInfo &dir : QDir(root).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks))
+        prepareLocalDictionary(root, dir.fileName());
+}
+
+QString dictionarySourceLanguage(const QString &root, const QString &id, const QVector<DownloadDictionary> &entries) {
+    // Existing installs may predate language metadata; keep catalog fallback.
+    const auto metadata = storage::readJson(folder(folder(root, id), "installed.json"));
+    const QString declared = DictionaryManager::normalizeLanguage(metadata["language"].toString());
+    if (!declared.isEmpty())
+        return declared;
+    for (const auto &entry : entries)
+        if (entry.id == id)
+            return DictionaryManager::normalizeLanguage(entry.language);
+    return id == QStringLiteral("hu-hu") ? QStringLiteral("hu") : QString();
+}
+
+bool importHungarianDictionary(const QString &root) {
+    const QString id = QStringLiteral("hu-hu");
+    const QString archive = QStringLiteral("/mnt/onboard/.kobo/custom-dict/HU_HU_Merged_v3.zip");
+    const QString destination = folder(root, id);
+    if (QFileInfo::exists(folder(destination, "installed.json"))) {
+
+        return true;
+    }
+    if (!QFileInfo(archive).isFile() || !QDir().mkpath(root) || QFileInfo::exists(destination)) {
+
+        return false;
+    }
+    QTemporaryDir staging(folder(root, ".hu-import-XXXXXX"));
+    if (!staging.isValid()) {
+
+        return false;
+    }
+    const QString prefix = QStringLiteral("hungarian-dictionary-merged-v3.");
+    for (const auto &ext : {QStringLiteral("ifo"), QStringLiteral("idx"), QStringLiteral("dict")}) {
+        ZipResource input;
+        if (!input.open(archive, prefix + ext, ext == "dict" ? 64LL * 1024 * 1024 : 8LL * 1024 * 1024)) {
+
+            return false;
+        }
+        QFile output(folder(staging.path(), id + "." + ext));
+        if (!output.open(QIODevice::WriteOnly)) {
+
+            return false;
+        }
+        while (input.valid() && !input.finished()) {
+            const auto chunk = input.next();
+            if (output.write(chunk) != chunk.size()) {
+
+                return false;
+            }
+        }
+        if (!input.valid()) {
+
+            return false;
+        }
+        output.close();
+
+    }
+    QString error;
+    if (!StarDict::prepare(staging.path(), id, &error)) {
+
+        return false;
+    }
+
+    if (!storage::writeJson(folder(staging.path(), "installed.json"),
+           qt::object({{"id", id}, {"name", QStringLiteral("Magyar értelmező szótár")}, {"language", QStringLiteral("hu")}, {"target", QStringLiteral("hu")}}))) {
+
+        return false;
+    }
+    if (!QDir().rename(staging.path(), destination)) {
+
+        return false;
+    }
+
+    staging.setAutoRemove(false);
+    return true;
+}
+
+class InstallJob final : public QThread {
 public:
     QString root, zip, error;
     DownloadDictionary entry;
     bool ok = false;
-
-    void run() override
-    {
-        ok = DictionaryManager::installArchive(root, entry, zip, &error,
-                                               [this] { return isInterruptionRequested(); });
+    void run() override {
+        ok = DictionaryManager::installArchive(root, entry, zip, &error, [this] {
+            return isInterruptionRequested();
+        });
     }
 };
-} // namespace
-
-struct DictionaryManager::Data
-{
+}
+struct DictionaryManager::Data {
     QString root, message, activeId, language, downloadError;
     std::unique_ptr<DictionaryService> fallback;
     std::unique_ptr<StarDict> active;
@@ -69,25 +188,23 @@ struct DictionaryManager::Data
     QPointer<QNetworkReply> reply;
     QTemporaryFile download;
     InstallJob *job = nullptr;
-    QCryptographicHash hash{ QCryptographicHash::Sha256 };
+    QCryptographicHash hash{QCryptographicHash::Sha256};
     qint64 bytes = 0;
     int percent = -1;
     DownloadDictionary entry;
     bool stopped = false;
 };
-
-DictionaryManager::DictionaryManager(QString directory, std::unique_ptr<DictionaryService> fallback,
-                                     QObject *parent, QNetworkAccessManager *network)
-    : QObject(parent), data(std::make_unique<Data>())
-{
+DictionaryManager::DictionaryManager(QString directory, std::unique_ptr<DictionaryService> fallback, QObject *parent,
+                                     QNetworkAccessManager *network)
+    : QObject(parent), data(std::make_unique<Data>()) {
     data->root = std::move(directory);
+    importHungarianDictionary(data->root);
+    discoverLocalDictionaries(data->root);
     data->fallback = std::move(fallback);
     if (network)
         data->requests = network;
 }
-
-DictionaryManager::~DictionaryManager()
-{
+DictionaryManager::~DictionaryManager() {
     if (data->reply) {
         disconnect(data->reply, nullptr, this, nullptr);
         data->reply->abort();
@@ -98,12 +215,9 @@ DictionaryManager::~DictionaryManager()
         delete data->job;
     }
 }
-
-QVector<DownloadDictionary> DictionaryManager::catalog()
-{
+QVector<DownloadDictionary> DictionaryManager::catalog() {
     QVector<DownloadDictionary> entries;
-    for (const auto &value :
-         QJsonDocument::fromJson(dictionaryCatalog).object()["dictionaries"].toArray()) {
+    for (const auto &value : QJsonDocument::fromJson(dictionaryCatalog).object()["dictionaries"].toArray()) {
         const auto d = value.toObject();
         DownloadDictionary entry;
         entry.id = d["id"].toString();
@@ -115,15 +229,12 @@ QVector<DownloadDictionary> DictionaryManager::catalog()
         entry.url = d["url"].toString();
         entry.sha256 = QByteArray::fromHex(d["sha256"].toString().toLatin1());
         entry.size = qint64(d["size"].toDouble());
-        if (validId(entry.id) && entry.sha256.size() == 32 && entry.size > 0
-            && entry.size <= 256 * 1024 * 1024)
+        if (validId(entry.id) && entry.sha256.size() == 32 && entry.size > 0 && entry.size <= 256 * 1024 * 1024)
             entries.append(entry);
     }
     return entries;
 }
-
-bool DictionaryManager::installed(const QString &id) const
-{
+bool DictionaryManager::installed(const QString &id) const {
     if (!validId(id))
         return false;
     const auto directory = folder(data->root, id);
@@ -132,16 +243,31 @@ bool DictionaryManager::installed(const QString &id) const
         return false;
     return storage::readJson(folder(directory, "installed.json"))["id"].toString() == id;
 }
-
-QVector<DictionaryChoice> DictionaryManager::choices() const
-{
+QVector<DictionaryChoice> DictionaryManager::choices() const {
     QVector<DictionaryChoice> current, other;
     for (const auto &entry : orderedCatalog(catalog()))
         if (installed(entry.id)) {
-            const DictionaryChoice choice{ "downloaded:" + entry.id, entry.name,
-                                           normalizeLanguage(entry.language), false };
+            const DictionaryChoice choice{"downloaded:" + entry.id, entry.name, normalizeLanguage(entry.language),
+                                          false};
             (choice.language == data->language ? current : other).append(choice);
         }
+    if (installed("hu-hu")) {
+        const DictionaryChoice choice{"downloaded:hu-hu", QStringLiteral("Magyar értelmező szótár"), QStringLiteral("hu"), false};
+        (data->language == "hu" ? current : other).append(choice);
+    }
+    // Installed local dictionaries are not necessarily present in the download catalog.
+    for (const QString &id : localDictionaryIds(data->root)) {
+        if (id == "hu-hu") continue;
+        bool managed = false;
+        for (const auto &entry : catalog())
+            if (entry.id == id) { managed = true; break; }
+        if (managed) continue;
+        const QJsonObject meta = storage::readJson(folder(folder(data->root, id), "installed.json"));
+        const QString name = meta["name"].toString(id);
+        const QString language = normalizeLanguage(meta["language"].toString(id.section('-', 0, 0)));
+        const DictionaryChoice option{"downloaded:" + id, name, language, false};
+        (language == data->language ? current : other).append(option);
+    }
     for (auto choice : data->fallback->choices()) {
         choice.fallback = true;
         choice.language = normalizeLanguage(choice.language);
@@ -150,9 +276,7 @@ QVector<DictionaryChoice> DictionaryManager::choices() const
     current += other;
     return current;
 }
-
-bool DictionaryManager::select(const QString &book, const QString &id, QString *error)
-{
+bool DictionaryManager::select(const QString &book, const QString &id, QString *error) {
     if (id.startsWith("downloaded:")) {
         const auto pair = id.mid(11);
         if (!installed(pair))
@@ -161,7 +285,8 @@ bool DictionaryManager::select(const QString &book, const QString &id, QString *
             auto active = std::make_unique<StarDict>();
             if (!active->open(folder(data->root, pair), pair, error))
                 return false;
-            data->active = std::move(active);
+            active->setHungarianSource(dictionarySourceLanguage(data->root, pair, catalog()) == QStringLiteral("hu"));
+        data->active = std::move(active);
             data->activeId = pair;
         }
     } else if (!data->fallback->select(book, id, error))
@@ -172,9 +297,7 @@ bool DictionaryManager::select(const QString &book, const QString &id, QString *
     emit changed();
     return true;
 }
-
-DictionaryResult DictionaryManager::lookup(const QString &book, const QString &word)
-{
+DictionaryResult DictionaryManager::lookup(const QString &book, const QString &word) {
     const auto available = choices();
     auto id = data->selected.value(book);
     bool present = false;
@@ -213,60 +336,58 @@ DictionaryResult DictionaryManager::lookup(const QString &book, const QString &w
             result.error = error;
             return result;
         }
-        data->active = std::move(active);
+        active->setHungarianSource(dictionarySourceLanguage(data->root, pair, catalog()) == QStringLiteral("hu"));
+            data->active = std::move(active);
         data->activeId = pair;
     }
     auto result = data->active->lookup(word);
     result.dictionaryId = id;
+    if (pair == "hu-hu") {
+        result.dictionary = QStringLiteral("Magyar értelmező szótár");
+        result.language = QStringLiteral("hu");
+    }
     for (const auto &entry : catalog())
         if (entry.id == pair) {
             result.dictionary = entry.name;
             result.language = entry.language;
             break;
         }
+    const auto meta = storage::readJson(folder(folder(data->root, pair), "installed.json"));
+    if (result.dictionary == pair || meta["local"].toBool(false)) {
+        result.dictionary = meta["name"].toString(pair);
+        result.language = normalizeLanguage(meta["language"].toString());
+    }
     return result;
 }
-
-bool DictionaryManager::busy() const
-{
+bool DictionaryManager::busy() const {
     return data->reply || data->job;
 }
-
-void DictionaryManager::setLanguage(const QString &language)
-{
+void DictionaryManager::setLanguage(const QString &language) {
     data->language = normalizeLanguage(language);
 }
-
-QString DictionaryManager::status() const
-{
+QString DictionaryManager::status() const {
     return data->message;
 }
-
-DictionaryTransfer DictionaryManager::transfer() const
-{
+DictionaryTransfer DictionaryManager::transfer() const {
     if (!busy())
         return {};
-    return { data->entry.id, data->bytes, data->entry.size, bool(data->job) };
+    return {data->entry.id, data->bytes, data->entry.size, bool(data->job)};
 }
-
-QHash<QString, qint64> DictionaryManager::installedSizes() const
-{
+QHash<QString, qint64> DictionaryManager::installedSizes() const {
     QHash<QString, qint64> result;
-    for (const auto &entry : catalog())
-        if (installed(entry.id)) {
+    for (const QString &id : localDictionaryIds(data->root))
+        if (installed(id)) {
             qint64 bytes = 0;
             // Installations are flat directories. Do not follow user-added symlinks.
-            for (const auto &file : QDir(folder(data->root, entry.id))
-                                            .entryInfoList(QDir::Files | QDir::NoDotAndDotDot))
+            for (const auto &file :
+                 QDir(folder(data->root, id)).entryInfoList(QDir::Files | QDir::NoDotAndDotDot))
                 if (!file.isSymLink())
                     bytes += file.size();
-            result.insert(entry.id, bytes);
+            result.insert(id, bytes);
         }
     return result;
 }
-
-qint64 DictionaryManager::availableBytes() const
-{
+qint64 DictionaryManager::availableBytes() const {
     QFileInfo path(data->root);
     while (!path.exists()) {
         const auto parent = path.absolutePath();
@@ -274,7 +395,7 @@ qint64 DictionaryManager::availableBytes() const
             return -1;
         path.setFile(parent);
     }
-    struct statvfs space{};
+    struct statvfs space {};
     if (::statvfs(QFile::encodeName(path.absoluteFilePath()).constData(), &space) != 0)
         return -1;
     const auto maximum = quint64(std::numeric_limits<qint64>::max());
@@ -283,27 +404,21 @@ qint64 DictionaryManager::availableBytes() const
         return qint64(maximum);
     return qint64(blocks * size);
 }
-
-QString DictionaryManager::selectedDictionary(const QString &book) const
-{
+QString DictionaryManager::selectedDictionary(const QString &book) const {
     const auto selected = data->selected.value(book);
     if (!selected.startsWith("downloaded:"))
         return {};
     const auto id = selected.mid(11);
     return installed(id) ? id : QString();
 }
-
-void DictionaryManager::cancel()
-{
+void DictionaryManager::cancel() {
     data->stopped = true;
     if (data->reply)
         data->reply->abort();
     if (data->job)
         data->job->requestInterruption();
 }
-
-void DictionaryManager::download(const QString &id)
-{
+void DictionaryManager::download(const QString &id) {
     if (busy() || installed(id))
         return;
     DownloadDictionary entry;
@@ -344,8 +459,7 @@ void DictionaryManager::download(const QString &id)
         QNetworkRequest networkRequest(url);
         networkRequest.setRawHeader("User-Agent", "Kobalt dictionary downloader");
 #if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
-        networkRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
-                                    QNetworkRequest::ManualRedirectPolicy);
+        networkRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
 #endif
         // Manual redirects also work on the Kobo Qt 5.2 build.
         data->reply = data->requests->get(networkRequest);
@@ -357,11 +471,11 @@ void DictionaryManager::download(const QString &id)
         reply->setReadBufferSize(65536);
         const auto drain = [this, reply, timeout] {
             timeout->start(30000);
-            if (!reply || reply != data->reply || data->stopped || !data->downloadError.isEmpty()
-                || reply->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid())
+            if (!reply || reply != data->reply || data->stopped || !data->downloadError.isEmpty() ||
+                reply->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid())
                 return;
-            while (reply && reply == data->reply && !data->stopped && data->downloadError.isEmpty()
-                   && reply->bytesAvailable()) {
+            while (reply && reply == data->reply && !data->stopped && data->downloadError.isEmpty() &&
+                   reply->bytesAvailable()) {
                 const auto bytes = reply->read(65536);
                 data->bytes += bytes.size();
                 if (data->bytes > data->entry.size || data->download.write(bytes) != bytes.size()) {
@@ -373,8 +487,7 @@ void DictionaryManager::download(const QString &id)
                 const int percent = int(data->bytes * 100 / data->entry.size);
                 if (percent != data->percent) {
                     data->percent = percent;
-                    data->message = "Downloading " + data->entry.name + " · "
-                            + QString::number(percent) + "%";
+                    data->message = "Downloading " + data->entry.name + " · " + QString::number(percent) + "%";
                     emit changed();
                 }
             }
@@ -387,8 +500,7 @@ void DictionaryManager::download(const QString &id)
             // abort() can emit finished synchronously while drain() is reading.
             disconnect(reply, nullptr, this, nullptr);
             drain();
-            const auto redirect =
-                    reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+            const auto redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
             data->reply = nullptr;
             const auto url = reply->url();
             const auto error = reply->error();
@@ -399,13 +511,12 @@ void DictionaryManager::download(const QString &id)
                 retry(url.resolved(redirect), redirects + 1, retry);
                 return;
             }
-            if (data->stopped || !data->downloadError.isEmpty() || error != QNetworkReply::NoError
-                || status != 200 || data->bytes != data->entry.size
-                || data->hash.result() != data->entry.sha256) {
-                data->message = data->stopped             ? "Download cancelled."
-                        : !data->downloadError.isEmpty()  ? data->downloadError
-                        : error != QNetworkReply::NoError ? errorText
-                                                          : "Dictionary checksum or size differs.";
+            if (data->stopped || !data->downloadError.isEmpty() || error != QNetworkReply::NoError || status != 200 ||
+                data->bytes != data->entry.size || data->hash.result() != data->entry.sha256) {
+                data->message = data->stopped                     ? "Download cancelled."
+                                : !data->downloadError.isEmpty()  ? data->downloadError
+                                : error != QNetworkReply::NoError ? errorText
+                                                                  : "Dictionary checksum or size differs.";
                 data->download.close();
                 data->download.remove();
                 emit changed();
@@ -433,9 +544,7 @@ void DictionaryManager::download(const QString &id)
     };
     request(QUrl(entry.url), 0, request);
 }
-
-bool DictionaryManager::remove(const QString &id, QString *error)
-{
+bool DictionaryManager::remove(const QString &id, QString *error) {
     if (busy() && data->entry.id == id)
         return fail(error, "Wait for this download to finish.");
     if (!installed(id))
@@ -457,13 +566,10 @@ bool DictionaryManager::remove(const QString &id, QString *error)
     emit changed();
     return true;
 }
-
-bool DictionaryManager::installArchive(const QString &directory, const DownloadDictionary &entry,
-                                       const QString &zip, QString *error,
-                                       const std::function<bool()> &cancelled)
-{
-    if (!validId(entry.id) || entry.sha256.size() != 32 || QFileInfo(directory).isSymLink()
-        || !QDir().mkpath(directory) || QFileInfo::exists(folder(directory, entry.id)))
+bool DictionaryManager::installArchive(const QString &directory, const DownloadDictionary &entry, const QString &zip,
+                                       QString *error, const std::function<bool()> &cancelled) {
+    if (!validId(entry.id) || entry.sha256.size() != 32 || QFileInfo(directory).isSymLink() ||
+        !QDir().mkpath(directory) || QFileInfo::exists(folder(directory, entry.id)))
         return fail(error, "Cannot install this dictionary.");
     QFile archive(zip);
     if (!archive.open(QIODevice::ReadOnly) || archive.size() != entry.size)
@@ -479,16 +585,14 @@ bool DictionaryManager::installArchive(const QString &directory, const DownloadD
     QTemporaryDir stage(folder(directory, ".install-XXXXXX"));
     if (!stage.isValid())
         return fail(error, "Cannot create dictionary storage.");
-    const auto files = QStringList{ entry.id + ".ifo", entry.id + ".idx", entry.id + ".dict.dz",
-                                    entry.id + ".syn", "LICENSE",         "ATTRIBUTION",
-                                    "README.txt" };
+    const auto files = QStringList{entry.id + ".ifo", entry.id + ".idx", entry.id + ".dict.dz", entry.id + ".syn",
+                                   "LICENSE",         "ATTRIBUTION",     "README.txt"};
     for (const auto &name : files) {
         ZipResource resource;
         if (!resource.open(zip, entry.id + "/" + name,
-                           name.endsWith(".ifo") ? 65536
-                                   : name.contains('.') && name != "README.txt"
-                                   ? 256LL * 1024 * 1024
-                                   : 1024 * 1024)) {
+                           name.endsWith(".ifo")                        ? 65536
+                           : name.contains('.') && name != "README.txt" ? 256LL * 1024 * 1024
+                                                                        : 1024 * 1024)) {
             if (name.endsWith(".syn") || name == "README.txt")
                 continue;
             return fail(error, "Dictionary archive is missing required files.");
@@ -510,10 +614,9 @@ bool DictionaryManager::installArchive(const QString &directory, const DownloadD
     if (!StarDict::prepare(stage.path(), entry.id, error, cancelled))
         return false;
     if (!storage::writeJson(
-                folder(stage.path(), "installed.json"),
-                qt::object({ { "id", entry.id },
-                             { "name", entry.name },
-                             { "sha256", QString::fromLatin1(entry.sha256.toHex()) } })))
+            folder(stage.path(), "installed.json"),
+            qt::object(
+                {{"id", entry.id}, {"name", entry.name}, {"language", normalizeLanguage(entry.language)}, {"target", normalizeLanguage(entry.target)}, {"sha256", QString::fromLatin1(entry.sha256.toHex())}})))
         return fail(error, "Cannot save dictionary metadata.");
     if (cancelled && cancelled())
         return fail(error, "Installation cancelled.");
@@ -522,4 +625,4 @@ bool DictionaryManager::installArchive(const QString &directory, const DownloadD
     stage.setAutoRemove(false);
     return true;
 }
-} // namespace kobalt
+}
