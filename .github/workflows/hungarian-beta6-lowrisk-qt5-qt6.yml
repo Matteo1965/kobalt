@@ -1,15 +1,15 @@
-name: Hungarian Edition beta6 Optical Margin Qt5 Qt6 Test
+name: Hungarian Edition beta6 Dictionary Qt5 Qt6 Test
 
 on:
   push:
-    branches: [hungarian-edition-beta6-optical-margin-test]
+    branches: [hungarian-edition-beta6-dictionary-test]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: hu-beta6-optical-${{ github.ref }}
+  group: hu-beta6-dictionary-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -53,11 +53,11 @@ jobs:
       - name: Build Kobo beta6 test package
         env:
           CONTAINER_ENGINE: docker
-          KOBALT_RELEASE_VERSION: v1.0-beta6-HU-OPTICAL-100-TEST
+          KOBALT_RELEASE_VERSION: v1.0-beta6-HU-DICTIONARY-TEST
         run: bash platforms/ci/build.sh "${{ matrix.target }}"
       - uses: actions/upload-artifact@v4
         with:
-          name: kobalt-beta6-hu-optical100-${{ github.run_number }}-${{ matrix.target }}
+          name: kobalt-beta6-hu-dictionary-${{ github.run_number }}-${{ matrix.target }}
           path: build/release/*
           if-no-files-found: error
           compression-level: 0
