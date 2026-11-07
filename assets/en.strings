@@ -1298,3 +1298,4 @@
 "settings.hanging_punctuation_off_description" = "Keep punctuation within the text edges.";
 "settings.hanging_punctuation_on_description" = "Let punctuation and line-ending hyphens extend beyond the text edges.";
 "settings.hanging_punctuation_description" = "The dashed lines mark the text edges. The sample uses justified text. This preference affects all books.";
+\n/* Hungarian Edition language selector */\n"settings.interface_language" = "Interface language";\n"settings.interface_language_restart" = "Restart Kobalt to apply the selected language.";\n
