@@ -423,7 +423,10 @@ DictionaryResult StarDict::lookup(const QString &word) {
         fallback.start();
         int probes = 0;
         for (const auto &candidate : candidates) {
-            if (probes >= 12 || fallback.elapsed() >= 1200 || expired()) break;
+            // The Hungarian stemmer may produce up to 128 prioritized variants.
+            // Do not truncate the candidate list after only twelve probes; keep
+            // the existing 1.2s lookup budget to bound slower storage devices.
+            if (probes >= 128 || fallback.elapsed() >= 1200 || expired()) break;
             ++probes;
             number = probe(QByteArray(candidate.data(), int(candidate.size())));
             if (number >= 0) break;
