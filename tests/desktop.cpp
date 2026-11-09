@@ -7147,21 +7147,20 @@ printf '[{"file":"%s.png","scene":"%s"}]' "$3" "$KOBALT_GALLERY_CAPTURE" > "$2/p
                             };
                         });
         QVERIFY(fixture.prepared);
-        // Legacy preferences must not hide the shortcut in the Light panel.
+        // A previously disabled preference must never hide the Light shortcut.
         auto saved = storage::readJson(fixture.paths.preferences());
         saved["light_dark_mode_shortcut"] = false;
         QVERIFY(storage::writeJson(fixture.paths.preferences(), saved));
-
         QSignalSpy opened(&fixture.window, &desktop::Window::bookOpened);
         fixture.window.openBook(book);
         QTRY_COMPARE(opened.count(), 1);
         QTRY_VERIFY(!fixture.state().value("busy").toBool());
         QVERIFY(fixture.press("rrPage"));
         QVERIFY(fixture.press("rrSettings"));
-        QVERIFY(revealSettingsOption(fixture, "rrDarkMode"));
+        // Appearance no longer exposes a duplicate switch.
+        auto *settingsDark = fixture.widget("rrDarkMode");
+        QVERIFY(settingsDark && !settingsDark->isVisible());
         QVERIFY(!fixture.widget("rrLightDarkModeShortcut"));
-        auto *dark = qobject_cast<QCheckBox *>(fixture.widget("rrDarkMode"));
-        QVERIFY(dark && dark->isVisible());
         QVERIFY(fixture.press("rrSettingsClose"));
         QTRY_VERIFY(!fixture.visible("rrGeneralSettings"));
         QTRY_VERIFY(!fixture.state().value("busy").toBool());
@@ -7177,18 +7176,11 @@ printf '[{"file":"%s.png","scene":"%s"}]' "$3" "$KOBALT_GALLERY_CAPTURE" > "$2/p
             QTRY_VERIFY(toggle->isChecked());
             QVERIFY(fixture.press("rrLightDarkMode"));
             QTRY_VERIFY(!fixture.state().value("dark_mode").toBool());
+            QTRY_VERIFY(!toggle->isChecked());
             QVERIFY(fixture.press("rrNavLight"));
             QTRY_VERIFY(!fixture.visible("rrLightPanel"));
         }
 
-        QVERIFY(fixture.press("rrSettings"));
-        QVERIFY(revealSettingsOption(fixture, "rrDarkMode"));
-        QVERIFY(fixture.press("rrDarkMode"));
-        QTRY_VERIFY(fixture.state().value("dark_mode").toBool());
-        QVERIFY(dark->isChecked());
-        QVERIFY(fixture.press("rrDarkMode"));
-        QTRY_VERIFY(!fixture.state().value("dark_mode").toBool());
-        QVERIFY(fixture.press("rrSettingsClose"));
         fixture.window.readerWindow()->close();
         QTRY_VERIFY(!fixture.window.readerWindow());
     }
@@ -7967,16 +7959,18 @@ printf '[{"file":"%s.png","scene":"%s"}]' "$3" "$KOBALT_GALLERY_CAPTURE" > "$2/p
             QVERIFY(hint && next && previous);
             for (int page = 0; page < 8 && previous->isEnabled(); ++page)
                 QVERIFY(fixture.press("rrSettingsOptionsPrevious"));
-            QTRY_VERIFY(hint->isVisible());
+            QCOMPARE(hint->isVisible(), next->isEnabled());
             for (int page = 0; page < 8 && next->isEnabled(); ++page)
                 QVERIFY(fixture.press("rrSettingsOptionsNext"));
             QVERIFY(!next->isEnabled());
             QTRY_VERIFY(!hint->isVisible());
             QVERIFY(capture(QString("display-last-landscape-%1").arg(screen)));
-            QVERIFY(fixture.press("rrSettingsOptionsPrevious"));
-            QTRY_VERIFY(hint->isVisible());
-            QVERIFY(fixture.press("rrSettingsOptionsNext"));
-            QTRY_VERIFY(!hint->isVisible());
+            if (previous->isEnabled()) {
+                QVERIFY(fixture.press("rrSettingsOptionsPrevious"));
+                QCOMPARE(hint->isVisible(), next->isEnabled());
+                QVERIFY(fixture.press("rrSettingsOptionsNext"));
+                QTRY_VERIFY(!hint->isVisible());
+            }
             QVERIFY(fixture.press("rrSettingsClose"));
         }
         rotate->trigger();
@@ -9919,8 +9913,8 @@ private slots:
         QVERIFY(fixture.press("rrSettings"));
         if (!fixture.visible("rrDisplayOptions"))
             QVERIFY(fixture.press("rrSettingsDisplay"));
-        QVERIFY(revealSettingsOption(fixture, "rrDarkMode"));
         QVERIFY(!fixture.widget("rrLightDarkModeShortcut"));
+        QVERIFY(!fixture.widget("rrDarkMode")->isVisible());
         QVERIFY(capture(fixture, name + "-settings-light-dark-mode"));
         QVERIFY(fixture.press("rrSettingsClose"));
         QTRY_VERIFY(!fixture.visible("rrGeneralSettings"));
