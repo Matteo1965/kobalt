@@ -7147,134 +7147,50 @@ printf '[{"file":"%s.png","scene":"%s"}]' "$3" "$KOBALT_GALLERY_CAPTURE" > "$2/p
                             };
                         });
         QVERIFY(fixture.prepared);
-        if (!available) {
-            auto saved = storage::readJson(fixture.paths.preferences());
-            saved["light_dark_mode_shortcut"] = true;
-            QVERIFY(storage::writeJson(fixture.paths.preferences(), saved));
-        }
-        for (int pass = 0; pass < 2; ++pass) {
-            QSignalSpy opened(&fixture.window, &desktop::Window::bookOpened);
-            fixture.window.openBook(book);
-            QTRY_COMPARE(opened.count(), 1);
-            QTRY_VERIFY(!fixture.state().value("busy").toBool());
-            QVERIFY(fixture.press("rrPage"));
-            QVERIFY(fixture.press("rrSettings"));
-            QVERIFY(revealSettingsOption(fixture, "rrDarkMode"));
-            auto *shortcut = qobject_cast<QCheckBox *>(fixture.widget("rrLightDarkModeShortcut"));
-            auto *dark = qobject_cast<QCheckBox *>(fixture.widget("rrDarkMode"));
-            QVERIFY(shortcut && dark && dark->isVisible());
-            const auto shortcutLook = static_cast<ui::DescribedOption *>(shortcut)->presentation();
-            const auto darkLook = static_cast<ui::DescribedOption *>(dark)->presentation();
-            QCOMPARE(shortcutLook.indicator, darkLook.indicator);
-            QCOMPARE(shortcutLook.horizontalInset, darkLook.horizontalInset);
-            QCOMPARE(shortcutLook.labelPixels, darkLook.labelPixels);
-            QCOMPARE(shortcutLook.descriptionPixels, darkLook.descriptionPixels);
-            QCOMPARE(shortcutLook.dividers, darkLook.dividers);
-            QCOMPARE(shortcut->isVisible(), available);
-            QCOMPARE(shortcut->isChecked(), !available || pass == 1);
-            if (available) {
-                QVERIFY(revealSettingsOption(fixture, "rrLightDarkModeShortcut"));
-                QVERIFY(fixture.press("rrLightDarkModeShortcut"));
-                QCOMPARE(storage::readJson(fixture.paths.preferences())
-                                 .value("light_dark_mode_shortcut")
-                                 .toBool(),
-                         pass == 1);
-            }
-            if (available && pass == 0) {
-                BlockedFile blocked(fixture.paths.preferences());
-                QVERIFY(blocked.active());
-                QVERIFY(fixture.press("rrSettingsClose"));
-                QTRY_VERIFY(fixture.visible("rrSettingsWriteError"));
-                QVERIFY(fixture.visible("rrGeneralSettings"));
-                QVERIFY(blocked.restore());
-                QVERIFY(!storage::readJson(fixture.paths.preferences())
-                                 .value("light_dark_mode_shortcut")
-                                 .toBool());
-                QVERIFY(fixture.press("rrSettingsWriteErrorConfirm"));
-            }
-            QVERIFY(fixture.press("rrSettingsClose"));
-            QTRY_VERIFY(!fixture.visible("rrGeneralSettings"));
-            QTRY_VERIFY(!fixture.state().value("busy").toBool());
-            if (available) {
-                QTRY_COMPARE(storage::readJson(fixture.paths.preferences())
-                                     .value("light_dark_mode_shortcut")
-                                     .toBool(),
-                             pass == 0);
-                QVERIFY(fixture.press("rrNavLight"));
-                QTRY_VERIFY(fixture.visible("rrLightPanel"));
-                auto *toggle = qobject_cast<QCheckBox *>(fixture.widget("rrLightDarkMode"));
-                QVERIFY(toggle);
-                QCOMPARE(toggle->isVisible(), pass == 0);
-                if (pass == 0) {
-                    QVERIFY(!toggle->isChecked());
+        // Legacy preferences must not hide the shortcut in the Light panel.
+        auto saved = storage::readJson(fixture.paths.preferences());
+        saved["light_dark_mode_shortcut"] = false;
+        QVERIFY(storage::writeJson(fixture.paths.preferences(), saved));
 
-                    struct Gate
-                    {
-                        QSemaphore release;
-                        std::atomic_bool entered{ false };
-                    };
+        QSignalSpy opened(&fixture.window, &desktop::Window::bookOpened);
+        fixture.window.openBook(book);
+        QTRY_COMPARE(opened.count(), 1);
+        QTRY_VERIFY(!fixture.state().value("busy").toBool());
+        QVERIFY(fixture.press("rrPage"));
+        QVERIFY(fixture.press("rrSettings"));
+        QVERIFY(revealSettingsOption(fixture, "rrDarkMode"));
+        QVERIFY(!fixture.widget("rrLightDarkModeShortcut"));
+        auto *dark = qobject_cast<QCheckBox *>(fixture.widget("rrDarkMode"));
+        QVERIFY(dark && dark->isVisible());
+        QVERIFY(fixture.press("rrSettingsClose"));
+        QTRY_VERIFY(!fixture.visible("rrGeneralSettings"));
+        QTRY_VERIFY(!fixture.state().value("busy").toBool());
 
-                    auto gate = std::make_shared<Gate>();
-                    storage::RecordWriter blocker;
-                    auto unblock = qScopeGuard([gate] { gate->release.release(); });
-                    blocker.post(
-                            [gate] {
-                                gate->entered.store(true);
-                                return gate->release.tryAcquire(1, 3000);
-                            },
-                            {});
-                    QTRY_VERIFY(gate->entered.load());
-                    QElapsedTimer clickTime;
-                    clickTime.start();
-                    QVERIFY(fixture.press("rrLightDarkMode"));
-                    QVERIFY2(clickTime.elapsed() < 1000,
-                             "Dark mode waited for the profile writer on the GUI thread");
-                    QVERIFY(!fixture.state().value("dark_mode").toBool());
-                    QVERIFY(!toggle->isEnabled());
-                    bool eventDelivered = false;
-                    QTimer::singleShot(0, [&] { eventDelivered = true; });
-                    QTRY_VERIFY(eventDelivered);
-                    gate->release.release();
-                    QTRY_VERIFY(fixture.state().value("dark_mode").toBool());
-                    QTRY_VERIFY(toggle->isEnabled());
-                    QVERIFY(toggle->isChecked());
-                    QVERIFY(dark->isChecked());
-                    QVERIFY(fixture.window.readerWindow()->property("reader_dark").toBool());
-                    QVERIFY(fixture.press("rrLightDarkMode"));
-                    QTRY_VERIFY(!fixture.state().value("dark_mode").toBool());
-                    QTRY_VERIFY(toggle->isEnabled());
-                    {
-                        BlockedFile blocked(fixture.paths.preferences());
-                        QVERIFY(blocked.active());
-                        QVERIFY(fixture.press("rrLightDarkMode"));
-                        QTRY_VERIFY(fixture.visible("rrSettingsWriteError"));
-                        QVERIFY(!toggle->isChecked());
-                        QVERIFY(!fixture.state().value("dark_mode").toBool());
-                        QVERIFY(blocked.restore());
-                    }
-                    QVERIFY(fixture.press("rrSettingsWriteErrorConfirm"));
-                }
-                QVERIFY(fixture.press("rrNavLight"));
-                QTRY_VERIFY(!fixture.visible("rrLightPanel"));
-            }
-            QVERIFY(fixture.press("rrSettings"));
-            QVERIFY(revealSettingsOption(fixture, "rrDarkMode"));
-            QVERIFY(!dark->isChecked());
-            QVERIFY(fixture.press("rrDarkMode"));
+        if (available) {
+            QVERIFY(fixture.press("rrNavLight"));
+            QTRY_VERIFY(fixture.visible("rrLightPanel"));
+            auto *toggle = qobject_cast<QCheckBox *>(fixture.widget("rrLightDarkMode"));
+            QVERIFY(toggle && toggle->isVisible());
+            QVERIFY(!toggle->isChecked());
+            QVERIFY(fixture.press("rrLightDarkMode"));
             QTRY_VERIFY(fixture.state().value("dark_mode").toBool());
-            QTRY_VERIFY(dark->isEnabled());
-            QVERIFY(dark->isChecked());
-            QCOMPARE(qobject_cast<QCheckBox *>(fixture.widget("rrLightDarkMode"))->isChecked(),
-                     true);
-            QTRY_VERIFY(storage::readJson(fixture.paths.preferences()).value("dark_mode").toBool());
-            QVERIFY(fixture.press("rrDarkMode"));
+            QTRY_VERIFY(toggle->isChecked());
+            QVERIFY(fixture.press("rrLightDarkMode"));
             QTRY_VERIFY(!fixture.state().value("dark_mode").toBool());
-            QTRY_VERIFY(dark->isEnabled());
-            QVERIFY(fixture.press("rrSettingsClose"));
-            QTRY_VERIFY(!fixture.visible("rrGeneralSettings"));
-            fixture.window.readerWindow()->close();
-            QTRY_VERIFY(!fixture.window.readerWindow());
+            QVERIFY(fixture.press("rrNavLight"));
+            QTRY_VERIFY(!fixture.visible("rrLightPanel"));
         }
+
+        QVERIFY(fixture.press("rrSettings"));
+        QVERIFY(revealSettingsOption(fixture, "rrDarkMode"));
+        QVERIFY(fixture.press("rrDarkMode"));
+        QTRY_VERIFY(fixture.state().value("dark_mode").toBool());
+        QVERIFY(dark->isChecked());
+        QVERIFY(fixture.press("rrDarkMode"));
+        QTRY_VERIFY(!fixture.state().value("dark_mode").toBool());
+        QVERIFY(fixture.press("rrSettingsClose"));
+        fixture.window.readerWindow()->close();
+        QTRY_VERIFY(!fixture.window.readerWindow());
     }
 
     // Checks that the light feedback setting persists after reopening, leaves edge gestures on, and then shows the notice.
@@ -10003,8 +9919,8 @@ private slots:
         QVERIFY(fixture.press("rrSettings"));
         if (!fixture.visible("rrDisplayOptions"))
             QVERIFY(fixture.press("rrSettingsDisplay"));
-        QVERIFY(revealSettingsOption(fixture, "rrLightDarkModeShortcut"));
-        QVERIFY(fixture.press("rrLightDarkModeShortcut"));
+        QVERIFY(revealSettingsOption(fixture, "rrDarkMode"));
+        QVERIFY(!fixture.widget("rrLightDarkModeShortcut"));
         QVERIFY(capture(fixture, name + "-settings-light-dark-mode"));
         QVERIFY(fixture.press("rrSettingsClose"));
         QTRY_VERIFY(!fixture.visible("rrGeneralSettings"));
