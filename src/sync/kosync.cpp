@@ -624,7 +624,12 @@ void Client::sendRequest(const QByteArray &method, const QString &path, const QU
     });
     auto *timeout = new QTimer(reply);
     timeout->setSingleShot(true);
-    connect(timeout, &QTimer::timeout, reply, &QNetworkReply::abort);
+    // Beta7 stability: distinguish a deadline abort from a transient disconnect.
+    auto timedOut = std::make_shared<bool>(false);
+    connect(timeout, &QTimer::timeout, reply, [reply, timedOut] {
+        *timedOut = true;
+        reply->abort();
+    });
     timeout->start(qMax(1, 10000 - int(requestElapsed_.elapsed())));
     reply->setReadBufferSize(storage::maxJsonBytes + 1);
     auto bytes = std::make_shared<QByteArray>();
@@ -635,9 +640,11 @@ void Client::sendRequest(const QByteArray &method, const QString &path, const QU
     };
     connect(reply, &QNetworkReply::readyRead, this, drain);
     connect(reply, &QNetworkReply::finished, this,
-            [this, reply, bytes, drain, done, method, path, server, username, key, body, attempt] {
+            [this, reply, bytes, drain, done, method, path, server, username, key, body, attempt,
+             timedOut, timeout] {
                 if (reply_ != reply)
                     return;
+                timeout->stop();
                 drain();
                 reply_ = nullptr;
                 reply->deleteLater();
@@ -662,14 +669,15 @@ void Client::sendRequest(const QByteArray &method, const QString &path, const QU
                 }
                 // Retry only reads whose transport failed. A PUT may already have reached
                 // the server; authentication, TLS and HTTP failures need an explicit fix.
-                if (status == 0 && transientNetworkError(reply->error())
+                if (!*timedOut && bytes->size() <= storage::maxJsonBytes && status == 0
+                    && transientNetworkError(reply->error())
                     && retryRequest(method, path, server, username, key, body, done, attempt))
                     return;
                 // Beta7 compatibility fix: only the exact server-provided
                 // no-progress object may turn HTTP 404 into an empty position.
                 // A missing endpoint must remain an error to prevent an unsafe PUT.
                 if (method == "GET" && path.startsWith("/syncs/progress/") && status == 404
-                    && bytes->size() <= storage::maxJsonBytes
+                    && !*timedOut && bytes->size() <= storage::maxJsonBytes
                     && (reply->error() == QNetworkReply::NoError
                         || reply->error() == QNetworkReply::ContentNotFoundError)) {
                     QJsonParseError parseError;
