@@ -85,7 +85,24 @@ void Button::paintEvent(QPaintEvent *)
                                                 : active ? QPalette::Window
                                                          : QPalette::WindowText));
             painter.setFont(font());
-            const int labelWidth = interfaceTextWidth(text(), font());
+            // Qt5 diagnostics: accented Hungarian rail captions use Qt's
+            // text rasterizer instead of the retained private bitmap path.
+            // Scope this to the Settings rail; all other buttons are unchanged.
+            const bool nativeRailText = property("reader_native_rail_text").toBool();
+            const int labelWidth = nativeRailText
+                    ? QFontMetrics(font()).boundingRect(text()).width()
+                    : interfaceTextWidth(text(), font());
+            const auto paintCaption = [&](const QRect &area) {
+                if (nativeRailText) {
+                    painter.save();
+                    painter.setClipRect(area);
+                    painter.drawText(area, Qt::AlignHCenter | Qt::AlignVCenter
+                                           | Qt::TextSingleLine, text());
+                    painter.restore();
+                } else {
+                    drawOpticalText(painter, area, text(), true);
+                }
+            };
             const QSize glyph = icon().isNull() ? QSize(0, 0) : iconSize();
             const int gap = text().isEmpty() || icon().isNull()
                     ? 0
@@ -100,8 +117,8 @@ void Button::paintEvent(QPaintEvent *)
                 icon().paint(&painter, area, Qt::AlignCenter,
                              isEnabled() ? QIcon::Normal : QIcon::Disabled,
                              active ? QIcon::On : QIcon::Off);
-                drawOpticalText(painter, QRect(0, area.bottom() + 1 + gap, width(), capital),
-                                text(), true);
+                paintCaption(QRect(0, area.bottom() + 1 + gap, width(),
+                                   nativeRailText ? QFontMetrics(font()).height() : capital));
                 return;
             }
             const int left = contentAlignment == Qt::AlignLeft
@@ -114,8 +131,7 @@ void Button::paintEvent(QPaintEvent *)
                     QRect(left, (height() - glyph.height()) / 2, glyph.width(), glyph.height()),
                     Qt::AlignCenter, isEnabled() ? QIcon::Normal : QIcon::Disabled,
                     active ? QIcon::On : QIcon::Off);
-            drawOpticalText(painter, QRect(left + glyph.width() + gap, 0, labelWidth, height()),
-                            text(), true);
+            paintCaption(QRect(left + glyph.width() + gap, 0, labelWidth, height()));
             return;
         }
         QStyleOptionButton option;
