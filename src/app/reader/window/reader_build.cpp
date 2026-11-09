@@ -1395,6 +1395,7 @@ void Reader::buildSettings()
     sleepTileButton = settings->sleepTileButton;
     sessionTimeoutButton = settings->sessionTimeoutButton;
     pageNavigationButton = settings->pageNavigationButton;
+    buttonControlsButton = settings->buttonControlsButton;
     chapterGroupsButton = settings->chapterGroupsButton;
     tapZonesButton = settings->tapZonesButton;
     tappableLinksButton = settings->tappableLinksButton;
@@ -1560,6 +1561,22 @@ void Reader::buildSettings()
             [this] { openNavigationBarButtons(); });
     connect(pageNavigationButton, &QPushButton::clicked, this, [this] { openPageNavigation(); });
     connect(chapterGroupsButton, &QPushButton::clicked, this, [this] { openChapterGroups(); });
+    settings->updateButtonControls(buttonControls(), preferences, false);
+    connect(buttonControlsButton, &QPushButton::clicked, this, [this, settings] {
+        const auto buttons = buttonControls();
+        if (buttons.isEmpty())
+            return;
+        settings->showButtonControls(buttons, preferences, [this](const QJsonObject &actions) {
+            saveButtonControls(actions);
+        });
+        settingsFontPopup = settings->fontDialog;
+        if (settingsFontPopup) {
+            settingsFontPopup->installEventFilter(this);
+            for (auto *widget : settingsFontPopup->findChildren<QWidget *>())
+                textRefresh(widget);
+            textRefresh(settingsFontPopup);
+        }
+    });
     connect(automaticOpeningOption, &QCheckBox::clicked, this,
             [this](bool enabled) { applyAutomaticOpening(enabled); });
     connect(refreshButton, &QPushButton::clicked, this, [this] { openScreenRefresh(); });
