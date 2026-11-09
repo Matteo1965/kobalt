@@ -325,10 +325,12 @@ inline constexpr Px thumbnailWidth{ 112 }, thumbnailHeight{ 168 };
 } // namespace actionMenu
 
 namespace notice {
+// Adopt beta7's density-independent modal frame and heading spacing.
+inline constexpr int cardBorder = 2;
 inline constexpr Px backdropPitch{ 18 };
 inline constexpr Px cardWidth{ 760 }, height{ 144 }, sideClearance{ 32 };
 inline constexpr PxMargins cardMargins{ 32, 28, 32, 28 };
-inline constexpr Px cardGap{ 20 };
+inline constexpr Px cardGap{ 20 }, headingGap{ 12 };
 inline constexpr Px progressHeight{ 32 };
 
 inline QRect centered(const QSize &size)
