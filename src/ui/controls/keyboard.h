@@ -1,5 +1,6 @@
 #pragma once
 #include "platform/api/keyboard_controller.h"
+#include <QString>
 
 namespace kobalt::ui {
 // A portable widget keyboard for hosts without a native input method.
