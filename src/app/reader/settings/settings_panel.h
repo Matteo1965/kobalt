@@ -1,5 +1,6 @@
 #pragma once
 #include "platform/api/page_animation_support.h"
+#include "platform/api/page_buttons.h"
 #include "ui/controls/buttons.h"
 #include "ui/controls/options.h"
 #include "ui/controls/panels.h"
@@ -50,6 +51,10 @@ public:
     SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs);
     ~SettingsPanel() override;
     void dismissRestore();
+    void updateButtonControls(const pageButtons::Buttons &buttons, const QJsonObject &prefs,
+                              bool saving);
+    void showButtonControls(const pageButtons::Buttons &buttons, const QJsonObject &prefs,
+                            std::function<void(QJsonObject)> chosen);
     void showFontChoices(const QString &title, const QVector<ReadingFont> &fonts,
                          const QString &current, const QString &emptyLabel,
                          std::function<void(const QString &)> chosen);
@@ -131,7 +136,7 @@ public:
                       *sleepTileButton = nullptr, *menuViewButton = nullptr;
     ui::CaptionButton *pageNavigationButton = nullptr, *tapZonesButton = nullptr,
                       *navigationBarButton = nullptr, *tappableLinksButton = nullptr,
-                      *chapterGroupsButton = nullptr;
+                      *chapterGroupsButton = nullptr, *buttonControlsButton = nullptr;
     ui::DescribedOption *bionicOption = nullptr;
     ui::CaptionButton *refreshButton = nullptr, *resetDefaults = nullptr;
     QPushButton *keepDefaults = nullptr, *confirmDefaults = nullptr;
