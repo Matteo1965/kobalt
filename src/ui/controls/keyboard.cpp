@@ -574,8 +574,14 @@ private:
 };
 } // namespace
 
-std::unique_ptr<KeyboardController> makeWidgetKeyboard(QWidget *parent, QLineEdit *editor,
-                                                       const QString &language)
+std::unique_ptr<KeyboardController> makeWidgetKeyboard(QWidget *parent, QLineEdit *editor)
+{
+    return std::make_unique<WidgetKeyboard>(parent, editor, strings::language());
+}
+
+std::unique_ptr<KeyboardController> makeLocalizedWidgetKeyboard(QWidget *parent,
+                                                                QLineEdit *editor,
+                                                                const QString &language)
 {
     return std::make_unique<WidgetKeyboard>(parent, editor, language);
 }
