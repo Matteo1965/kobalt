@@ -704,6 +704,7 @@ QVector<QWidget *> Reader::popups() const
              refreshPopup.data(),
              sleepPopup.data(),
              pageNavigationPopup.data(),
+             chapterGroupsPopup.data(),
              tapZonesPopup.data(),
              navigationBarPopup.data(),
              menuViewPopup.data(),
@@ -978,6 +979,11 @@ bool Reader::eventFilter(QObject *watched, QEvent *event)
     if (pageNavigationPopup && watched == pageNavigationPopup
         && type == QEvent::MouseButtonRelease) {
         closePageNavigation();
+        return true;
+    }
+    if (chapterGroupsPopup && watched == chapterGroupsPopup
+        && type == QEvent::MouseButtonRelease) {
+        closeChapterGroups();
         return true;
     }
     // Panels are raised as they open, and a panel created later starts
@@ -2290,7 +2296,12 @@ void Reader::showChapters()
                          (navigation ? navigation->contentBottom(size()) : height()) - top);
     choices->setChapterPosition(
             strings::get("stats.page_of").arg(session->page() + 1).arg(session->pages()));
-    choices->showChoices(session->title(), std::move(items), current);
+    const auto groups = preferences.value("chapter_groups").toString();
+    choices->showChoices(session->title(), std::move(items), current,
+                         ChoiceScreen::Mode::Chapters,
+                         groups == "off"           ? ChapterGroups::Off
+                                 : groups == "all" ? ChapterGroups::All
+                                                   : ChapterGroups::Current);
     refresh();
 }
 
