@@ -749,3 +749,16 @@
 "settings.hanging_punctuation_off_description" = "Az írásjelek a szöveg jobb és bal széle között maradnak.";
 "settings.hanging_punctuation_on_description" = "Az írásjelek és a sorvégi elválasztójelek túlnyúlhatnak a szöveg szélén.";
 "settings.hanging_punctuation_description" = "A szaggatott vonalak a szöveg széleit jelölik. A minta sorkizárt szöveget mutat. Ez a beállítás minden könyvre érvényes.";
+"chapter_contents.collapse_group" = "%1 összecsukása";
+"chapter_contents.expand_group" = "%1 kibontása";
+"chapter_contents.expanded" = "Kibontva";
+"chapter_contents.collapsed" = "Összecsukva";
+"settings.section_chapter_list" = "Fejezetlista";
+"settings.chapter_groups" = "Összecsukható fejezetek";
+"settings.chapter_groups_hint" = "Válaszd ki, hogyan jelenjenek meg a fejezetcsoportok.";
+"settings.chapter_groups_current" = "Aktuális szakasz";
+"settings.chapter_groups_current_description" = "Az aktuális fejezet szülőcsoportjai legyenek kibontva.";
+"settings.chapter_groups_all" = "Összes fejezet";
+"settings.chapter_groups_all_description" = "Minden csoport legyen kibontva, a teljes fejezetlista látható.";
+"settings.chapter_groups_off" = "Ki";
+"settings.chapter_groups_off_description" = "Minden fejezet megjelenik csoportnyitó és -záró gombok nélkül.";
