@@ -20,6 +20,14 @@ public:
 
     QVBoxLayout *rows() const { return contentRows; }
 
+    // Beta7: a single wrapped header owns both title and description.
+    struct Heading
+    {
+        QLabel *title, *description;
+    };
+    Heading heading(const QString &title, const QString &description = {},
+                    const QString &titleName = {}, const QString &descriptionName = {});
+
     QLabel *title(const QString &text, const QString &name = {});
     QLabel *message(const QString &text, const QString &name = {});
     QHBoxLayout *actions();
