@@ -596,6 +596,35 @@ void Reader::fitAppearance()
     menu->setGeometry(panelBounds(height));
 }
 
+pageButtons::Buttons Reader::buttonControls() const
+{
+    auto buttons = services.buttonControls ? services.buttonControls() : pageButtons::Buttons{};
+    // A physical button's default follows Nickel orientation and inversion.
+    for (auto &button : buttons) {
+        QKeyEvent event(QEvent::KeyPress, button.key, Qt::NoModifier);
+        const int direction = services.pageButtonDirection(&event);
+        if (direction)
+            button.defaultDirection = direction;
+    }
+    return buttons;
+}
+
+void Reader::saveButtonControls(const QJsonObject &actions)
+{
+    auto next = preferences;
+    next[pageButtons::preferenceKey] = actions;
+    if (writePreferences(next)) {
+        preferences = next;
+        static_cast<SettingsPanel *>(general)->updateButtonControls(buttonControls(),
+                                                                      preferences, false);
+        settingsError->clear();
+        settingsError->hide();
+    } else {
+        settingsError->setText(strings::get("reader.could_not_save_reader_settings"));
+        settingsError->show();
+    }
+}
+
 bool Reader::writePreferences(const QJsonObject &next)
 {
     // Do not replace a pending asynchronous dark-mode save.
