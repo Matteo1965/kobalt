@@ -363,6 +363,7 @@ void Reader::openSettings()
     denseGraphOption->setChecked(preferences.value("dense_stats_chart").toBool(false));
     showSleepScreen();
     showPageNavigation();
+    showChapterGroups();
     showTapZones();
     showTappableLinks();
     minimalAnnotationOption->setChecked(minimalAnnotationMode());
