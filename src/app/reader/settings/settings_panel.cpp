@@ -436,6 +436,8 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     };
     darkOption = check(displayPage, "rrDarkMode", strings::get("reader.dark_mode"),
                        strings::get("settings.dark_description"));
+    // Dark mode is accessible in Light only; keep the legacy option hidden.
+    darkOption->hide();
     const bool animationsSupported = pageAnimationsAvailable(inputs.animationSupport);
     const auto animationDescription =
             strings::get(inputs.animationSupport == PageAnimationSupport::Uncertain
