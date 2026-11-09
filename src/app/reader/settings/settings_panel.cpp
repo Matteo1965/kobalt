@@ -825,7 +825,6 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     QVector<ui::DescribedOption *> options = { hideNonlinearOption,
                                                linkIndicatorOption,
                                                darkOption,
-                                               lightDarkModeOption,
                                                bionicOption,
                                                landscapeColumnsOption,
                                                animationOption,
