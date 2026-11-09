@@ -2122,30 +2122,37 @@ void SettingsPanel::fitRail(int availableHeight)
     for (auto *button : settingsTabButtons)
         if (!button->isHidden())
             ++visible;
-    // The rail uses the full panel height, independently of the list pager.
+    // Fit the tabs into the space below the heading. On short Kobo screens,
+    // icon-above-label rows may leave too little space for Hungarian captions.
+    // Switch to side-by-side icons instead of letting the clipped caption paint
+    // into the next row (the apparent white band on the left rail).
     const int rowHeight = availableHeight > 0
             ? qMin<int>(chrome::railRowHeight, qMax(1, availableHeight) / qMax(1, visible))
             : int(chrome::railRowHeight);
+    const bool compactLabels = shortRail
+            || rowHeight < int(chrome::tabIcon + chrome::tabText + chrome::tabGap + ui::px(8));
     int widest = chrome::tabIcon;
     for (auto *button : settingsTabButtons)
         if (!button->isHidden()) {
-            if (button->height() != rowHeight) {
-                auto style = button->property("reader_style").toString();
-                // Style minimums must agree with the fitted height on Qt 5.2 too.
-                style.replace(QRegularExpression("(min-height|max-height):[0-9]+px"),
-                              "\\1:" + QString::number(rowHeight) + "px");
-                ui::readerStyle(button, style);
-                button->setFixedHeight(rowHeight);
-                button->setIconSize(QSize(
-                        chrome::tabIcon,
-                        qMax(1,
-                             qMin<int>(chrome::tabIcon,
-                                       rowHeight - chrome::tabText - chrome::tabGap - ui::px(8)))));
+            if (auto *tab = dynamic_cast<ui::Button *>(button)) {
+                tab->setIconAboveLabel(!compactLabels);
+                tab->setIconLabelGap(compactLabels ? int(chrome::inset)
+                                                  : int(chrome::tabGap));
+                tab->setContentAlignment(compactLabels ? Qt::AlignLeft : Qt::AlignHCenter);
             }
+            auto style = button->property("reader_style").toString();
+            // Keep the Qt 5.2 stylesheet limits in sync with the actual height.
+            style.replace(QRegularExpression("(min-height|max-height):[0-9]+px"),
+                          "\\1:" + QString::number(rowHeight) + "px");
+            ui::readerStyle(button, style);
+            button->setFixedHeight(rowHeight);
+            button->setIconSize(QSize(chrome::tabIcon,
+                                      qMax(1, qMin<int>(chrome::tabIcon,
+                                          rowHeight - chrome::tabText - ui::px(8)))));
             button->ensurePolished();
-            widest = qMax(widest,
-                          ui::interfaceTextWidth(button->text(), button->font())
-                                  + (shortRail ? int(chrome::tabIcon) + int(chrome::inset) : 0));
+            const int labelWidth = ui::interfaceTextWidth(button->text(), button->font());
+            widest = qMax(widest, labelWidth
+                    + (compactLabels ? int(chrome::tabIcon + chrome::inset) : 0));
         }
     tabRail->setFixedWidth(widest + 2 * chrome::railInset);
 }
