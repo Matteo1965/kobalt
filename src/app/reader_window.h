@@ -69,6 +69,12 @@ public:
     virtual void refreshHostPresentation() = 0;
     // Logical forward/backward input, independent of touch swipe direction.
     virtual void pageButton(int direction) = 0;
+    // Preserve the physical key identity for per-button reader mappings.
+    virtual void physicalPageButton(int key, int direction)
+    {
+        Q_UNUSED(key);
+        pageButton(direction);
+    }
 
     // For the scenario player: a page key that skips the filter for rapid
     // duplicate input, so a sample measures the turn and not the filter.
