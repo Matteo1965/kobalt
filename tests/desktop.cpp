@@ -9890,7 +9890,7 @@ private slots:
             QVERIFY(capture(fixture, name + (locale == "de_DE" ? "-qwertz" : "-azerty")));
         }
         // Hungarian Edition uses explicit QWERTZ keys independent of Nickel locale.
-        auto hungarian = ui::makeWidgetKeyboard(view, editor, QStringLiteral("hu"));
+        auto hungarian = ui::makeLocalizedWidgetKeyboard(view, editor, QStringLiteral("hu"));
         hungarian->setSubmitText(submitText);
         QVERIFY(hungarian->show());
         const auto keyboards = view->findChildren<QWidget *>("widgetKeyboard");
