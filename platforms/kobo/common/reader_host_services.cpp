@@ -274,7 +274,7 @@ ReaderHostServices readerHostServices()
         // Keep Nickel's keyboard untouched. The Hungarian Edition uses its
         // own fully accented QWERTZ keyboard only with the Hungarian UI.
         if (strings::language() == QLatin1String("hu"))
-            return ui::makeWidgetKeyboard(parent, editor, QStringLiteral("hu"));
+            return ui::makeLocalizedWidgetKeyboard(parent, editor, QStringLiteral("hu"));
         return std::make_unique<Keyboard>(parent, editor);
     };
     result.syncNetwork = [] { return std::make_unique<NativeSyncNetwork>(); };
