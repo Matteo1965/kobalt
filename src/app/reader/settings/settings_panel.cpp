@@ -455,8 +455,8 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     generalOptions->addWidget(animationOption);
     section(displayPage, generalOptions, "rrDisplayAppearanceSection",
             strings::get("settings.section_appearance"));
-    for (auto *option : { darkOption, bionicOption })
-        generalOptions->addWidget(option);
+    // Keep dark mode accessible through Light, not duplicated in Appearance.
+    generalOptions->addWidget(bionicOption);
     section(displayPage, generalOptions, "rrDisplayColumnsSection", strings::get("reader.columns"));
     landscapeColumnsOption =
             check(displayPage, "rrLandscapeColumns", strings::get("settings.landscape_columns"),
