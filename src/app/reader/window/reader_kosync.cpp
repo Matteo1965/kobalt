@@ -593,6 +593,9 @@ void Reader::finishKosync(const QString &message)
     kosyncPage->setStatus(message, false);
     updateKosyncToolbar();
     if (!finishing && !closing && !lifecycleHidden && !exportRunning) {
+        // Beta7: a longer KOSync error must be measured before painting Settings.
+        if (general->isVisible())
+            fitSettings();
         if (opening && message != strings::get("kosync.up_to_date")
             && message != strings::get("kosync.pending"))
             page->notice = message;
@@ -688,7 +691,8 @@ void Reader::startKosyncExchange(bool finishing)
                 if (epoch != kosyncEpoch)
                     return;
                 if (!error.isEmpty()) {
-                    finishKosync(strings::get("kosync.saved_locally"));
+                    // Preserve the actual failure reason; no remote overwrite follows.
+                    finishKosync(error);
                     return;
                 }
                 if (finishing && (book->pendingProgress() || book->deviceTransition())) {
@@ -729,11 +733,12 @@ void Reader::startKosyncExchange(bool finishing)
                                     return;
                                 if (pushError.isEmpty())
                                     kosyncProgress.uploaded(local.position);
-                                const auto status = !pushError.isEmpty() ? "kosync.saved_locally"
-                                        : kosyncClient->recordSyncSuccess()
-                                        ? "kosync.up_to_date"
-                                        : "kosync.storage_error";
-                                finishKosync(strings::get(status));
+                                finishKosync(
+                                        !pushError.isEmpty()
+                                                ? pushError
+                                                : strings::get(kosyncClient->recordSyncSuccess()
+                                                                       ? "kosync.up_to_date"
+                                                                       : "kosync.storage_error"));
                             });
                     if (kosyncClient->busy())
                         kosyncStatus(strings::get("kosync.syncing"));
