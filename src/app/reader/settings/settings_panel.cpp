@@ -389,6 +389,9 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
             button->setAccessibleName(strings::get("settings.dictionaries"));
         button->setProperty("reader_tab_label", tabs[index]);
         button->setProperty("reader_tab_icon", int(tabIcons[index]));
+        // Test the accented-label hypothesis without altering other readers'
+        // retained-font rendering; RENDSZER is the only accent-free tab.
+        button->setProperty("reader_native_rail_text", true);
         button->setCheckable(true);
         tabGroup->addButton(button, index);
         settingsTabButtons.append(button);
