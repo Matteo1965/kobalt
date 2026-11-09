@@ -762,3 +762,13 @@
 "settings.chapter_groups_all_description" = "Minden csoport legyen kibontva, a teljes fejezetlista látható.";
 "settings.chapter_groups_off" = "Ki";
 "settings.chapter_groups_off_description" = "Minden fejezet megjelenik csoportnyitó és -záró gombok nélkül.";
+
+"settings.time_remaining_format" = "Hátralévő idő formátuma";
+"settings.time_remaining_format_description" = "A fejlécben, a láblécben és az alvóképernyőn megjelenő becsült olvasási idő formátuma.";
+"settings.time_remaining_detailed" = "Részletes";
+"settings.time_remaining_approximate" = "Közelítő";
+"settings.time_remaining_detailed_description" = "Részletes időbecslés, például: „83 perc van hátra”.";
+"settings.time_remaining_approximate_description" = "Kerekített időbecslés, például: „kb. 2 óra van hátra”.";
+"time_remaining.about_minutes" = "körülbelül %1 perc";
+"time_remaining.about_hour" = "körülbelül egy óra";
+"time_remaining.about_hours" = "körülbelül %1 óra";
