@@ -47,8 +47,14 @@ protected:
     }
 };
 
-QStringList alphabetRows()
+QStringList alphabetRows(const QString &language)
 {
+    // Direct Hungarian QWERTZ keys, including all nine accented vowels.
+    // This follows Kobalt's interface language, not Nickel's system locale.
+    if (language == QLatin1String("hu"))
+        return { QString::fromUtf8("qwertzuiopőú"),
+                 QString::fromUtf8("asdfghjkléáű"),
+                 QString::fromUtf8("íyxcvbnmöóü"), QString() };
     switch (QLocale().language()) {
     case QLocale::German:
         return { "", "qwertzuiop", "asdfghjkl", "yxcvbnm" };
@@ -99,8 +105,9 @@ QString accents(const QString &letter)
 class WidgetKeyboard final : public QObject, public KeyboardController
 {
 public:
-    WidgetKeyboard(QWidget *parent, QLineEdit *editor)
-        : editor(editor), panel(new QWidget(parent)), window(panel->window())
+    WidgetKeyboard(QWidget *parent, QLineEdit *editor, const QString &language)
+        : letterRows(alphabetRows(language.isEmpty() ? strings::language() : language)),
+          editor(editor), panel(new QWidget(parent)), window(panel->window())
     {
         panel->setObjectName("widgetKeyboard");
         panel->setAutoFillBackground(true);
@@ -461,7 +468,7 @@ private:
         }
     }
 
-    const QStringList letterRows = alphabetRows();
+    const QStringList letterRows;
     const QStringList symbolRows{ "1234567890", "!@#$%^&*()", "-_=+[]{}\\|", ";:'\",.<>/?`~" };
     std::array<QVector<QPushButton *>, 4> keys;
     std::array<QWidget *, 4> rowWidgets;
@@ -520,11 +527,12 @@ private:
                     (panel->width() - margins.left() - margins.right() - (columns - 1) * spacing)
                             / columns);
         };
-        const int width = widthFor(symbolPage ? 14 : 10);
+        const bool hungarianLayout = letterRows.first().size() == 12;
+        const int width = widthFor(symbolPage ? 14 : (hungarianLayout ? 12 : 10));
         // A narrow screen gives the symbol rows of ten the width of letter
         // keys. Only the longer punctuation row keeps the narrow keys.
         const bool narrow = isNarrowWidth(panel->width(), density());
-        const int rowCount = symbolPage ? 5 : 4;
+        const int rowCount = symbolPage || hungarianLayout ? 5 : 4;
         const int height = qMax(1,
                                 (panel->height() - margins.top() - margins.bottom()
                                  - (rowCount - 1) * panel->layout()->spacing())
@@ -548,7 +556,10 @@ private:
                 key->setVisible(!shown.isEmpty());
                 key->setFixedSize(narrow && rows[row].size() <= 10 ? widthFor(10) : width, height);
             }
-            rowWidgets[row]->setVisible(!rows[row].isEmpty());
+            // Hungarian has three full alphabet rows and a separate Shift/Delete row.
+            rowWidgets[row]->setVisible(!rows[row].isEmpty()
+                                        || (hungarianLayout && !symbolPage
+                                            && row == rows.size() - 1));
         }
     }
 
@@ -563,8 +574,9 @@ private:
 };
 } // namespace
 
-std::unique_ptr<KeyboardController> makeWidgetKeyboard(QWidget *parent, QLineEdit *editor)
+std::unique_ptr<KeyboardController> makeWidgetKeyboard(QWidget *parent, QLineEdit *editor,
+                                                       const QString &language)
 {
-    return std::make_unique<WidgetKeyboard>(parent, editor);
+    return std::make_unique<WidgetKeyboard>(parent, editor, language);
 }
 } // namespace kobalt::ui
