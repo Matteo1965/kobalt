@@ -1395,6 +1395,7 @@ void Reader::buildSettings()
     sleepTileButton = settings->sleepTileButton;
     sessionTimeoutButton = settings->sessionTimeoutButton;
     pageNavigationButton = settings->pageNavigationButton;
+    chapterGroupsButton = settings->chapterGroupsButton;
     tapZonesButton = settings->tapZonesButton;
     tappableLinksButton = settings->tappableLinksButton;
     navigationBarButton = settings->navigationBarButton;
@@ -1558,6 +1559,7 @@ void Reader::buildSettings()
     connect(navigationBarButton, &QPushButton::clicked, this,
             [this] { openNavigationBarButtons(); });
     connect(pageNavigationButton, &QPushButton::clicked, this, [this] { openPageNavigation(); });
+    connect(chapterGroupsButton, &QPushButton::clicked, this, [this] { openChapterGroups(); });
     connect(automaticOpeningOption, &QCheckBox::clicked, this,
             [this](bool enabled) { applyAutomaticOpening(enabled); });
     connect(refreshButton, &QPushButton::clicked, this, [this] { openScreenRefresh(); });
