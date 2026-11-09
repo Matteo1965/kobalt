@@ -484,6 +484,12 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     pageNavigationButton = ui::makeCaptionButton(controlsPage, nullptr, "rrPageNavigation",
                                                  strings::get("settings.page_navigation"), [] { });
     controlsRows->addWidget(pageNavigationButton);
+    section(controlsPage, controlsRows, "rrControlsChapterSection",
+            strings::get("settings.section_chapter_list"));
+    chapterGroupsButton = ui::makeCaptionButton(
+            controlsPage, nullptr, "rrChapterGroups", strings::get("settings.chapter_groups"),
+            [] { });
+    controlsRows->addWidget(chapterGroupsButton);
     tapZonesButton = ui::makeCaptionButton(controlsPage, nullptr, "rrTapZones",
                                            strings::get("settings.tap_zones"), [] { });
     controlsRows->addWidget(tapZonesButton);
@@ -862,6 +868,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                           sleepTileButton,
                           sessionTimeoutButton,
                           pageNavigationButton,
+                          chapterGroupsButton,
                           tapZonesButton,
                           tappableLinksButton,
                           navigationBarButton,
