@@ -665,6 +665,22 @@ void Client::sendRequest(const QByteArray &method, const QString &path, const QU
                 if (status == 0 && transientNetworkError(reply->error())
                     && retryRequest(method, path, server, username, key, body, done, attempt))
                     return;
+                // Beta7 compatibility fix: only the exact server-provided
+                // no-progress object may turn HTTP 404 into an empty position.
+                // A missing endpoint must remain an error to prevent an unsafe PUT.
+                if (method == "GET" && path.startsWith("/syncs/progress/") && status == 404
+                    && bytes->size() <= storage::maxJsonBytes
+                    && (reply->error() == QNetworkReply::NoError
+                        || reply->error() == QNetworkReply::ContentNotFoundError)) {
+                    QJsonParseError parseError;
+                    const auto result = QJsonDocument::fromJson(*bytes, &parseError);
+                    const auto object = result.object();
+                    if (parseError.error == QJsonParseError::NoError && result.isObject()
+                        && object.size() == 1 && object.value("status").toString() == "not found") {
+                        done(status, {}, {});
+                        return;
+                    }
+                }
                 if (reply->error() != QNetworkReply::NoError || status != 200
                     || bytes->size() > storage::maxJsonBytes) {
                     // Qt opens sockets on its own thread, so errno here says nothing.
