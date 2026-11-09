@@ -1574,22 +1574,22 @@ int main(int argc, char **argv)
             { "Part B", "b", "chapterGroupB", {}, 0, 3 },
             { "Last", "last", "chapterGroupLast", {}, 1, 4 },
         };
-        auto *first = contents.findChild<QPushButton *>("chapterGroupFirst");
+        const auto visible = [&contents](const QString &id) {
+            auto *widget = contents.findChild<QPushButton *>(id);
+            return widget && widget->isVisibleTo(&contents);
+        };
         contents.showChapters("Groups", chapters, "chapterGroupFirst");
-        auto *expand = contents.findChild<QPushButton *>("chapterGroupAToggle");
-        first = contents.findChild<QPushButton *>("chapterGroupFirst");
-        require(expand && expand->isVisible() && first && first->isVisible(),
+        require(visible("chapterGroupAToggle") && visible("chapterGroupFirst"),
                 "Current chapter group did not expand");
-        expand->click();
-        require(!first->isVisible() && expand->isVisible(),
+        contents.findChild<QPushButton *>("chapterGroupAToggle")->click();
+        require(!visible("chapterGroupFirst") && visible("chapterGroupAToggle"),
                 "Collapsing a group did not hide its child");
-        expand->click();
-        require(first->isVisible(), "Re-expanding a group lost its child");
+        contents.findChild<QPushButton *>("chapterGroupAToggle")->click();
+        require(visible("chapterGroupFirst"), "Re-expanding a group lost its child");
         contents.showChapters("Groups", chapters, {}, kobalt::ChapterGroups::All);
-        require(contents.findChild<QPushButton *>("chapterGroupLast")->isVisible(),
-                "All-chapters mode did not expand later groups");
+        require(visible("chapterGroupLast"), "All-chapters mode did not expand later groups");
         contents.showChapters("Groups", chapters, {}, kobalt::ChapterGroups::Off);
-        require(first->isVisible() && !expand->isVisible(),
+        require(visible("chapterGroupFirst") && !visible("chapterGroupAToggle"),
                 "Off mode retained disclosure controls or collapsed rows");
     }
     std::puts("PASS: chapter row highlights, paging and navigation in light and dark themes");
