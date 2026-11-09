@@ -7959,7 +7959,9 @@ printf '[{"file":"%s.png","scene":"%s"}]' "$3" "$KOBALT_GALLERY_CAPTURE" > "$2/p
             QVERIFY(hint && next && previous);
             for (int page = 0; page < 8 && previous->isEnabled(); ++page)
                 QVERIFY(fixture.press("rrSettingsOptionsPrevious"));
-            QCOMPARE(hint->isVisible(), next->isEnabled());
+            // The hint appears only if the remaining blank area fits its
+            // height and width; a next page does not guarantee free space.
+            QVERIFY(!hint->isVisible() || next->isEnabled());
             for (int page = 0; page < 8 && next->isEnabled(); ++page)
                 QVERIFY(fixture.press("rrSettingsOptionsNext"));
             QVERIFY(!next->isEnabled());
@@ -7967,7 +7969,9 @@ printf '[{"file":"%s.png","scene":"%s"}]' "$3" "$KOBALT_GALLERY_CAPTURE" > "$2/p
             QVERIFY(capture(QString("display-last-landscape-%1").arg(screen)));
             if (previous->isEnabled()) {
                 QVERIFY(fixture.press("rrSettingsOptionsPrevious"));
-                QCOMPARE(hint->isVisible(), next->isEnabled());
+                // The hint appears only if the remaining blank area fits its
+            // height and width; a next page does not guarantee free space.
+            QVERIFY(!hint->isVisible() || next->isEnabled());
                 QVERIFY(fixture.press("rrSettingsOptionsNext"));
                 QTRY_VERIFY(!hint->isVisible());
             }
