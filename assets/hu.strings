@@ -289,7 +289,7 @@
 "settings.refresh_smart_description" = "Fejezet elején, legfeljebb %1 lapozásonként.";
 "settings.refresh_every_page" = "Minden oldalon";
 "settings.refresh_manually_description" = "Érintsd meg kétszer az oldal közepét: előbb a menü megnyitásához, majd bezárásához.";
-"settings.inherit_text_layout" = "Utolsó könyv szövegstílusának öröklése";
+"settings.inherit_text_layout" = "Utolsó könyv-stílus öröklése";
 "settings.inherit_text_layout_description" = "Az új könyvek az előző könyv stílusával indulnak. Az elrendezési beállítások minden könyvre érvényesek.";
 "settings.inherit_header_footer" = "Fejléc és lábléc öröklése";
 "settings.inherit_header_footer_description" = "Az új könyvek az előző könyv fejlécét és láblécét használják. A mentett beállítások megmaradnak.";
@@ -342,7 +342,7 @@
 "settings.column_spacing_default" = "1,5× (alapértelmezett)";
 "settings.column_spacing_description" = "Az oszlopok közötti távolság a szövegméret arányában. Minden könyvre érvényes.";
 "settings.landscape_columns" = "Két oszlop fekvő nézetben";
-"settings.landscape_columns_description" = "Álló nézetben egy oszlopot használ. Minden könyvre érvényes.";
+"settings.landscape_columns_description" = "Álló nézetben egy oszlopot használ.";
 "reader.auto_alignment" = "Automatikus igazítás";
 "reader.zoom_in" = "Nagyítás a navigációs sávon";
 "reader.zoom_out" = "Kicsinyítés a navigációs sávon";
@@ -623,7 +623,7 @@
 "settings.avoid_wasteful_styling_margins" = "Figyelmen kívül hagyja a könyv saját oldalmargóit és térközeit, így az Elrendezés lapon beállított margók érvényesülnek.";
 "settings.avoid_wasteful_styling_breaks" = "Eltávolítja a könyv által az új oldalra kerülő szöveg, például a fejezetkezdés fölé tett üres helyet.";
 "settings.avoid_wasteful_styling_illustrations" = "Megőrzi a könyv által a fejezetkezdő illusztrációk fölé beállított térközt.";
-"reader.bionic_description" = "A szavak elejét félkövérrel emeli ki. Bekapcsolva a vonalvastagság és a változó betűvastagság nem állítható.";
+"reader.bionic_description" = "A szavak elejét félkövérrel emeli ki.";
 
 /* Hungarian Edition: LOOKUP / local and downloadable dictionaries */
 "settings.lookup" = "SZÓTÁRAK";
