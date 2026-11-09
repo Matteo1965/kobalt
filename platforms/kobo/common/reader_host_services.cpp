@@ -254,6 +254,9 @@ ReaderHostServices readerHostServices()
     result.observeWifi = observeNativeWifi;
     result.remoteKeyActivity = reportNativeBluetoothActivity;
     result.pageButtons = nativeReaderHasPageButtons;
+    result.buttonControls = [] {
+        return nativeReaderHasPageButtons() ? pageButtons::paging() : pageButtons::Buttons{};
+    };
     result.reverseLandscapeButtons = nativeReaderReverseLandscapeButtons;
     result.pageButtonDirection = nativePageButtonDirection;
     result.fontFamilies = nativeReaderFontFamilies;
