@@ -1638,28 +1638,6 @@ private slots:
             // Reflow restores the canonical bookmark, rather than the new page start.
             QCOMPARE(host.session()->state().value("position").toString(), anchor);
         };
-        const auto settingsToggle = [&](const char *name, const char *key) {
-            menu();
-            QVERIFY(click(canvas, host.window()->findChild<QPushButton *>("rrSettings")));
-            auto *option = host.window()->findChild<QCheckBox *>(name);
-            QVERIFY(option);
-            const bool before = option->isChecked();
-            QVERIFY(click(canvas, option));
-            QCOMPARE(option->isChecked(), !before);
-            // Dark mode saves asynchronously. Wait before asking Settings to close.
-            QTRY_VERIFY_WITH_TIMEOUT(option->isEnabled() && !host.session()->busy()
-                                             && host.session()->state().value(key).toBool()
-                                                     == !before,
-                                     30000);
-            QVERIFY(click(canvas, host.window()->findChild<QPushButton *>("rrSettingsClose")));
-            QTRY_VERIFY_WITH_TIMEOUT(
-                    !host.window()->findChild<QWidget *>("rrGeneralSettings")->isVisible()
-                            && !host.session()->busy()
-                            && host.session()->state().value(key).toBool() == !before,
-                    30000);
-            preserved();
-            QCOMPARE(host.session()->state().value(key).toBool(), !before);
-        };
         // Weight controls are disabled while Bionic Reading is active.
         if (host.session()->state().value("bold_reading").toString() != "off") {
             menu();
@@ -1757,8 +1735,8 @@ private slots:
         QVERIFY(click(canvas, host.window()->findChild<QPushButton *>("rrSettingsClose")));
         preserved();
         QCOMPARE(host.session()->state().value("bold_reading").toString(), QString("bold"));
-        settingsToggle("rrDarkMode", "dark_mode");
-        settingsToggle("rrDarkMode", "dark_mode");
+        // Dark-mode toggling is separately checked through the Light panel;
+        // Appearance intentionally no longer contains a dark-mode toggle.
         for (const auto &size : { QSize(800, 1200), QSize(1400, 1000) }) {
             host.window()->setFixedSize(size);
             QTRY_COMPARE_WITH_TIMEOUT(inspect().value("viewport_width").toInt(), size.width(),
