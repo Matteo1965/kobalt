@@ -1,6 +1,8 @@
 #include "reader_host_services.h"
 #include "native_dictionary.h"
 #include "native_keyboard.h"
+#include "ui/controls/keyboard.h"
+#include "support/strings.h"
 #include "native_sync_network.h"
 #include "native_lifecycle.h"
 #include "native_light.h"
@@ -267,7 +269,12 @@ ReaderHostServices readerHostServices()
     result.cancelAnimation = cancelPageAnimation;
     result.light = [](QWidget *anchor) { return std::make_unique<Light>(anchor); };
     result.dictionary = [] { return std::make_unique<Dictionary>(); };
-    result.keyboard = [](QWidget *parent, QLineEdit *editor) {
+    result.keyboard = [](QWidget *parent, QLineEdit *editor)
+            -> std::unique_ptr<KeyboardController> {
+        // Keep Nickel's keyboard untouched. The Hungarian Edition uses its
+        // own fully accented QWERTZ keyboard only with the Hungarian UI.
+        if (strings::language() == QLatin1String("hu"))
+            return ui::makeWidgetKeyboard(parent, editor, QStringLiteral("hu"));
         return std::make_unique<Keyboard>(parent, editor);
     };
     result.syncNetwork = [] { return std::make_unique<NativeSyncNetwork>(); };
