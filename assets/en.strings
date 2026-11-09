@@ -1302,3 +1302,17 @@
 /* Hungarian Edition language selector */
 "settings.interface_language" = "Interface language";
 "settings.interface_language_restart" = "Restart Kobalt to apply the selected language.";
+
+"chapter_contents.collapse_group" = "Collapse %1";
+"chapter_contents.expand_group" = "Expand %1";
+"chapter_contents.expanded" = "Expanded";
+"chapter_contents.collapsed" = "Collapsed";
+"settings.section_chapter_list" = "Chapter List";
+"settings.chapter_groups" = "Collapsible chapters";
+"settings.chapter_groups_hint" = "Choose whether chapter groups can collapse and how they open.";
+"settings.chapter_groups_current" = "Current section";
+"settings.chapter_groups_current_description" = "Expand the current chapter's parent groups. Default.";
+"settings.chapter_groups_all" = "All chapters";
+"settings.chapter_groups_all_description" = "Expand every group to show the full chapter list.";
+"settings.chapter_groups_off" = "Off";
+"settings.chapter_groups_off_description" = "Show every chapter without expand or collapse buttons.";
