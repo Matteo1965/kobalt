@@ -364,6 +364,7 @@ void Reader::openSettings()
     denseGraphOption->setChecked(preferences.value("dense_stats_chart").toBool(false));
     showSleepScreen();
     showPageNavigation();
+    static_cast<SettingsPanel *>(general)->updateButtonControls(buttonControls(), preferences, false);
     showChapterGroups();
     showTapZones();
     showTappableLinks();
