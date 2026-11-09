@@ -1449,7 +1449,9 @@ int main(int argc, char **argv)
                               i == 1 ? 2 : 1,
                               i * 10 });
         chapters[2].value.clear();
-        choices.showChapters("Book <title>", chapters, "chapter34");
+        // This legacy geometry check covers the ungrouped compatibility mode.
+        choices.showChapters("Book <title>", chapters, "chapter34",
+                             kobalt::ChapterGroups::Off);
         QApplication::processEvents();
         auto *contents = &choices;
         auto *previous = choices.findChild<QPushButton *>("rrContentsPrevious");
