@@ -65,8 +65,8 @@ void Reader::refresh()
     if (!restoringDefaults)
         darkOption->setChecked(dark);
     darkOption->setEnabled(darkEnabled);
-    lightPopup->setDarkModeShortcut(preferences.value("light_dark_mode_shortcut").toBool(false),
-                                    dark, darkEnabled);
+    // The Light-panel dark-mode shortcut is permanently available.
+    lightPopup->setDarkModeShortcut(true, dark, darkEnabled);
     if (recordedOpening && !kosyncStarted)
         synchronizeKosync();
     showKosyncChoice();
