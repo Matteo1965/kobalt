@@ -1,3 +1,4 @@
+#include <QKeyEvent>
 #include "reading/remaining_time.h"
 #include "ui/controls/buttons.h"
 #include "ui/controls/icons.h"
