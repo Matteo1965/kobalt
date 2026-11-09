@@ -1,0 +1,69 @@
+name: Hungarian Edition beta6 - beta7 Dialog Rail Qt5 Test
+
+on:
+  push:
+    branches: [hungarian-edition-beta6-beta7-dialog-rail-fix]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hu-beta7-dialog-rail-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Preserve Hungarian beta6 features
+        run: python3 tests/integration/test_hu_beta6_lowrisk.py
+      - name: Validate upstream tooling
+        run: bash platforms/ci/test.sh
+      - name: Verify beta7 dialog and rail integration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          panel = Path("src/app/reader/settings/settings_panel.cpp").read_text()
+          modal = Path("src/ui/dialogs/modals.cpp").read_text()
+          assert "compactLabels" in panel
+          assert "setIconAboveLabel(!compactLabels)" in panel
+          assert "PopupCard::Heading PopupCard::heading" in modal
+          assert "card->heading(content.title" in modal
+          PY
+  native-tests:
+    needs: validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Native test suite (upstream English baseline)
+        env:
+          KOBALT_TEST_INTERFACE_LANGUAGE: en
+        run: bash platforms/ci/native-tests.sh
+
+  build-kobo-qt5:
+    needs: [validation, native-tests]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build Kobo Qt5 test package
+        env:
+          CONTAINER_ENGINE: docker
+          KOBALT_RELEASE_VERSION: v1.0-beta6-HU-B7-DIALOG-RAIL-TEST
+        run: bash platforms/ci/build.sh qt5
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kobalt-hu-beta6-b7-dialog-rail-${{ github.run_number }}-qt5
+          path: build/release/*
+          if-no-files-found: error
+          compression-level: 0
