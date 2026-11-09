@@ -9889,6 +9889,52 @@ private slots:
             QVERIFY(regional->show());
             QVERIFY(capture(fixture, name + (locale == "de_DE" ? "-qwertz" : "-azerty")));
         }
+        // Hungarian Edition uses explicit QWERTZ keys independent of Nickel locale.
+        auto hungarian = ui::makeWidgetKeyboard(view, editor, QStringLiteral("hu"));
+        hungarian->setSubmitText(submitText);
+        QVERIFY(hungarian->show());
+        const auto keyboards = view->findChildren<QWidget *>("widgetKeyboard");
+        QVERIFY(!keyboards.isEmpty());
+        auto *hu = keyboards.last();
+        QVERIFY(hu && hu->isVisible());
+        const auto character = [hu](int row, int column) {
+            const auto name = QStringLiteral("widgetKey%1_%2").arg(row).arg(column);
+            auto *key = hu->findChild<QPushButton *>(name);
+            return key ? key->property("keyboard.character").toString() : QString();
+        };
+        QCOMPARE(character(0, 0), QStringLiteral("q"));
+        QCOMPARE(character(0, 5), QStringLiteral("z"));
+        QCOMPARE(character(0, 10), QString::fromUtf8("ő"));
+        QCOMPARE(character(0, 11), QString::fromUtf8("ú"));
+        QCOMPARE(character(1, 9), QString::fromUtf8("é"));
+        QCOMPARE(character(1, 10), QString::fromUtf8("á"));
+        QCOMPARE(character(1, 11), QString::fromUtf8("ű"));
+        QCOMPARE(character(2, 0), QString::fromUtf8("í"));
+        QCOMPARE(character(2, 8), QString::fromUtf8("ö"));
+        QCOMPARE(character(2, 9), QString::fromUtf8("ó"));
+        QCOMPARE(character(2, 10), QString::fromUtf8("ü"));
+        auto *huShift = hu->findChild<QPushButton *>("widgetKeyboardShift");
+        auto *huDelete = hu->findChild<QPushButton *>("widgetKeyboardDelete");
+        QVERIFY(huShift && huShift->isVisible() && huDelete && huDelete->isVisible());
+        auto *huO = hu->findChild<QPushButton *>("widgetKey0_10");
+        QVERIFY(huO && huO->isVisible());
+        const auto beforeHu = editor->text();
+        huO->click();
+        QCOMPARE(editor->text(), beforeHu + QString::fromUtf8("ő"));
+        huShift->click();
+        QCOMPARE(character(0, 10), QString::fromUtf8("Ő"));
+        huO->click();
+        QCOMPARE(editor->text(), beforeHu + QString::fromUtf8("őŐ"));
+        huDelete->click();
+        QCOMPARE(editor->text(), beforeHu + QString::fromUtf8("ő"));
+        auto *huSymbols = hu->findChild<QPushButton *>("widgetKeyboardSymbols");
+        QVERIFY(huSymbols);
+        huSymbols->click();
+        QCOMPARE(character(0, 0), QStringLiteral("1"));
+        huSymbols->click();
+        QCOMPARE(character(0, 10), QString::fromUtf8("ő"));
+        QVERIFY(capture(fixture, name + "-hungarian-qwertz"));
+
     }
 
     void lightDarkModeShortcut_data() { screenshotVariants(); }
