@@ -880,7 +880,7 @@ bool Reader::eventFilter(QObject *watched, QEvent *event)
                 if (!closing && !book->deviceTransition() && services.remoteKeyActivity)
                     services.remoteKeyActivity(this, key);
                 if (!key->isAutoRepeat())
-                    pageButton(direction, quint32(key->timestamp()));
+                    pageButton(direction, quint32(key->timestamp()), true, key->key());
             }
             event->accept();
             return true;
@@ -2372,12 +2372,17 @@ void Reader::pageButton(int direction)
     pageButton(direction, 0);
 }
 
+void Reader::physicalPageButton(int key, int direction)
+{
+    pageButton(direction, 0, true, key);
+}
+
 void Reader::scriptedPageButton(int direction)
 {
     pageButton(direction, 0, false);
 }
 
-void Reader::pageButton(int direction, quint32 sourceTime, bool userInput)
+void Reader::pageButton(int direction, quint32 sourceTime, bool userInput, int physicalKey)
 {
     if (resizePending)
         return;
@@ -2401,7 +2406,16 @@ void Reader::pageButton(int direction, quint32 sourceTime, bool userInput)
         || lookupPending || acknowledgments->isVisible() || bookmarkList->isVisible()
         || lightPopup->isVisible())
         return;
-    turnPage(direction, sourceTime, userInput, ui::InputClock::Key);
+    if (userInput && physicalKey && services.buttonControls) {
+        for (const auto &button : services.buttonControls()) {
+            if (button.key == physicalKey) {
+                direction = pageButtons::direction(preferences, button.id, direction);
+                break;
+            }
+        }
+    }
+    if (direction)
+        turnPage(direction, sourceTime, userInput, ui::InputClock::Key);
 }
 
 void Reader::turnPage(int direction, quint32 sourceTime, bool userInput, ui::InputClock clock)
