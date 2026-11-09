@@ -52,7 +52,7 @@ jobs:
           for vowel in "áéíóöőúüű":
               assert vowel in keyboard, vowel
           assert 'qwertzuiopőú' in keyboard
-          assert 'ui::makeWidgetKeyboard(parent, editor, QStringLiteral("hu"))' in host
+          assert 'ui::makeLocalizedWidgetKeyboard(parent, editor, QStringLiteral("hu"))' in host
           assert 'strings::language()' in host
           assert '"widgetKeyboardShift"' in Path("tests/desktop.cpp").read_text()
           PY
