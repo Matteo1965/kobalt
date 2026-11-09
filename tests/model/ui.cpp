@@ -1559,6 +1559,39 @@ int main(int argc, char **argv)
             require(!button->objectName().startsWith("chapter") || !button->isVisible(),
                     "Empty contents retained a navigable chapter");
     }
+    // Exercise the beta7 chapter-group modes independently of legacy row geometry.
+    {
+        QWidget host;
+        host.resize(1072, 1448);
+        host.show();
+        kobalt::ui::readerStyle(&host, kobalt::ui::styles::reader());
+        kobalt::ChapterContents contents(&host);
+        contents.resize(host.size());
+        const QVector<kobalt::Choice> chapters{
+            { "Part A", "a", "chapterGroupA", {}, 0, 0 },
+            { "First", "first", "chapterGroupFirst", {}, 1, 1 },
+            { "Second", "second", "chapterGroupSecond", {}, 1, 2 },
+            { "Part B", "b", "chapterGroupB", {}, 0, 3 },
+            { "Last", "last", "chapterGroupLast", {}, 1, 4 },
+        };
+        auto *first = contents.findChild<QPushButton *>("chapterGroupFirst");
+        contents.showChapters("Groups", chapters, "chapterGroupFirst");
+        auto *expand = contents.findChild<QPushButton *>("chapterGroupAToggle");
+        first = contents.findChild<QPushButton *>("chapterGroupFirst");
+        require(expand && expand->isVisible() && first && first->isVisible(),
+                "Current chapter group did not expand");
+        expand->click();
+        require(!first->isVisible() && expand->isVisible(),
+                "Collapsing a group did not hide its child");
+        expand->click();
+        require(first->isVisible(), "Re-expanding a group lost its child");
+        contents.showChapters("Groups", chapters, {}, kobalt::ChapterGroups::All);
+        require(contents.findChild<QPushButton *>("chapterGroupLast")->isVisible(),
+                "All-chapters mode did not expand later groups");
+        contents.showChapters("Groups", chapters, {}, kobalt::ChapterGroups::Off);
+        require(first->isVisible() && !expand->isVisible(),
+                "Off mode retained disclosure controls or collapsed rows");
+    }
     std::puts("PASS: chapter row highlights, paging and navigation in light and dark themes");
     {
         namespace chapterMetrics = kobalt::ui::metrics::chapters;
