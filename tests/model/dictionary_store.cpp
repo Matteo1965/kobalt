@@ -556,6 +556,37 @@ int main(int argc, char **argv)
                 "Hungarian punctuation normalization");
         require(hungarian.lookup(QString::fromUtf8("nincsilyenalak")).html.isEmpty(),
                 "Unknown Hungarian word should not produce an unrelated match");
+        // A generated Wiktionary page is not a definition. If an exact
+        // possessive form is just a placeholder, continue to the true lemma.
+        {
+            const auto folder2 = temp.path() + "/hungarian-placeholder";
+            require(QDir().mkpath(folder2), "make Hungarian placeholder fixture");
+            const QByteArray placeholder(
+                    "<p>Magyar Wikiszótár címszó.</p><p>A szócikkhez nem áll "
+                    "rendelkezésre egyértelmű magyar jelentés.</p>");
+            const QByteArray definitions2 = stemDefinition + placeholder;
+            QByteArray index2;
+            const auto add2 = [&](const QByteArray &term, quint32 offset, quint32 size) {
+                index2 += term;
+                index2.append('\0');
+                be32(index2, offset);
+                be32(index2, size);
+            };
+            add2(QString::fromUtf8("kabát").toUtf8(), 0, stemDefinition.size());
+            add2(QString::fromUtf8("kabátja").toUtf8(),
+                 stemDefinition.size(), placeholder.size());
+            save(folder2 + "/hu-hu.ifo",
+                 "StarDict's dict ifo file\nversion=2.4.2\nwordcount=2\nidxfilesize="
+                         + QByteArray::number(index2.size()) + "\nsametypesequence=h\n");
+            save(folder2 + "/hu-hu.idx", index2);
+            save(folder2 + "/hu-hu.dict.dz", dictzip(definitions2));
+            require(StarDict::prepare(folder2, "hu-hu", &error), qPrintable(error));
+            StarDict compact;
+            require(compact.open(folder2, "hu-hu", &error), qPrintable(error));
+            require(compact.lookup(QString::fromUtf8("kabátja")).html.toUtf8()
+                            == stemDefinition,
+                    "placeholder possessive must resolve to meaningful Hungarian lemma");
+        }
     }
     QByteArray idx("CAT\0", 4);
     be32(idx, first.size());
