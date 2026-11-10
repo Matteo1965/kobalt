@@ -936,6 +936,8 @@ void Reader::buildOverlays()
     pinnedBookmarks = new BookmarkTray(this);
     pinnedBookmarks->setObjectName("rrPinnedBookmarks");
     ui::readerStyle(pinnedBookmarks, "QFrame#rrPinnedBookmarks{background:transparent;}");
+    // The tray itself stays unobtrusive; its painted bookmark capsules
+    // receive an opaque theme-paper fill in BookmarkTray::paintEvent.
     pinnedBookmarks->hide();
     for (int i = 0; i < BookmarkStore::maxPins; ++i) {
         auto *button = new ui::CellButton(ui::ControlIcon::Star, pinnedBookmarks,
