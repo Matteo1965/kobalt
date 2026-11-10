@@ -384,8 +384,33 @@ DictionaryResult StarDict::lookup(const QString &word) {
     QElapsedTimer timer;
     timer.start();
     const auto expired = [&]() { return timer.elapsed() >= 3000; };
-    const auto probe = [&](const QByteArray &candidate) {
-        return candidate.isEmpty() || expired() ? -1 : find(*data->words, data->idx, candidate);
+    const auto probe = [&](const QByteArray &candidate) -> qint64 {
+        if (candidate.isEmpty() || expired())
+            return -1;
+        const qint64 found = find(*data->words, data->idx, candidate);
+        if (found < 0 || !hungarian)
+            return found;
+        // Some Hungarian Wiktionary archives contain generated entries with
+        // no definition. Do not let those stop the morphological fallback.
+        // Inspect only a bounded prefix of the matched definition, without
+        // treating other entries or dictionary markup as empty.
+        if (found >= data->words->file.size() / 4
+            || !data->idx.seek(be32(reinterpret_cast<const char *>(data->words->bytes)
+                                     + found * 4)))
+            return found;
+        const QByteArray entry = data->idx.read(264);
+        const int zero = entry.indexOf('\0');
+        if (zero <= 0 || zero + 9 > entry.size())
+            return found;
+        const quint32 offset = be32(entry.constData() + zero + 1);
+        const quint32 length = be32(entry.constData() + zero + 5);
+        const QByteArray preview = data->body.read(offset, qMin<quint32>(length, 4096));
+        // Preserve ordinary definitions even if they mention Wiktionary.
+        if (QString::fromUtf8(preview).contains(
+                    QStringLiteral("nem áll rendelkezésre egyértelmű magyar jelentés"),
+                    Qt::CaseInsensitive))
+            return -1;
+        return found;
     };
     // Try the original spelling first; lower-case normalization remains a
     // fallback for Hungarian lookup, not a reason to lose an exact headword.
