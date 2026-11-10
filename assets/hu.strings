@@ -789,3 +789,6 @@
 "buttons.while_reading" = "Mit tegyen ez a gomb olvasás közben?";
 "buttons.hardware_title" = "Fizikai gombok";
 "dictionaries.local" = "Helyi";
+
+"dictionaries.select" = "Kiválasztás";
+"dictionaries.selected" = "Kiválasztva";
