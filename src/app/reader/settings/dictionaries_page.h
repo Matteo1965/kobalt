@@ -22,6 +22,8 @@ public:
     int preferredHeight() const;
     void setLanguage(const QString &language);
     void setCatalog(const QVector<DownloadDictionary> &entries);
+    // Local StarDict installs are shown but never offered for removal by the downloader.
+    void setLocalDictionaryIds(const QSet<QString> &ids);
     void setState(const QSet<QString> &installed, bool busy, const QString &status);
     void setStorage(const QHash<QString, qint64> &sizes, qint64 freeBytes,
                     const QString &selectedId = {});
@@ -39,7 +41,7 @@ private:
     void dismissConfirmation();
     void askConfirmation(const DownloadDictionary &entry, bool removing);
     QVector<DownloadDictionary> entries;
-    QSet<QString> installedIds;
+    QSet<QString> installedIds, localIds;
     QHash<QString, qint64> installedSizes;
     QString language, transferId, endedId, failedId, requestedId;
     qint64 freeBytes = -1, receivedBytes = 0, totalBytes = 0;
