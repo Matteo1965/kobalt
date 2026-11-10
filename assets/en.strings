@@ -1336,3 +1336,5 @@
 
 "dictionaries.select" = "Select";
 "dictionaries.selected" = "Selected";
+"stats.pages_left_compact" = "pages left";
+"stats.page_unit_short" = "pages";
