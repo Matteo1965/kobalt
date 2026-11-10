@@ -239,7 +239,9 @@ ReaderHostServices readerHostServices()
     };
     result.deviceName = syncDeviceModel();
     result.colorDisplay = [] { return pageAnimationPanel() == AnimationPanel::Color; };
-    result.downloadableDictionaries = false;
+    // The Kobo HU edition provides local StarDict dictionaries and the
+    // in-reader dictionary selection page; do not hide its controls.
+    result.downloadableDictionaries = true;
     result.browserAvailable = nativeReaderBrowserAvailable;
     result.openBrowser = nativeReaderOpenBrowser;
     result.clock = nativeReaderClock;
