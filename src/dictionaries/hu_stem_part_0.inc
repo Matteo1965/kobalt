@@ -45,7 +45,10 @@ inline void hungarianStemVariants(const std::string& word, std::vector<std::stri
       const char* from;
       const char* to;
     };
-    static constexpr Pair SPECIAL[] = {{"nekem", "én"},
+    static constexpr Pair SPECIAL[] = {{"írtam", "ír"},
+                                       {"mentünk", "megy"},
+                                       {"legszebb", "szép"},
+                                       {"nekem", "én"},
                                        {"atyavilág", "világ"},
                                        {"kabátja", "kabát"},
                                        {"igazgatónője", "igazgató"},
