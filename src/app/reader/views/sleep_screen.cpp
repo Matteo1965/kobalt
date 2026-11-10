@@ -230,7 +230,8 @@ QString sleepTimeLeft(qint64 milliseconds, bool approximate)
     const auto time = minutes <= 120
             ? strings::get("stats.duration_minutes").arg(minutes)
             : strings::get("stats.duration_hours").arg(minutes / 60).arg(minutes % 60);
-    return strings::get("sleep.time_left").arg(time);
+    return strings::get(minutes <= 120 ? "sleep.time_left_minutes" : "sleep.time_left")
+            .arg(time);
 }
 
 QImage sleepCoverBackground(const QImage &cover, QSize size)
