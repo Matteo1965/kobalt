@@ -162,6 +162,9 @@ public:
         symbols->setObjectName("widgetKeyboardSymbols");
         shift->setCheckable(true);
         symbols->setCheckable(true);
+        // On Qt5, private text rendering of checkable buttons needs explicit
+        // inversion to keep the 123/ABC caption visible on the dark fill.
+        symbols->setProperty("reader_invert_pressed", true);
         QObject::connect(shift, &QPushButton::clicked, this, [this] {
             const auto interval = quint32(QApplication::doubleClickInterval());
             const bool doubleTap = shift->pointerRelease && pointerShift
