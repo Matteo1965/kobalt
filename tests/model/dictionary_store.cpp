@@ -515,6 +515,48 @@ int main(int argc, char **argv)
         require(dictionary.lookup("ice").html.isEmpty(),
                 "Phrase lookup silently used only its first word");
     }
+    {
+        // Real StarDict lookup precedence for Hungarian entries: an explicit
+        // dictionary headword beats a stem, and case suffixes resolve to a
+        // headword without returning arbitrary unrelated entries.
+        const auto folder = temp.path() + "/hungarian";
+        require(QDir().mkpath(folder), "make Hungarian fixture directory");
+        const QByteArray stemDefinition("<p>Coat noun</p>");
+        const QByteArray exactDefinition("<p>Explicit possessive entry</p>");
+        const QByteArray houseDefinition("<p>House noun</p>");
+        QByteArray definitions = stemDefinition + exactDefinition + houseDefinition;
+        QByteArray index;
+        const auto add = [&](const QByteArray &term, quint32 offset, quint32 size) {
+            index += term;
+            index.append('\0');
+            be32(index, offset);
+            be32(index, size);
+        };
+        add(QString::fromUtf8("ház").toUtf8(),
+            stemDefinition.size() + exactDefinition.size(), houseDefinition.size());
+        add(QString::fromUtf8("kabát").toUtf8(), 0, stemDefinition.size());
+        add(QString::fromUtf8("kabátja").toUtf8(),
+            stemDefinition.size(), exactDefinition.size());
+        save(folder + "/hu-hu.ifo",
+             "StarDict's dict ifo file\\nversion=2.4.2\\nwordcount=3\\nidxfilesize="
+                     + QByteArray::number(index.size()) + "\\nsametypesequence=h\\n");
+        save(folder + "/hu-hu.idx", index);
+        save(folder + "/hu-hu.dict.dz", dictzip(definitions));
+        QString error;
+        require(StarDict::prepare(folder, "hu-hu", &error), qPrintable(error));
+        StarDict hungarian;
+        require(hungarian.open(folder, "hu-hu", &error), qPrintable(error));
+        require(hungarian.lookup(QString::fromUtf8("kabátja")).html.toUtf8() == exactDefinition,
+                "Hungarian exact possessive headword must beat stemmed coat");
+        require(hungarian.lookup(QString::fromUtf8("kabát")).html.toUtf8() == stemDefinition,
+                "Hungarian base headword");
+        require(hungarian.lookup(QString::fromUtf8("házban")).html.toUtf8() == houseDefinition,
+                "Hungarian case-suffixed form must resolve to house");
+        require(hungarian.lookup(QString::fromUtf8("„házban!”")).html.toUtf8() == houseDefinition,
+                "Hungarian punctuation normalization");
+        require(hungarian.lookup(QString::fromUtf8("nincsilyenalak")).html.isEmpty(),
+                "Unknown Hungarian word should not produce an unrelated match");
+    }
     QByteArray idx("CAT\0", 4);
     be32(idx, first.size());
     be32(idx, second.size());
