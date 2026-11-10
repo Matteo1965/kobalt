@@ -145,7 +145,10 @@ void Button::paintEvent(QPaintEvent *)
             // a segment is selected or pressed. Match its painted background.
             const bool primary = property("reader_primary_action").toBool();
             const bool segment = property("segment_first").isValid();
-            const bool inverted = segment ? isChecked() || isDown() : primary && !isDown();
+            const bool keyboardInverted = property("reader_invert_pressed").toBool();
+            const bool inverted = segment ? isChecked() || isDown()
+                    : keyboardInverted ? isChecked() || isDown()
+                                       : primary && !isDown();
             const auto colors =
                     primary || segment ? readerPalette(palette(), darkTheme(this)) : palette();
             painter.setPen(colors.color(!isEnabled()       ? QPalette::Mid
