@@ -411,7 +411,12 @@ void ReaderSession::open(OpenRequest request, std::function<void(OpeningResult)>
                 const auto publishCover = [&] {
                     if (coverPublished || !coverReady || !lease || lease->revoked())
                         return;
+                    QElapsedTimer coverTiming;
+                    coverTiming.start();
                     auto image = engine->coverImage({ 2048, 2048 }, coverPath);
+                    diagnostic("opening-cover-decode",
+                               { { "elapsed_ms", coverTiming.nsecsElapsed() / 1e6 },
+                                 { "ready", !image.isNull() } }, false);
                     coverPublished = !image.isNull();
                     kobalt::qt::invoke(
                             qApp,
@@ -435,8 +440,14 @@ void ReaderSession::open(OpenRequest request, std::function<void(OpeningResult)>
                                                  strings::key("error.opening_interrupted"));
                 };
                 const auto locate = [&](const QString &location) {
+                    QElapsedTimer positionTiming;
+                    positionTiming.start();
                     QString detail;
-                    if (!openAtPlatform(*engine, positions, location, &detail))
+                    const bool located = openAtPlatform(*engine, positions, location, &detail);
+                    diagnostic("opening-position-restore",
+                               { { "elapsed_ms", positionTiming.nsecsElapsed() / 1e6 },
+                                 { "mode", "platform" }, { "success", located } }, false);
+                    if (!located)
                         outcome = OpeningResult::failed(
                                 positions ? OpeningFailureKind::InvalidContent
                                           : OpeningFailureKind::HostUnavailable,
@@ -606,11 +617,19 @@ void ReaderSession::open(OpenRequest request, std::function<void(OpeningResult)>
                             engine->go(0);
                         else if (!initial.isEmpty())
                             locate(initial);
-                        else if (!saved.value("position").toString().isEmpty()
-                                 && !engine->goTo(saved.value("position").toString()))
-                            outcome = OpeningResult::failed(
-                                    OpeningFailureKind::InvalidContent,
-                                    strings::key("error.cannot_restore_the_retained_position"));
+                        else if (!saved.value("position").toString().isEmpty()) {
+                            QElapsedTimer positionTiming;
+                            positionTiming.start();
+                            const bool restored = engine->goTo(saved.value("position").toString());
+                            diagnostic("opening-position-restore",
+                                       { { "elapsed_ms", positionTiming.nsecsElapsed() / 1e6 },
+                                         { "mode", "retained" },
+                                         { "success", restored } }, false);
+                            if (!restored)
+                                outcome = OpeningResult::failed(
+                                        OpeningFailureKind::InvalidContent,
+                                        strings::key("error.cannot_restore_the_retained_position"));
+                        }
                         if (outcome.ready() && !cancelled()) {
                             result = capture(*engine, positions, false, markup, markupGeneration);
                             result.author = engine->author();

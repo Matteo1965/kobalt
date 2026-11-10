@@ -1,4 +1,6 @@
 #include "bookmark_session.h"
+#include "support/diagnostics.h"
+#include <QElapsedTimer>
 #include "reader_session.h"
 #include "appearance_settings.h"
 #include "support/diagnostics.h"
@@ -102,9 +104,19 @@ bool BookmarkSession::sync()
     for (const auto &bookmark : store->bookmarks())
         positions << bookmark.position;
     QPointer<BookmarkSession> guard(this);
+    QElapsedTimer resolutionTiming;
+    resolutionTiming.start();
+    diagnostic("bookmarks-resolve-start",
+               { { "count", positions.size() }, { "layout_revision", double(revision) } },
+               false);
     session.bookmarkPages(positions,
-                          [guard, key, revision, request, positions,
+                          [guard, key, revision, request, positions, resolutionTiming,
                            generation = generation](QVector<int> pages) {
+                              diagnostic("bookmarks-resolve-end",
+                                         { { "elapsed_ms", resolutionTiming.nsecsElapsed() / 1e6 },
+                                           { "count", positions.size() },
+                                           { "stale", !guard || guard->lookupRequest_ != request } },
+                                         false);
                               if (!guard || guard->lookupRequest_ != request)
                                   return;
                               guard->lookup_.clear();

@@ -276,9 +276,13 @@ Reader::Reader(std::unique_ptr<kobalt::ReadingBook> openedBook,
                                    kobalt::DiagnosticSeverity::Error);
         }
     }
+    QElapsedTimer bookmarkLoadTiming;
+    bookmarkLoadTiming.start();
     bookmarks = std::make_unique<kobalt::BookmarkSession>(
             *session, [this] { return layoutKey(); }, book->paths().annotations(), book->identity(),
             book->fingerprint(), session->title(), book->paths().database());
+    openingStages["bookmarks_load_ms"] = bookmarkLoadTiming.nsecsElapsed() / 1e6;
+    openingStages["bookmarks_count"] = bookmarks->bookmarks().size();
     highlights = std::make_unique<kobalt::HighlightSession>(
             *session, [this] { return layoutKey(); }, book->paths().annotations(), book->identity(),
             book->fingerprint(), session->title(), book->paths().database());
@@ -426,7 +430,10 @@ Reader::Reader(std::unique_ptr<kobalt::ReadingBook> openedBook,
                     setGeometry(geometry);
             });
     resize(QGuiApplication::primaryScreen()->size());
+    QElapsedTimer coverScheduleTiming;
+    coverScheduleTiming.start();
     prepareSleepCover();
+    openingStages["sleep_cover_schedule_ms"] = coverScheduleTiming.nsecsElapsed() / 1e6;
     if (sleep::mode(preferences) == sleep::Mode::Overlay)
         prepareSleepOverlay();
     const auto battery = services.battery();
