@@ -24,11 +24,13 @@ public:
     void setCatalog(const QVector<DownloadDictionary> &entries);
     // Local StarDict installs are shown but never offered for removal by the downloader.
     void setLocalDictionaryIds(const QSet<QString> &ids);
+    void setSelectedDictionary(const QString &id);
     void setState(const QSet<QString> &installed, bool busy, const QString &status);
     void setStorage(const QHash<QString, qint64> &sizes, qint64 freeBytes,
                     const QString &selectedId = {});
     void setTransfer(const QString &id, qint64 received, qint64 total, bool installing);
-    std::function<void(const QString &)> installRequested, removeRequested;
+    std::function<void(const QString &)> installRequested, removeRequested,
+                                      selectRequested;
     std::function<void()> cancelRequested;
 
 protected:
@@ -43,7 +45,7 @@ private:
     QVector<DownloadDictionary> entries;
     QSet<QString> installedIds, localIds;
     QHash<QString, qint64> installedSizes;
-    QString language, transferId, endedId, failedId, requestedId;
+    QString language, transferId, endedId, failedId, requestedId, selectedDictionary;
     qint64 freeBytes = -1, receivedBytes = 0, totalBytes = 0;
     bool working = false, unpacking = false;
     int page = 0;
