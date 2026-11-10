@@ -107,7 +107,7 @@ jobs:
         run: bash platforms/ci/build.sh qt5
       - uses: actions/upload-artifact@v4
         with:
-          name: kobalt-hu-beta7-hu-meaning-${{ github.run_number }}-qt5
+          name: kobalt-hu-beta7-main-standby-${{ github.run_number }}-qt5
           path: build/release/*
           if-no-files-found: error
           compression-level: 0
