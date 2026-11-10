@@ -241,6 +241,7 @@ private:
     void buildOverlays();
     void buildAppearance(const kobalt::reader::AppearanceLayout &layout);
     void buildSettings();
+    void initializeKosync();
     void buildKosync();
     void requestManualKosync();
     void updateKosyncToolbar();
@@ -369,17 +370,19 @@ private:
     std::unique_ptr<kobalt::reader::Navigation> navigation;
     QVector<QWidget *> topActions;
     kobalt::ui::Panel *general = nullptr;
+    bool settingsBuilt = false;
     std::unique_ptr<kobalt::LightControls> light;
     kobalt::LightPanel *lightPopup = nullptr;
-    QCheckBox *darkOption, *inheritTextLayoutOption, *animationOption, *edgeLightOption,
-            *lightGestureFeedbackOption, *denseGraphOption;
+    QCheckBox *darkOption = nullptr, *inheritTextLayoutOption = nullptr,
+            *animationOption = nullptr, *edgeLightOption = nullptr,
+            *lightGestureFeedbackOption = nullptr, *denseGraphOption = nullptr;
     QCheckBox *automaticOpeningOption = nullptr, *minimalAnnotationOption = nullptr,
               *hideTabLabelsOption = nullptr;
     QCheckBox *wifiPowerSaverOption = nullptr;
     QPushButton *autoRotateOption;
     bool hideNativeStatus() const;
     QJsonObject preferences;
-    QLabel *settingsError;
+    QLabel *settingsError = nullptr;
     kobalt::ui::ModalOverlay *busyNotice = nullptr;
     QTimer renderNoticeTimer, resizeTimer;
     kobalt::ui::LightSwipeNotice *brightnessNotice = nullptr;

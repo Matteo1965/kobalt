@@ -16,10 +16,12 @@ QByteArray Reader::kosyncDocument() const
 void Reader::kosyncStatus(const QString &message)
 {
     kosyncMessage = message;
-    kosyncPage->setLastSync(kosyncClient->lastSync());
-    kosyncPage->setStatus(message,
-                          kosyncClient->busy() || kosyncConnecting || kosyncAuthenticating
-                                  || bool(kosyncReaderReady));
+    if (kosyncPage) {
+        kosyncPage->setLastSync(kosyncClient->lastSync());
+        kosyncPage->setStatus(message,
+                              kosyncClient->busy() || kosyncConnecting || kosyncAuthenticating
+                                      || bool(kosyncReaderReady));
+    }
     updateKosyncToolbar();
     if (general->isVisible() && !lifecycleHidden && !closing && !exportRunning) {
         fitSettings();
@@ -27,7 +29,7 @@ void Reader::kosyncStatus(const QString &message)
     }
 }
 
-void Reader::buildKosync()
+void Reader::initializeKosync()
 {
     if (services.kosyncHttp)
         kosyncHttp = services.kosyncHttp();
@@ -38,6 +40,49 @@ void Reader::buildKosync()
     kosyncClient->setDefaultDeviceName(services.deviceName.isEmpty()
                                                ? QStringLiteral("Kobalt")
                                                : services.deviceName + QStringLiteral(" (Kobalt)"));
+    const auto status = book->usesNativeCloudSync()
+            ? strings::get("kosync.native_sync")
+            : strings::get(kosyncClient->signedIn() ? "kosync.signed_in" : "kosync.signed_out");
+    kosyncMessage = kosyncClient->storageError().isEmpty() ? status : kosyncClient->storageError();
+    kosyncFinishingElapsed.invalidate();
+    // Timers belong to the sync client, not to the optional Settings UI.
+    kosyncDeadline.setObjectName("rrKosyncDeadline");
+    kosyncOpeningGrace.setObjectName("rrKosyncOpeningGrace");
+    kosyncDeadline.setSingleShot(true);
+    connect(&kosyncDeadline, &QTimer::timeout, this, [this] {
+        diagnostic("kosync-deadline",
+                   qt::object({ { "connecting", kosyncConnecting },
+                                { "request_busy", kosyncClient->busy() },
+                                { "suspended", services.suspended() },
+                                { "reader_waiting", bool(kosyncReaderReady) } }));
+        ++kosyncEpoch;
+        if (kosyncNetwork)
+            kosyncNetwork->cancel();
+        if (kosyncConnecting)
+            ++kosyncBackgroundFailures;
+        kosyncConnecting = false;
+        const bool authenticating = std::exchange(kosyncAuthenticating, false);
+        kosyncClient->cancel();
+        kosyncFlushWaiting = false;
+        finishKosync(
+                strings::get(authenticating ? "kosync.network_error" : "kosync.saved_locally"));
+    });
+    kosyncOpeningGrace.setSingleShot(true);
+    connect(&kosyncOpeningGrace, &QTimer::timeout, this, [this] {
+        if (kosyncOpening)
+            showKosyncOpening();
+        finishKosyncPresentation();
+    });
+    kosyncReaderRetry.setInterval(100);
+    connect(&kosyncReaderRetry, &QTimer::timeout, this, [this] {
+        if (kosyncReaderReady)
+            continueKosyncWhenReady(std::move(kosyncReaderReady));
+    });
+    updateKosyncToolbar();
+}
+
+void Reader::buildKosync()
+{
     kosyncPage->setNativeCloudSync(book->usesNativeCloudSync(), book->isKoboCloudBook());
     const auto account = [this] {
         kosyncPage->setFilenameMatching(kosyncClient->filenameMatching());
@@ -130,47 +175,7 @@ void Reader::buildKosync()
     };
     kosyncPage->syncRequested = [this] { synchronizeKosync(true); };
     updateKosyncFeatures();
-    const auto status = book->usesNativeCloudSync()
-            ? strings::get("kosync.native_sync")
-            : strings::get(kosyncClient->signedIn() ? "kosync.signed_in" : "kosync.signed_out");
-    kosyncStatus(kosyncClient->storageError().isEmpty() ? status : kosyncClient->storageError());
-    kosyncFinishingElapsed.invalidate();
-    // Names let tests check and run the timers instead of waiting for them.
-    kosyncDeadline.setObjectName("rrKosyncDeadline");
-    kosyncOpeningGrace.setObjectName("rrKosyncOpeningGrace");
-    kosyncDeadline.setSingleShot(true);
-    connect(&kosyncDeadline, &QTimer::timeout, this, [this] {
-        diagnostic("kosync-deadline",
-                   qt::object({ { "connecting", kosyncConnecting },
-                                { "request_busy", kosyncClient->busy() },
-                                { "suspended", services.suspended() },
-                                { "reader_waiting", bool(kosyncReaderReady) } }));
-        ++kosyncEpoch;
-        if (kosyncNetwork)
-            kosyncNetwork->cancel();
-        // Only background connections run under this deadline; interactive
-        // ones start it after they connect. A connection that never answers
-        // counts as a failed background attempt.
-        if (kosyncConnecting)
-            ++kosyncBackgroundFailures;
-        kosyncConnecting = false;
-        const bool authenticating = std::exchange(kosyncAuthenticating, false);
-        kosyncClient->cancel();
-        kosyncFlushWaiting = false;
-        finishKosync(
-                strings::get(authenticating ? "kosync.network_error" : "kosync.saved_locally"));
-    });
-    kosyncOpeningGrace.setSingleShot(true);
-    connect(&kosyncOpeningGrace, &QTimer::timeout, this, [this] {
-        if (kosyncOpening)
-            showKosyncOpening();
-        finishKosyncPresentation();
-    });
-    kosyncReaderRetry.setInterval(100);
-    connect(&kosyncReaderRetry, &QTimer::timeout, this, [this] {
-        if (kosyncReaderReady)
-            continueKosyncWhenReady(std::move(kosyncReaderReady));
-    });
+    kosyncStatus(kosyncMessage);
 }
 
 // While you read, a changed position syncs once the chosen interval has passed
@@ -571,7 +576,8 @@ void Reader::finishKosync(const QString &message)
         startKosyncExchange(true);
         return;
     }
-    kosyncPage->setLastSync(kosyncClient->lastSync());
+    if (kosyncPage)
+        kosyncPage->setLastSync(kosyncClient->lastSync());
     releaseKosyncWifi();
     if (kosyncNetwork)
         kosyncNetwork->cancel();
@@ -590,7 +596,8 @@ void Reader::finishKosync(const QString &message)
     auto finished = std::move(kosyncFinished);
     kosyncFinished = {};
     kosyncMessage = message;
-    kosyncPage->setStatus(message, false);
+    if (kosyncPage)
+        kosyncPage->setStatus(message, false);
     updateKosyncToolbar();
     if (!finishing && !closing && !lifecycleHidden && !exportRunning) {
         // Beta7: a longer KOSync error must be measured before painting Settings.
@@ -815,8 +822,9 @@ void Reader::showKosyncChoice()
                     kosyncPositionFailed = true;
                     kosyncClient->setAutomatic(false);
                     updateKosyncToolbar();
-                    kosyncPage->setAccount(kosyncClient->server(), kosyncClient->username(), true,
-                                           kosyncClient->automatic());
+                    if (kosyncPage)
+                        kosyncPage->setAccount(kosyncClient->server(), kosyncClient->username(), true,
+                                               kosyncClient->automatic());
                 }
                 page->notice = error.isEmpty() ? strings::get("kosync.resumed") : error;
                 kosyncStatus(page->notice);

@@ -375,8 +375,12 @@ Reader::Reader(std::unique_ptr<kobalt::ReadingBook> openedBook,
     built("overlays");
     buildAppearance(appearanceLayout);
     built("appearance");
-    buildSettings();
-    built("settings");
+    // The Settings panel is expensive to build and is not needed for reading.
+    // Keep a hidden, lightweight panel so existing visibility checks work.
+    general = new kobalt::ui::Panel(this);
+    general->hide();
+    initializeKosync();
+    built("kosync_core");
     buildNotices();
     built("notices");
     buildAnnotations();
@@ -1330,6 +1334,14 @@ void Reader::buildAppearance(const kobalt::reader::AppearanceLayout &layout)
 
 void Reader::buildSettings()
 {
+    if (settingsBuilt)
+        return;
+    QElapsedTimer lazyBuild;
+    lazyBuild.start();
+    // Replace the dormant visibility placeholder with the full panel only on demand.
+    auto *placeholder = general;
+    general = nullptr;
+    delete placeholder;
     kobalt::reader::SettingsPanelInputs settingsInputs;
     settingsInputs.keyboard = services.keyboard;
     const auto release = QStringLiteral(KOBALT_VERSION);
@@ -1691,6 +1703,11 @@ void Reader::buildSettings()
         fitSettings();
         refresh();
     });
+    settingsBuilt = true;
+    general->hide();
+    const double elapsed = lazyBuild.nsecsElapsed() / 1e6;
+    diagnostic("settings-lazy-build",
+               { { "elapsed_ms", elapsed }, { "first_open", true } }, false);
 }
 
 void Reader::buildNotices()

@@ -270,6 +270,11 @@ void Reader::openSettings()
     if (session->temporaryTypography())
         return;
     kobalt::ui::PanelTiming timing("settings");
+    if (!settingsBuilt) {
+        buildSettings();
+        for (auto *widget : general->findChildren<QWidget *>())
+            textRefresh(widget);
+    }
     kosyncPage->setAccount(kosyncClient->server(), kosyncClient->username(),
                            kosyncClient->signedIn(), kosyncClient->automatic());
     kosyncPage->setLastSync(kosyncClient->lastSync());

@@ -62,9 +62,11 @@ void Reader::refresh()
                                           : session->state().value("dark_mode").toBool(false);
     const bool darkEnabled = savingDarkMode < 0 && pendingDarkMode < 0 && !session->busy()
             && !session->temporaryTypography();
-    if (!restoringDefaults)
-        darkOption->setChecked(dark);
-    darkOption->setEnabled(darkEnabled);
+    if (darkOption) {
+        if (!restoringDefaults)
+            darkOption->setChecked(dark);
+        darkOption->setEnabled(darkEnabled);
+    }
     // The Light-panel dark-mode shortcut is permanently available.
     lightPopup->setDarkModeShortcut(true, dark, darkEnabled);
     if (recordedOpening && !kosyncStarted)
@@ -175,8 +177,10 @@ bool Reader::publishPendingDarkMode()
     if (session->state().value("dark_mode").toBool(false) != target
         || (appearanceEdit.preview()
             && appearanceEdit.preview()->state().value("dark_mode").toBool(false) != target)) {
-        settingsError->setText(strings::get("reader.could_not_change_dark_mode"));
-        settingsError->show();
+        if (settingsError) {
+            settingsError->setText(strings::get("reader.could_not_change_dark_mode"));
+            settingsError->show();
+        }
         return false;
     }
     return true;

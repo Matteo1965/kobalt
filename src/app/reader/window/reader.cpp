@@ -71,7 +71,8 @@ Reader::~Reader()
     disconnect(QGuiApplication::primaryScreen(), nullptr, this, nullptr);
     delete annotationExportPicker.data();
     cancelKosync();
-    kosyncPage->dismissEditor();
+    if (kosyncPage)
+        kosyncPage->dismissEditor();
     book->onEstimatesChanged({});
     session->cancelPagePreview();
     if (pageScrubber) {
@@ -187,7 +188,8 @@ void Reader::prepareTransition(std::function<void()> finished, bool usb)
     exitPending = exportRunning = false;
     closing = true;
     cancelKosync();
-    kosyncPage->dismissEditor();
+    if (kosyncPage)
+        kosyncPage->dismissEditor();
     clockTimer->stop();
     setEnabled(false);
     auto completed = std::make_shared<bool>(false);
@@ -514,8 +516,10 @@ void Reader::sleepReader()
     closeSearch();
     dismissLookup();
     hideKosyncOpening();
-    kosyncPage->dismissEditor();
-    kosyncPage->setStatus(kosyncMessage, false);
+    if (kosyncPage)
+        kosyncPage->dismissEditor();
+    if (kosyncPage)
+        kosyncPage->setStatus(kosyncMessage, false);
     kosyncStarted = false;
     if (kosyncDialog) {
         kosyncDialog->hide();
