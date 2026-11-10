@@ -1350,11 +1350,37 @@ void Reader::buildSettings()
         dictionarySettings->setCatalog(catalog);
         auto updateDictionaries = [this, manager, dictionarySettings, catalog,
                                    previous = QSet<QString>{},
+                                   previouslyLocal = QSet<QString>{},
                                    sizes = QHash<QString, qint64>{}]() mutable {
-            QSet<QString> installed;
-            for (const auto &entry : catalog)
+            QSet<QString> installed, local;
+            QSet<QString> catalogIds;
+            for (const auto &entry : catalog) {
+                catalogIds.insert(entry.id);
                 if (manager->installed(entry.id))
                     installed.insert(entry.id);
+            }
+            const auto choices = manager->choices();
+            auto allEntries = catalog;
+            for (const auto &choice : choices) {
+                if (!choice.id.startsWith("downloaded:"))
+                    continue;
+                const QString id = choice.id.mid(11);
+                if (catalogIds.contains(id) || !manager->installed(id))
+                    continue;
+                kobalt::DownloadDictionary entry;
+                entry.id = id;
+                entry.name = choice.name;
+                entry.language = choice.language;
+                entry.target = choice.language;
+                allEntries.append(entry);
+                local.insert(id);
+                installed.insert(id);
+            }
+            if (previouslyLocal != local) {
+                dictionarySettings->setLocalDictionaryIds(local);
+                dictionarySettings->setCatalog(allEntries);
+                previouslyLocal = local;
+            }
             if (installed != previous) {
                 sizes = manager->installedSizes();
                 previous = installed;
@@ -1364,7 +1390,8 @@ void Reader::buildSettings()
             dictionarySettings->setTransfer(transfer.id, transfer.received, transfer.total,
                                             transfer.installing);
             dictionarySettings->setState(installed, manager->busy(), manager->status());
-            dictionaryPanel->setChoices(manager->choices());
+            // The reading dictionary chooser includes the same local installs.
+            dictionaryPanel->setChoices(choices);
         };
         dictionarySettings->installRequested = [manager](const QString &id) {
             manager->download(id);
