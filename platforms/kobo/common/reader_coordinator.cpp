@@ -130,6 +130,21 @@ kobalt_benchmark_typography_v1(const char *contentId, int enable)
 ReaderCoordinator::ReadingRun::ReadingRun() = default;
 ReaderCoordinator::ReadingRun::~ReadingRun() = default;
 
+void ReaderCoordinator::setOpeningSuspendGuard(bool active, const char *reason)
+{
+    if (openingSuspendGuard == active)
+        return;
+    openingSuspendGuard = active;
+    if (active)
+        openingSuspendTimer.start();
+    kobalt::diagnostic("opening-standby-guard",
+                       { { "active", active },
+                         { "reason", QString::fromLatin1(reason) },
+                         { "elapsed_ms", !active && openingSuspendTimer.isValid()
+                                                 ? openingSuspendTimer.nsecsElapsed() / 1e6
+                                                 : 0.0 } }, false);
+}
+
 ReaderCoordinator::ReaderCoordinator(ReaderEnvironment &environment, CoordinatorBindings bindings,
                                      QObject *parent)
     : QObject(parent),
@@ -157,7 +172,10 @@ ReaderCoordinator::ReaderCoordinator(ReaderEnvironment &environment, Coordinator
     };
     lifecycle->readerInputActive = [this] { return run.reader && run.reader->isVisible(); };
     lifecycle->beforeStandby = [this] {
-        return busy || !run.reader || run.reader->flushBeforeStandby();
+        // A busy opening is not a reason to allow standby: Nickel may otherwise
+        // suspend between the progress screen and the reader's first paint.
+        return !openingSuspendGuard
+                && (busy || !run.reader || run.reader->flushBeforeStandby());
     };
     lifecycle->sleepWorkPending = [this] {
         return run.reader && (run.reader->pendingNetworkSync() || run.reader->pendingStorageSave());
@@ -402,6 +420,7 @@ bool ReaderCoordinator::begin(const RetainOpening &retainOpening)
     }
     run.opening = std::move(request);
     busy = true;
+    setOpeningSuspendGuard(true, "opening-accepted");
     watch();
     run.openingTimer.start();
     run.openingTimings = {};
@@ -640,6 +659,7 @@ void ReaderCoordinator::drainReadingJobs(std::function<void()> finished)
 
 void ReaderCoordinator::disposeForTransition(std::function<void()> finished, bool nativeAllowed)
 {
+    setOpeningSuspendGuard(false, "transition");
     authorization->end();
     if (run.fallbackAlert)
         run.fallbackAlert->reject();
@@ -711,6 +731,7 @@ void ReaderCoordinator::finishDisposal(const QString &finalStatus, bool nativeAl
 
 void ReaderCoordinator::release(bool endAuthorization)
 {
+    setOpeningSuspendGuard(false, "release");
     if (endAuthorization)
         authorization->end();
     ++generation;
@@ -1114,6 +1135,7 @@ void ReaderCoordinator::showReader()
         QCoreApplication::sendPostedEvents(reader, QEvent::UpdateLater);
         QCoreApplication::sendPostedEvents(reader, QEvent::UpdateRequest);
         guard->hideLoading();
+        guard->setOpeningSuspendGuard(false, "reader-visible");
         guard->run.openingTimings["total_ms"] = guard->run.openingTimer.elapsed();
         guard->status("reading");
         // A sync can finish while the book opens.
