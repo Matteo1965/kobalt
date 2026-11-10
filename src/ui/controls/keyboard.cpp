@@ -580,7 +580,9 @@ private:
                 const auto shown =
                         caseMode != Case::Lower && !symbolPage ? character.toUpper() : character;
                 key->setProperty("keyboard.character", shown);
-                key->setText(shown == "&" ? QStringLiteral("&&") : shown);
+                // These keys are painted by Kobalt, not a mnemonic-aware menu.
+                // Doubling the ampersand would render two literal characters.
+                key->setText(shown);
                 characterFont(key);
                 key->setVisible(!shown.isEmpty());
                 const int columns = symbolPage ? (rows[row].size() <= 10 ? 10 : 14)
