@@ -225,16 +225,26 @@ Reader::Reader(std::unique_ptr<kobalt::ReadingBook> openedBook,
          { &kosyncDeadline, &kosyncOpeningGrace, &kosyncReaderRetry, &renderNoticeTimer,
            &resizeTimer, &annotationModeHide, &brightnessHide, &lightFeedback })
         timer->setParent(this);
+    // Keep book-open timing breakdowns available to the existing reader-shown
+    // diagnostic. In particular, the 100%-to-page delay can be in GUI setup,
+    // after the publication/CREngine progress indicator has completed.
+    QElapsedTimer openingPart;
+    openingPart.start();
     presentation = services.presentation(this);
     Q_ASSERT(presentation);
+    openingStages["build_presentation_ms"] = openingPart.nsecsElapsed() / 1e6;
+    openingPart.restart();
     dictionary = services.dictionary();
     if (services.downloadableDictionaries)
         dictionary = std::make_unique<kobalt::DictionaryManager>(
                 book->paths().directory + "/dictionaries", std::move(dictionary));
+    openingStages["build_dictionary_create_ms"] = openingPart.nsecsElapsed() / 1e6;
+    openingPart.restart();
     if (!book->dictionaryChoice().isEmpty()) {
         QString error;
         dictionary->select(book->identity(), book->dictionaryChoice(), &error);
     }
+    openingStages["build_dictionary_select_ms"] = openingPart.nsecsElapsed() / 1e6;
     kobalt::platform::setReaderRefreshWindow(this);
     qApp->installEventFilter(this);
     setWindowModality(Qt::ApplicationModal);
