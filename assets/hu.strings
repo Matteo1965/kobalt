@@ -208,6 +208,7 @@
 "search_panel.result_range" = "Találatok: %1–%2";
 "bookmarks.previous" = "Előző könyvjelzők";
 "bookmarks.next" = "Következő könyvjelzők";
+"finish.dont_ask_again" = "Ennél a könyvnél ne kérdezd újra";
 "finish.prompt" = "Befejezted a könyvet?";
 "finish.still_reading" = "Még olvasom";
 "finish.mark_finished" = "Megjelölés befejezettként";
