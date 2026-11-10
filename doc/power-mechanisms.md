@@ -11,6 +11,17 @@ Firmware 4.x runs the Qt 5 package (`platforms/kobo/nickel-qt5/`). Firmware 5.x 
 - **Timers stop with the reader.** Timers do not fire while the kernel is suspended. Most of Kobalt's timers also stop when the reader hides or sleeps.
 - **The page turn is sacred.** Kobalt never waits for storage or another thread on the main thread while the user can turn a page. Turning Wi-Fi off is the one radio action that waits. It happens before the reader takes input, at sleep or at close, except when a KOSync sync that turned Wi-Fi on ends while the reader takes input; see [When Kobalt turns Wi-Fi off](#when-kobalt-turns-wi-fi-off). See [the main-thread guard](validation.md#main-thread-guard).
 
+## Opening-only standby protection
+
+While a native Kobalt opening is accepted, the Kobo coordinator temporarily declines
+Nickel's automatic standby permission through the existing `NativeLifecycle::canSuspend()`
+hook. The protection begins before the opening view is shown and ends after the
+first reader view has been shown and the loading view dismissed. Cancellation,
+failure, USB, sleep and shutdown transitions also release the protection.
+It does not disable the normal sleep policy after opening and does not block
+explicit power transitions. Diagnostics emit `opening-standby-guard` with
+`active`, `reason` and `elapsed_ms` fields when the protection changes.
+
 ## Timers that repeat while reading
 
 While a book is open and the device is awake, Kobalt wakes once a minute, just after the wall-clock minute changes. That one tick does all of the periodic work:

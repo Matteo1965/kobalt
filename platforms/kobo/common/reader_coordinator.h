@@ -112,6 +112,10 @@ private:
     void updateOpening(kobalt::OpeningStage stage, int percent);
     unsigned generation = 0;
     bool busy = false;
+    // Only block automatic standby between accepted book opening and visible reading.
+    bool openingSuspendGuard = false;
+    QElapsedTimer openingSuspendTimer;
+    void setOpeningSuspendGuard(bool active, const char *reason);
     bool profilePrepared = false;
     // Shown by the next reader: a saved-data reset, or a benchmark result that
     // no reader was open to show.
