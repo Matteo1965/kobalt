@@ -1348,6 +1348,23 @@ void Reader::buildSettings()
         manager->setLanguage(session->state().value("language").toString());
         const auto catalog = kobalt::DictionaryManager::catalog();
         dictionarySettings->setCatalog(catalog);
+        if (book->dictionaryChoice().startsWith("downloaded:"))
+            dictionarySettings->setSelectedDictionary(book->dictionaryChoice().mid(11));
+        dictionarySettings->selectRequested = [this, manager, dictionarySettings](
+                                                     const QString &id) {
+            const QString choice = "downloaded:" + id;
+            QString error;
+            if (manager->select(book->identity(), choice, &error)
+                && book->saveDictionaryChoice(choice)) {
+                dictionarySettings->setSelectedDictionary(id);
+                dictionaryPanel->setChoices(manager->choices());
+            } else {
+                settingsError->setText(
+                        error.isEmpty() ? strings::get("reader.could_not_save_reader_settings")
+                                        : error);
+                settingsError->show();
+            }
+        };
         auto updateDictionaries = [this, manager, dictionarySettings, catalog,
                                    previous = QSet<QString>{},
                                    previouslyLocal = QSet<QString>{},
