@@ -207,9 +207,9 @@ private:
         if (ui::interfaceTextWidth(unitText, unitMetrics) > unitWidth) {
             if (unitText == strings::get("stats.pages_left")
                 || unitText == strings::get("stats.page_left")) {
-                unitText = QStringLiteral("lap hátra");
+                unitText = strings::get("stats.pages_left_compact");
                 if (ui::interfaceTextWidth(unitText, unitMetrics) > unitWidth)
-                    unitText = QStringLiteral("lap");
+                    unitText = strings::get("stats.page_unit_short");
             } else {
                 unitText = ui::elideInterfaceText(unitText, unitMetrics, unitWidth);
             }
