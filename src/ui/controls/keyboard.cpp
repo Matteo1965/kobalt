@@ -220,7 +220,7 @@ public:
         lastRow->insertWidget(1, shift);
         lastRow->insertWidget(lastRow->count() - 1, erase);
         const bool hungarian = letterRows.first().size() == 13;
-        actions->addWidget(symbols, 2);
+        actions->addWidget(symbols, hungarian ? 2 : 1);
         actions->addWidget(minus, 1);
         actions->addWidget(space, hungarian ? 5 : 4);
         actions->addWidget(comma, 1);
