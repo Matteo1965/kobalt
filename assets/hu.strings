@@ -796,3 +796,4 @@
 "sleep.time_left" = "%1 van hátra";
 "stats.pages_left_compact" = "lap hátra";
 "stats.page_unit_short" = "lap";
+"sleep.time_left_minutes" = "%1";
