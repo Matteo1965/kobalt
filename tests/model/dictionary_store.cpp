@@ -538,8 +538,8 @@ int main(int argc, char **argv)
         add(QString::fromUtf8("kabátja").toUtf8(),
             stemDefinition.size(), exactDefinition.size());
         save(folder + "/hu-hu.ifo",
-             "StarDict's dict ifo file\\nversion=2.4.2\\nwordcount=3\\nidxfilesize="
-                     + QByteArray::number(index.size()) + "\\nsametypesequence=h\\n");
+             "StarDict's dict ifo file\nversion=2.4.2\nwordcount=3\nidxfilesize="
+                     + QByteArray::number(index.size()) + "\nsametypesequence=h\n");
         save(folder + "/hu-hu.idx", index);
         save(folder + "/hu-hu.dict.dz", dictzip(definitions));
         QString error;
