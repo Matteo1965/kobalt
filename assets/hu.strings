@@ -121,8 +121,8 @@
 "chapter_contents.page" = "Oldal";
 /* Arguments: %1, %2 */
 "stats.page_of" = "%1 / %2. oldal";
-"stats.pages_left" = "oldal van hátra";
-"stats.page_left" = "oldal van hátra";
+"stats.pages_left" = "lap van hátra";
+"stats.page_left" = "lap van hátra";
 /* Arguments: %1, %2 */
 "reader.menu_page_of" = "%1 / %2. OLDAL";
 "reader.font_thickness" = "Vastagság: ";
@@ -769,9 +769,9 @@
 "settings.time_remaining_approximate" = "Közelítő";
 "settings.time_remaining_detailed_description" = "Részletes időbecslés, például: „83 perc van hátra”.";
 "settings.time_remaining_approximate_description" = "Kerekített időbecslés, például: „kb. 2 óra van hátra”.";
-"time_remaining.about_minutes" = "körülbelül %1 perc";
-"time_remaining.about_hour" = "körülbelül egy óra";
-"time_remaining.about_hours" = "körülbelül %1 óra";
+"time_remaining.about_minutes" = "kb. %1 perc";
+"time_remaining.about_hour" = "kb. 1 óra";
+"time_remaining.about_hours" = "kb. %1 óra";
 "buttons.title" = "Lapozógombok beállítása";
 "buttons.upper" = "Felső gomb";
 "buttons.lower" = "Alsó gomb";
@@ -792,3 +792,5 @@
 
 "dictionaries.select" = "Kiválasztás";
 "dictionaries.selected" = "Kiválasztva";
+"sleep.sleeping" = "Alvó mód";
+"sleep.time_left" = "%1 van hátra";
