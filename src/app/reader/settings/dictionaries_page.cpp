@@ -183,6 +183,14 @@ void DictionariesPage::setCatalog(const QVector<DownloadDictionary> &value)
     redraw();
 }
 
+void DictionariesPage::setLocalDictionaryIds(const QSet<QString> &ids)
+{
+    if (localIds == ids)
+        return;
+    localIds = ids;
+    redraw();
+}
+
 void DictionariesPage::setStorage(const QHash<QString, qint64> &sizes, qint64 available,
                                   const QString &)
 {
@@ -467,8 +475,10 @@ void DictionariesPage::redraw()
         auto *action = created ? nullptr : static_cast<ui::Button *>(layout->itemAt(1)->widget());
         if (created)
             action = new ui::Button(line);
-        action->setText(active              ? strings::get("dictionaries.stop")
-                                : installed ? strings::get("dictionaries.remove")
+        const bool local = localIds.contains(entry.id);
+        action->setText(local              ? strings::get("dictionaries.local")
+                        : active            ? strings::get("dictionaries.stop")
+                        : installed         ? strings::get("dictionaries.remove")
                                             : strings::get("dictionaries.get"));
         action->setObjectName(QString("rrDictionaryAction%1").arg(index));
         if (created) {
@@ -476,6 +486,8 @@ void DictionariesPage::redraw()
             connect(action, &QPushButton::clicked, this, [this, id = entry.id] {
                 const bool active = id == transferId, installed = installedIds.contains(id);
                 failedId.clear();
+                if (localIds.contains(id))
+                    return;
                 if (active) {
                     if (cancelRequested)
                         cancelRequested();
@@ -519,7 +531,7 @@ void DictionariesPage::redraw()
                 action->clearIconConfiguration();
         }
         action->setIconSize(QSize(ui::px(28), ui::px(28)));
-        action->setEnabled(installed || active || !working);
+        action->setEnabled(!local && (installed || active || !working));
         layout->activate();
         if (active) {
             const auto status = unpacking ? strings::get("dictionaries.installing")
