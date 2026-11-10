@@ -52,9 +52,10 @@ QStringList alphabetRows(const QString &language)
     // Direct Hungarian QWERTZ keys, including all nine accented vowels.
     // This follows Kobalt's interface language, not Nickel's system locale.
     if (language == QLatin1String("hu"))
-        return { QString::fromUtf8("qwertzuiopőú"),
+        return { QString::fromUtf8("0123456789öüó"),
+                 QString::fromUtf8("qwertzuiopőú"),
                  QString::fromUtf8("asdfghjkléáű"),
-                 QString::fromUtf8("íyxcvbnmöóü"), QString() };
+                 QString::fromUtf8("íyxcvbnm") };
     switch (QLocale().language()) {
     case QLocale::German:
         return { "", "qwertzuiop", "asdfghjkl", "yxcvbnm" };
@@ -183,6 +184,12 @@ public:
             render();
         });
         auto *space = new Button(strings::get("keyboard.space"), panel);
+        auto *minus = new Button(QStringLiteral("-"), panel);
+        auto *comma = new Button(QStringLiteral(","), panel);
+        auto *period = new Button(QStringLiteral("."), panel);
+        minus->setObjectName("widgetKeyboardMinus");
+        comma->setObjectName("widgetKeyboardComma");
+        period->setObjectName("widgetKeyboardPeriod");
         erase = new Button(panel);
         done = new Button(strings::get("keyboard.done"), panel);
         for (const auto &item :
@@ -203,7 +210,8 @@ public:
         done->setObjectName("widgetKeyboardDone");
         done->setProperty("reader_primary_action", true);
         for (auto *key :
-             std::array<QPushButton *, 5>{ shift, symbols, space, erase, done.data() }) {
+             std::array<QPushButton *, 8>{ shift, symbols, minus, space, comma, period,
+                                           erase, done.data() }) {
             key->installEventFilter(this);
             key->setFocusPolicy(Qt::NoFocus);
             key->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -211,15 +219,31 @@ public:
         }
         lastRow->insertWidget(1, shift);
         lastRow->insertWidget(lastRow->count() - 1, erase);
-        actions->addWidget(symbols, 1);
-        actions->addWidget(space, 4);
+        const bool hungarian = letterRows.first().size() == 13;
+        actions->addWidget(symbols, 2);
+        actions->addWidget(minus, 1);
+        actions->addWidget(space, hungarian ? 5 : 4);
+        actions->addWidget(comma, 1);
+        actions->addWidget(period, 1);
         actions->addWidget(done, 2);
+        minus->setVisible(hungarian);
+        comma->setVisible(hungarian);
+        period->setVisible(hungarian);
         layout->setStretch(layout->count() - 1, 1);
         render();
         QObject::connect(space, &QPushButton::clicked, this, [this] {
             closeAccents();
             insert(QStringLiteral(" "), true);
         });
+        for (const auto &item : { qMakePair(minus, QStringLiteral("-")),
+                                   qMakePair(comma, QStringLiteral(",")),
+                                   qMakePair(period, QStringLiteral(".")) }) {
+            QObject::connect(item.first, &QPushButton::clicked, this,
+                             [this, character = item.second] {
+                                 closeAccents();
+                                 insert(character, true);
+                             });
+        }
         QObject::connect(erase, &QPushButton::clicked, this, [this] {
             closeAccents();
             endShiftTap();
@@ -527,8 +551,8 @@ private:
                     (panel->width() - margins.left() - margins.right() - (columns - 1) * spacing)
                             / columns);
         };
-        const bool hungarianLayout = letterRows.first().size() == 12;
-        const int width = widthFor(symbolPage ? 14 : (hungarianLayout ? 12 : 10));
+        const bool hungarianLayout = letterRows.first().size() == 13;
+        const int width = widthFor(symbolPage ? 14 : (hungarianLayout ? 13 : 10));
         // A narrow screen gives the symbol rows of ten the width of letter
         // keys. Only the longer punctuation row keeps the narrow keys.
         const bool narrow = isNarrowWidth(panel->width(), density());
@@ -537,8 +561,10 @@ private:
                                 (panel->height() - margins.top() - margins.bottom()
                                  - (rowCount - 1) * panel->layout()->spacing())
                                         / rowCount);
-        shift->setFixedWidth(width * 3 / 2);
-        erase->setFixedWidth(width * 3 / 2);
+        shift->setFixedWidth(hungarianLayout && !symbolPage ? widthFor(12) * 2
+                                                              : width * 3 / 2);
+        erase->setFixedWidth(hungarianLayout && !symbolPage ? widthFor(12) * 2
+                                                              : width * 3 / 2);
         shift->setFixedHeight(height);
         erase->setFixedHeight(height);
         // Style the keys before showing their row. Showing polishes them, and
@@ -554,12 +580,13 @@ private:
                 key->setText(shown == "&" ? QStringLiteral("&&") : shown);
                 characterFont(key);
                 key->setVisible(!shown.isEmpty());
-                key->setFixedSize(narrow && rows[row].size() <= 10 ? widthFor(10) : width, height);
+                const int columns = symbolPage ? (rows[row].size() <= 10 ? 10 : 14)
+                                                : hungarianLayout ? (row == 0 ? 13 : 12)
+                                                                  : 10;
+                key->setFixedSize((narrow || hungarianLayout) ? widthFor(columns) : width,
+                                  height);
             }
-            // Hungarian has three full alphabet rows and a separate Shift/Delete row.
-            rowWidgets[row]->setVisible(!rows[row].isEmpty()
-                                        || (hungarianLayout && !symbolPage
-                                            && row == rows.size() - 1));
+            rowWidgets[row]->setVisible(!rows[row].isEmpty());
         }
     }
 
