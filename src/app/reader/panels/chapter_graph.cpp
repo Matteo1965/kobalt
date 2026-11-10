@@ -199,17 +199,24 @@ private:
                             chapters::figureBaseline - ui::interfaceLineAscent(figureMetrics),
                             figureWidth, ui::interfaceLineHeight(figureMetrics));
         const int unitLeft = chrome::inset + figureWidth + chapters::unitGap;
-        // A large figure keeps every digit. A unit that does not fit beside it
-        // takes two lines, the last on the figure's baseline, as in a narrow
-        // cell on a phone; only then does it shorten.
+        // Keep the unit on one baseline with its number. On narrow Hungarian
+        // screens, wrapping it above the figure overlaps the BOOK caption and
+        // Qt5 may paint the line-break as a stray glyph. Shorten instead.
         const int unitWidth = qMax(1, width() - chrome::inset - unitLeft);
-        const auto unitText = twoLines(unitMetrics, unitValue, unitWidth);
-        const int unitLines = unitText.count('\n') + 1;
-        const int lineHeight = ui::interfaceLineHeight(unitMetrics);
+        QString unitText = unitValue;
+        if (ui::interfaceTextWidth(unitText, unitMetrics) > unitWidth) {
+            if (unitText == strings::get("stats.pages_left")
+                || unitText == strings::get("stats.page_left")) {
+                unitText = QStringLiteral("lap hátra");
+                if (ui::interfaceTextWidth(unitText, unitMetrics) > unitWidth)
+                    unitText = QStringLiteral("lap");
+            } else {
+                unitText = ui::elideInterfaceText(unitText, unitMetrics, unitWidth);
+            }
+        }
         unit->setGeometry(unitLeft,
-                          chapters::figureBaseline - ui::interfaceLineAscent(unitMetrics)
-                                  - (unitLines - 1) * lineHeight,
-                          unitWidth, unitLines * lineHeight);
+                          chapters::figureBaseline - ui::interfaceLineAscent(unitMetrics),
+                          unitWidth, ui::interfaceLineHeight(unitMetrics));
         unit->setText(unitText);
         detail->setGeometry(chrome::inset, chapters::detailTop, inner,
                             ui::interfaceLineHeight(unitMetrics)
