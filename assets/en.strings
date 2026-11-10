@@ -1332,3 +1332,4 @@
 "buttons.volume_note" = "On Android, these mappings use the physical volume buttons.";
 "buttons.while_reading" = "Decide what this hardware button should do when you're reading.";
 "buttons.hardware_title" = "Hardware buttons";
+"dictionaries.local" = "Local";
