@@ -378,23 +378,19 @@ DictionaryResult StarDict::lookup(const QString &word) {
     }
     const QString cleaned = hungarian ? normalized : word;
     const QByteArray key = cleaned.toUtf8();
-    const QByteArray lookupKey = hungarian && cleaned == QStringLiteral("kabátja") ? QByteArray("kabát")
-                               : hungarian && cleaned == QStringLiteral("igazgatónője") ? QStringLiteral("igazgató").toUtf8()
-                               : key;
+    // Do not remap complete dictionary headwords through hard-coded examples.
+    // An exact entry is always more trustworthy than a generated stem.
+    const QByteArray lookupKey = key;
     QElapsedTimer timer;
     timer.start();
     const auto expired = [&]() { return timer.elapsed() >= 3000; };
     const auto probe = [&](const QByteArray &candidate) {
         return candidate.isEmpty() || expired() ? -1 : find(*data->words, data->idx, candidate);
     };
-    auto number = -1;
-    if (hungarian && cleaned == QStringLiteral("kabátja"))
-        number = probe(QByteArray("kabát"));
-    else if (hungarian && cleaned == QStringLiteral("igazgatónője")) {
-        number = probe(QStringLiteral("igazgatónő").toUtf8());
-        if (number < 0) number = probe(QStringLiteral("igazgató").toUtf8());
-    }
-    if (number < 0)
+    // Try the original spelling first; lower-case normalization remains a
+    // fallback for Hungarian lookup, not a reason to lose an exact headword.
+    auto number = probe(word.normalized(QString::NormalizationForm_C).toUtf8());
+    if (number < 0 && hungarian)
         number = probe(lookupKey);
     if (number < 0 && hungarian) {
         for (const auto &ending : {QStringLiteral("ja"), QStringLiteral("je")}) {
@@ -423,7 +419,7 @@ DictionaryResult StarDict::lookup(const QString &word) {
         fallback.start();
         int probes = 0;
         for (const auto &candidate : candidates) {
-            if (probes >= 12 || fallback.elapsed() >= 1200 || expired()) break;
+            if (probes >= 64 || fallback.elapsed() >= 1200 || expired()) break;
             ++probes;
             number = probe(QByteArray(candidate.data(), int(candidate.size())));
             if (number >= 0) break;
