@@ -20,5 +20,6 @@ crengine-image-proportions.patch
 crengine-alternate-layout.patch
 crengine-render-overflow.patch
 crengine-embedded-font-limit.patch
+crengine-empty-pages.patch
 crengine-hungarian-extended.patch
 crengine-hungarian-width.patch
