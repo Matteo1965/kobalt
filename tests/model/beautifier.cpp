@@ -467,8 +467,14 @@ int main(int argc, char **argv)
             "<p class='noind1'><span class='inic'>R</span>"
             "emarkably lengthy introductory prose should remain an independent paragraph "
             "because it continues beyond a single printed line on a narrow display.</p>";
+    // Give the genuine second paragraph an explicit visual gap. Without it,
+    // CREngine may render a paragraph boundary and a hard line break with
+    // identical pixels, making an image-only negative check ambiguous.
+    const QByteArray longContinuation =
+            "<p class='calibre5' style='margin-top:5em'>"
+            "Beyond the valley the traveler discovered a new home and a new beginning.</p>";
     EngineDocument longSeparate(test::readerFonts()), longManuallyJoined(test::readerFonts());
-    require(longSeparate.openResources(fixture(longOpening + continuation, sizes, shortInitialCss),
+    require(longSeparate.openResources(fixture(longOpening + longContinuation, sizes, shortInitialCss),
                                        sizes, { 500, 750 }, {}, &error)
                     && longManuallyJoined.openResources(
                             fixture(longOpening.left(longOpening.size() - 4) + "<br/>"
