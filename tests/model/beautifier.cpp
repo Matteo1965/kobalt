@@ -437,6 +437,47 @@ int main(int argc, char **argv)
     require(imageInitial.applyAppearance({ { "beautifier_initials", true } })
                     && imageInitial.image(0) == imageBefore,
             "Text-initial normalization changed an image initial");
+    // Regression: Calibre-style short paragraph following a large .inic
+    // initial must be continued within the same paragraph after a <br>.
+    // The fixture uses an original short synthetic example, not book text.
+    const QByteArray shortInitialCss =
+            ".inic{float:left;font-size:360%;margin:.18em .02em 0 0}"
+            ".noind1{margin:2.8em 0 0;text-indent:0}"
+            ".calibre5{margin:0;text-indent:1.5em}";
+    const QByteArray shortFirst = "<p class='noind1'><span class='inic'>R</span>aya Elias.</p>";
+    const QByteArray continuation =
+            "<p class='calibre5'>Beyond the valley the traveler discovered a new home and a new beginning.</p>";
+    const QByteArray expectedJoined =
+            "<p class='noind1'><span class='inic'>R</span>aya Elias.<br/>"
+            "Beyond the valley the traveler discovered a new home and a new beginning.</p>";
+    EngineDocument originalShort(test::readerFonts()), manuallyJoined(test::readerFonts());
+    require(originalShort.openResources(fixture(shortFirst + continuation, sizes, shortInitialCss),
+                                        sizes, { 500, 750 }, {}, &error),
+            qPrintable(error));
+    require(manuallyJoined.openResources(fixture(expectedJoined, sizes, shortInitialCss), sizes,
+                                         { 500, 750 }, {}, &error),
+            qPrintable(error));
+    require(originalShort.image(0) == manuallyJoined.image(0),
+            "A short .inic paragraph was not joined to its continuation with a line break");
+    const auto continuationHit = find(originalShort, "Beyond the valley");
+    require(!continuationHit.start.isEmpty(),
+            "Drop-cap continuation disappeared during structural merging");
+    // Longer first paragraphs must not be joined to the next true paragraph.
+    const QByteArray longOpening =
+            "<p class='noind1'><span class='inic'>R</span>"
+            "emarkably lengthy introductory prose should remain an independent paragraph "
+            "because it continues beyond a single printed line on a narrow display.</p>";
+    EngineDocument longSeparate(test::readerFonts()), longManuallyJoined(test::readerFonts());
+    require(longSeparate.openResources(fixture(longOpening + continuation, sizes, shortInitialCss),
+                                       sizes, { 500, 750 }, {}, &error)
+                    && longManuallyJoined.openResources(
+                            fixture(longOpening.left(longOpening.size() - 4) + "<br/>"
+                                            "Beyond the valley the traveler discovered a new home and a new beginning.</p>",
+                                    sizes, shortInitialCss),
+                            sizes, { 500, 750 }, {}, &error),
+            qPrintable(error));
+    require(longSeparate.image(0) != longManuallyJoined.image(0),
+            "A long independent paragraph was unexpectedly merged into an initial");
     QJsonObject prefs;
     appearance::rememberTextLayout(prefs,
                                    { { "font_pixels", 44 },
