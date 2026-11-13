@@ -2,7 +2,7 @@ name: Build and release
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, hungarian-edition-beta8-baseline-check]
     tags: ['v*']
   workflow_dispatch:
 
