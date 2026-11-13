@@ -498,7 +498,7 @@ bool EngineDocument::openSource(std::shared_ptr<ReaderSource> source, QSize size
                 Utf8ToUnicode(lString8(documentCacheName(cacheFingerprint_).toUtf8().constData())));
         properties->setHex(
                 DOC_PROP_FILE_CRC32,
-                documentCacheChecksum(documentCachePolicy() + ":bionic-v3:" + bionic_.toUtf8(),
+                documentCacheChecksum(documentCachePolicy() + ":hu-dropcap-merge-v1:bionic-v3:" + bionic_.toUtf8(),
                                       domVersion_));
         properties->setString(DOC_PROP_FILE_SIZE,
                               lString32::itoa(int(cacheBytes_ < 0                 ? 0
@@ -566,6 +566,110 @@ bool EngineDocument::openSource(std::shared_ptr<ReaderSource> source, QSize size
     }
     applyStyleSheet();
     engine_->Render();
+    // Hungarian Edition: in some EPUBs a short opening paragraph ends before
+    // the drop cap's float has finished. CREngine then lays out the next
+    // paragraph independently, allowing its indent to overlap the initial.
+    // Join only visually confirmed, simple one-line continuations, preserving
+    // the original text nodes and inserting a real line break instead.
+    if (!openedFromCache_ && !beautifierInitials_ && !source_->parent) {
+        auto *doc = engine_->getDocument();
+        const auto pId = doc->getElementNameIndex("p");
+        const auto brId = doc->getElementNameIndex("br");
+        const auto idAttr = doc->getAttrNameIndex("id");
+        auto firstText = [](ldomNode *node) -> ldomNode * {
+            if (!node) return nullptr;
+            QVector<ldomNode *> todo{node};
+            int limit = 64;
+            while (!todo.isEmpty() && --limit > 0) {
+                auto *item = todo.takeLast();
+                if (item->isText() && !qstring(item->getText()).trimmed().isEmpty())
+                    return item;
+                for (int j = item->getChildCount() - 1; j >= 0; --j)
+                    todo.append(item->getChildNode(j));
+            }
+            return nullptr;
+        };
+        auto glyphRect = [](ldomNode *node, bool last) -> lvRect {
+            lvRect rectangle{};
+            if (!node || !node->isText() || node->getText().empty())
+                return rectangle;
+            const int offset = last ? node->getText().length() - 1 : 0;
+            ldomXPointerEx start(ldomXPointer(node, offset));
+            ldomXPointerEx end(ldomXPointer(node, offset + 1));
+            LVArray<lvRect> rects;
+            ldomXRange(start, end).getSegmentRects(rects);
+            if (rects.length())
+                rectangle = rects[0];
+            return rectangle;
+        };
+        QVector<ldomNode *> pending;
+        if (auto *root = doc->getRootNode())
+            pending.append(root);
+        int visited = 0, repaired = 0;
+        while (!pending.isEmpty() && ++visited < 120000 && repaired < 128) {
+            auto *parent = pending.takeLast();
+            if (!parent || !parent->isElement())
+                continue;
+            for (int i = 0; i + 1 < parent->getChildCount(); ++i) {
+                auto *first = parent->getChildNode(i);
+                auto *second = parent->getChildNode(i + 1);
+                if (!first || !second || !first->isElement() || !second->isElement()
+                    || first->getNodeId() != pId || second->getNodeId() != pId
+                    || first->hasAttribute(idAttr) || second->hasAttribute(idAttr)
+                    || first->getChildCount() != 2 || second->getChildCount() != 1)
+                    continue;
+                auto *initial = first->getChildNode(0);
+                auto *after = first->getChildNode(1);
+                auto *next = second->getChildNode(0);
+                if (!initial || !initial->isElement())
+                    continue;
+                // Restrict the transformation to a floated opening glyph, not
+                // to arbitrary large text, quotation blocks or headings.
+                const auto initialStyle = initial->getStyle();
+                const bool floated = !initialStyle.isNull()
+                        && initialStyle->float_ == css_f_left;
+                const QString initialName = qstring(initial->getNodeName()).toLower();
+                const QString initialClass = qstring(initial->getAttributeValue("class")).toLower();
+                const bool decorated = initialName == "floatbox"
+                        || initialClass.contains("dropcap")
+                        || initialClass.contains("drop-cap")
+                        || initialClass.contains("initial");
+                if (!floated && !decorated)
+                    continue;
+                auto *initialText = firstText(initial);
+                auto *afterText = firstText(after);
+                auto *nextText = firstText(next);
+                if (!initialText || !afterText || !nextText)
+                    continue;
+                const auto initialBox = glyphRect(initialText, false);
+                const auto beginFirst = glyphRect(afterText, false);
+                const auto endFirst = glyphRect(afterText, true);
+                const auto nextBox = glyphRect(nextText, false);
+                const int lineHeight = endFirst.bottom - endFirst.top;
+                const int initialHeight = initialBox.bottom - initialBox.top;
+                if (lineHeight <= 0 || initialHeight < lineHeight * 3 / 2
+                    || beginFirst.top != endFirst.top
+                    || nextBox.bottom <= nextBox.top || nextBox.top <= beginFirst.top)
+                    continue;
+                const bool compact = paragraphSpacing_ >= 0 && paragraphSpacing_ <= 50
+                        && paragraphIndent_ >= 0 && paragraphIndent_ <= 100;
+                if (nextBox.top >= initialBox.bottom
+                    && !(compact && nextBox.top - initialBox.bottom <= lineHeight))
+                    continue;
+                if (!first->insertChildElement(brId))
+                    continue;
+                second->moveItemsTo(first, 0, 0);
+                parent->removeChild(i + 1);
+                ++repaired;
+            }
+            for (int i = parent->getChildCount() - 1; i >= 0; --i)
+                pending.append(parent->getChildNode(i));
+        }
+        if (repaired) {
+            doc->forceReinitStyles();
+            engine_->Render();
+        }
+    }
     openingTimes_["model_paginate_ms"] = double(phase.restart());
     if (!resourceError().isEmpty()) {
         const auto detail = resourceError();
