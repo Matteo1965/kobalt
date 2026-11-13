@@ -21,6 +21,7 @@ crengine-alternate-layout.patch
 crengine-render-overflow.patch
 crengine-embedded-font-limit.patch
 crengine-empty-pages.patch
+crengine-search-preparation.patch
 crengine-figure-breaks.patch
 crengine-hungarian-extended.patch
 crengine-hungarian-width.patch
