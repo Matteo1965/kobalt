@@ -1068,7 +1068,7 @@ bool EngineDocument::applyAppearance(const QJsonObject &settings, QSize size,
         if (!cacheFingerprint_.isEmpty())
             engine_->getDocProps()->setHex(
                     DOC_PROP_FILE_CRC32,
-                    documentCacheChecksum(documentCachePolicy() + ":hu-dropcap-merge-v1:bionic-v3:" + bionic_.toUtf8(),
+                    documentCacheChecksum(documentCachePolicy() + ":hu-dropcap-merge-v2:bionic-v3:" + bionic_.toUtf8(),
                                           domVersion_));
         engine_->getDocument()->getProps()->setInt("kobalt.bionic.mode", bionic_ == "bold" ? 1 : 0);
         engine_->requestRender();
