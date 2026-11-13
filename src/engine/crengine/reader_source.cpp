@@ -34,6 +34,96 @@ lString32 cre(const QString &s)
     return Utf8ToUnicode(s.toUtf8().constData());
 }
 
+// Rejoin short publisher-separated introductory lines while their floated initial
+// is still active. Do this before pagination: rendered floatBox wrappers and
+// geometry do not reliably identify the original XHTML paragraph boundary.
+int repairShortDropcapParagraphs(ldomDocument *doc)
+{
+    if (!doc || !doc->getRootNode())
+        return 0;
+    const int pId = doc->getElementNameIndex("p");
+    const int brId = doc->getElementNameIndex("br");
+    const int idAttr = doc->getAttrNameIndex("id");
+    QVector<ldomNode *> parents{doc->getRootNode()};
+    int visited = 0, repairs = 0;
+    while (!parents.isEmpty() && ++visited < 120000 && repairs < 128) {
+        auto *parent = parents.takeLast();
+        if (!parent || !parent->isElement())
+            continue;
+        for (int i = 0; i + 1 < parent->getChildCount(); ++i) {
+            auto *first = parent->getChildNode(i);
+            auto *second = parent->getChildNode(i + 1);
+            if (!first || !second || !first->isElement() || !second->isElement()
+                || first->getNodeId() != pId || second->getNodeId() != pId
+                || first->hasAttribute(idAttr) || second->hasAttribute(idAttr))
+                continue;
+
+            // A decorated initial must be close to the start of the first
+            // paragraph. Count text nodes, not rendering wrappers, so EPUBs
+            // that CREngine internally wraps in spans also work.
+            int firstLength = 0, secondLength = 0;
+            int initialOffset = -1;
+            bool unsafe = false;
+            QVector<ldomNode *> nodes{first};
+            int scanned = 0;
+            while (!nodes.isEmpty() && ++scanned < 256) {
+                auto *node = nodes.takeLast();
+                if (node->isText()) {
+                    firstLength += qstring(node->getText()).trimmed().size();
+                    continue;
+                }
+                if (!node->isElement())
+                    continue;
+                const QString name = qstring(node->getNodeName()).toLower();
+                const QString cls = qstring(node->getAttributeValue("class")).toLower();
+                if (name == "a" || name == "img" || name == "br" || name == "table"
+                    || name == "figure" || node != first && node->hasAttribute(idAttr)) {
+                    unsafe = true;
+                    break;
+                }
+                const bool hasInitial = cls.contains("inic") || cls.contains("dropcap")
+                        || cls.contains("drop-cap") || cls.contains("initial");
+                if (hasInitial && initialOffset < 0)
+                    initialOffset = firstLength;
+                for (int j = node->getChildCount() - 1; j >= 0; --j)
+                    nodes.append(node->getChildNode(j));
+            }
+            if (unsafe || scanned >= 256 || initialOffset < 0 || initialOffset > 2
+                || firstLength < 8 || firstLength > 64)
+                continue;
+            nodes = {second};
+            scanned = 0;
+            while (!nodes.isEmpty() && ++scanned < 256) {
+                auto *node = nodes.takeLast();
+                if (node->isText()) {
+                    secondLength += qstring(node->getText()).trimmed().size();
+                    continue;
+                }
+                if (!node->isElement())
+                    continue;
+                const QString name = qstring(node->getNodeName()).toLower();
+                if (name == "a" || name == "img" || name == "table" || name == "figure"
+                    || node != second && node->hasAttribute(idAttr)) {
+                    unsafe = true;
+                    break;
+                }
+                for (int j = node->getChildCount() - 1; j >= 0; --j)
+                    nodes.append(node->getChildNode(j));
+            }
+            if (unsafe || scanned >= 256 || secondLength < 8)
+                continue;
+            if (!first->insertChildElement(brId))
+                continue;
+            second->moveItemsTo(first, 0, 0);
+            parent->removeChild(i + 1);
+            ++repairs;
+        }
+        for (int i = parent->getChildCount() - 1; i >= 0; --i)
+            parents.append(parent->getChildNode(i));
+    }
+    return repairs;
+}
+
 constexpr int maxBook = 64 * 1024 * 1024;
 
 class ResourceStream : public LVNamedStream
@@ -498,7 +588,7 @@ bool EngineDocument::openSource(std::shared_ptr<ReaderSource> source, QSize size
                 Utf8ToUnicode(lString8(documentCacheName(cacheFingerprint_).toUtf8().constData())));
         properties->setHex(
                 DOC_PROP_FILE_CRC32,
-                documentCacheChecksum(documentCachePolicy() + ":hu-dropcap-merge-v1:bionic-v3:" + bionic_.toUtf8(),
+                documentCacheChecksum(documentCachePolicy() + ":hu-dropcap-merge-v2:bionic-v3:" + bionic_.toUtf8(),
                                       domVersion_));
         properties->setString(DOC_PROP_FILE_SIZE,
                               lString32::itoa(int(cacheBytes_ < 0                 ? 0
@@ -558,6 +648,9 @@ bool EngineDocument::openSource(std::shared_ptr<ReaderSource> source, QSize size
             stylesheet->pop();
         }
         markBodyAlignment(document);
+        // Preserve the first paragraph's active drop-cap float across a short
+        // publisher-created paragraph break by replacing it with <br>.
+        repairShortDropcapParagraphs(document);
         markBeautifierContent(document);
         markChapterLeadingImages(engine_.get());
         markKoboLinkDecorations();
