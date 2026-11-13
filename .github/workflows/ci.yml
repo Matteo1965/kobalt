@@ -41,6 +41,8 @@ jobs:
         with:
           persist-credentials: false
       - name: Build and run native tests (all variants on tags)
+        env:
+          KOBALT_TEST_INTERFACE_LANGUAGE: en
         run: bash platforms/ci/native-tests.sh
 
   build-kobo:
