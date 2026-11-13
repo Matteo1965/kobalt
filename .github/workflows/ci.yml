@@ -2,7 +2,7 @@ name: Build and release
 
 on:
   push:
-    branches: [main, develop, hungarian-edition-beta8-integration]
+    branches: [main, develop, hungarian-edition-beta8-integration, hungarian-edition-beta8-dropcap-diagnostic]
     tags: ['v*']
   workflow_dispatch:
 
@@ -59,14 +59,14 @@ jobs:
         run: bash platforms/ci/build.sh qt5
       - name: Name ZIP for this Hungarian Edition build
         run: |
-          name="Kobalt-Hungarian-Edition-Beta8-Build-${GITHUB_RUN_NUMBER}-Run-${GITHUB_RUN_ID}-Qt5"
+          name="Kobalt-Hungarian-Edition-Beta8-Dropcap-Diagnostic-Build-${GITHUB_RUN_NUMBER}-Run-${GITHUB_RUN_ID}-Qt5"
           mv build/release/Kobalt-qt5.zip "build/release/${name}.zip"
           echo "ARTIFACT_NAME=${name}" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: |
-            build/release/Kobalt-Hungarian-Edition-Beta8-Build-*-Run-*-Qt5.zip
+            build/release/Kobalt-Hungarian-Edition-Beta8-Dropcap-Diagnostic-Build-*-Run-*-Qt5.zip
             build/release/build-qt5.json
           if-no-files-found: error
           compression-level: 0
