@@ -41,6 +41,8 @@ jobs:
         with:
           persist-credentials: false
       - name: Build and run native tests (all variants on tags)
+        env:
+          JOBS: '2'
         run: bash platforms/ci/native-tests.sh
 
   build-kobo:
