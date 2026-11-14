@@ -14,6 +14,7 @@
 #include <QElapsedTimer>
 #include <QDir>
 #include <QFileInfo>
+#include <QFile>
 #include <textlang.h>
 #include <QRegularExpression>
 #include <QXmlStreamReader>
@@ -330,6 +331,17 @@ private:
     std::shared_ptr<ResourceCache> resources;
 };
 
+// Temporary Build-only diagnostic for the reported Calibre drop-cap case.
+ // Never record book text; only transformation flags and cache status.
+void writeDropcapProbe(const QByteArray &event, bool truncate = false)
+{
+    QFile file(QStringLiteral("/mnt/onboard/.adds/kobalt/dropcap-probe.txt"));
+    if (file.open(QIODevice::WriteOnly | (truncate ? QIODevice::Truncate : QIODevice::Append))) {
+        file.write(event);
+        file.write("\\n", 1);
+    }
+}
+
 class ContentContainer : public LVContainer
 {
 public:
@@ -384,6 +396,19 @@ public:
             return stream;
         }
         auto cleaned = withShortDropcapContinuations(withoutKoboStyleHacks(bytes));
+        // This marker is deliberately limited to the one EPUB chapter being
+        // investigated, and contains no text from the publication.
+        if (bytes.contains(QStringLiteral("Szíriában született").toUtf8())) {
+            const bool joined = cleaned.contains(
+                    QStringLiteral("Elias.<br/>Szíriában született").toUtf8());
+            const QByteArray event =
+                    QByteArray("TARGET_XHTML path=") + QFileInfo(path).fileName().toUtf8()
+                    + " bytes_changed=" + QByteArray::number(cleaned != bytes)
+                    + " joined=" + QByteArray::number(joined)
+                    + " source_bytes=" + QByteArray::number(bytes.size())
+                    + " transformed_bytes=" + QByteArray::number(cleaned.size());
+            writeDropcapProbe(event);
+        }
         if (cleaned == bytes) {
             stream->SetPos(0);
             return stream;
@@ -569,6 +594,7 @@ bool EngineDocument::openSource(std::shared_ptr<ReaderSource> source, QSize size
             *error = detail.isEmpty() ? strings::get(reason) : detail;
         return false;
     };
+    writeDropcapProbe("OPEN_BEGIN diagnostic=v1", true);
     openingTimes_ = {};
     QElapsedTimer phase;
     phase.start();
@@ -627,6 +653,9 @@ bool EngineDocument::openSource(std::shared_ptr<ReaderSource> source, QSize size
         // from the cache arrives rendered.
         openedFromCache_ = loaded && cache.enabled() && engine_->getDocument()->isRendered();
     }
+    writeDropcapProbe(QByteArray("LOAD_DOCUMENT cache_hit=")
+                      + QByteArray::number(openedFromCache_)
+                      + " loaded=" + QByteArray::number(loaded));
     openingTimes_["model_cache_hit"] = openedFromCache_;
     if (!loaded) {
         const auto resourceFailure = resourceError();
