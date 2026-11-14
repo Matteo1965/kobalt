@@ -31,6 +31,8 @@ jobs:
         run: echo "version=$(bash platforms/ci/version.sh)" >> "$GITHUB_OUTPUT"
       - name: Check release helpers
         run: bash platforms/ci/test.sh
+      - name: Hungarian hyphenation regression tests (Beta 5 restored)
+        run: python3 -m unittest discover -s tests/hyphenation -p 'test_hungarian_*.py' -v
 
   native-tests:
     needs: validation
