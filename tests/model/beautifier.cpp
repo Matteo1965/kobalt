@@ -482,7 +482,12 @@ int main(int argc, char **argv)
                                     sizes, shortInitialCss),
                             sizes, { 500, 750 }, {}, &error),
             qPrintable(error));
-    require(longSeparate.image(0) != longManuallyJoined.image(0),
+    // The long continuation may be placed on page two or later at this
+    // viewport. Comparing only page zero could incorrectly report equality.
+    bool separateLayout = longSeparate.pages() != longManuallyJoined.pages();
+    for (int page = 0; !separateLayout && page < longSeparate.pages(); ++page)
+        separateLayout = longSeparate.image(page) != longManuallyJoined.image(page);
+    require(separateLayout,
             "A long independent paragraph was unexpectedly merged into an initial");
     QJsonObject prefs;
     appearance::rememberTextLayout(prefs,
