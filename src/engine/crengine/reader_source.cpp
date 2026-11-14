@@ -383,7 +383,7 @@ public:
             stream->SetPos(0);
             return stream;
         }
-        auto cleaned = withoutKoboStyleHacks(bytes);
+        auto cleaned = withShortDropcapContinuations(withoutKoboStyleHacks(bytes));
         if (cleaned == bytes) {
             stream->SetPos(0);
             return stream;
