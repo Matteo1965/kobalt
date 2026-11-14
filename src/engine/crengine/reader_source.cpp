@@ -338,7 +338,7 @@ void writeDropcapProbe(const QByteArray &event, bool truncate = false)
     QFile file(QStringLiteral("/mnt/onboard/.adds/kobalt/dropcap-probe.txt"));
     if (file.open(QIODevice::WriteOnly | (truncate ? QIODevice::Truncate : QIODevice::Append))) {
         file.write(event);
-        file.write("\\n", 1);
+        file.write("\n", 1);
     }
 }
 
