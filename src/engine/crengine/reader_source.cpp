@@ -604,7 +604,7 @@ bool EngineDocument::openSource(std::shared_ptr<ReaderSource> source, QSize size
                 Utf8ToUnicode(lString8(documentCacheName(cacheFingerprint_).toUtf8().constData())));
         properties->setHex(
                 DOC_PROP_FILE_CRC32,
-                documentCacheChecksum(documentCachePolicy() + ":hu-dropcap-merge-v2:bionic-v3:" + bionic_.toUtf8(),
+                documentCacheChecksum(documentCachePolicy() + ":hu-dropcap-merge-v3:bionic-v3:" + bionic_.toUtf8(),
                                       domVersion_));
         properties->setString(DOC_PROP_FILE_SIZE,
                               lString32::itoa(int(cacheBytes_ < 0                 ? 0
