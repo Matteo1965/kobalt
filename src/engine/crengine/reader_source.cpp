@@ -77,7 +77,7 @@ int repairShortDropcapParagraphs(ldomDocument *doc)
                 const QString name = qstring(node->getNodeName()).toLower();
                 const QString cls = qstring(node->getAttributeValue("class")).toLower();
                 if (name == "a" || name == "img" || name == "br" || name == "table"
-                    || name == "figure" || node != first && node->hasAttribute(idAttr)) {
+                    || name == "figure" || (node != first && node->hasAttribute(idAttr))) {
                     unsafe = true;
                     break;
                 }
@@ -103,7 +103,7 @@ int repairShortDropcapParagraphs(ldomDocument *doc)
                     continue;
                 const QString name = qstring(node->getNodeName()).toLower();
                 if (name == "a" || name == "img" || name == "table" || name == "figure"
-                    || node != second && node->hasAttribute(idAttr)) {
+                    || (node != second && node->hasAttribute(idAttr))) {
                     unsafe = true;
                     break;
                 }
