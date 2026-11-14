@@ -38,7 +38,7 @@ inline QByteArray withShortDropcapContinuations(const QByteArray &bytes)
                                                QRegularExpression::CaseInsensitiveOption))
             || first.size() > 180 || second.trimmed().size() < 8)
             continue;
-        fixes.append({found.capturedStart(), found.capturedLength(),
+        fixes.append({int(found.capturedStart()), int(found.capturedLength()),
                       first + QStringLiteral("<br/>") + second + QStringLiteral("</p>")});
     }
     for (int i = fixes.size() - 1; i >= 0; --i)
