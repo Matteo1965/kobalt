@@ -482,6 +482,27 @@ int main(int argc, char **argv)
             "</div>";
     require(withShortDropcapContinuations(chapterFromCalibre) == chapterNormalized,
             "Calibre XHTML drop-cap source was not normalized before parsing");
+    // Real Kobo KEPUB injects nested koboSpan elements with stable anchors.
+    const QByteArray kepubChapter =
+            "<p class=\"noind1\"><span class=\"inic\">"
+            "<span class=\"koboSpan\" id=\"kobo.3.1\">R</span></span>"
+            "<span class=\"koboSpan\" id=\"kobo.3.2\">ayya Mokdessy Elias.</span></p>\n\n"
+            "<p class=\"calibre5\"><span class=\"koboSpan\" id=\"kobo.4.1\">"
+            "Szíriában született, Detroitban nőtt fel.</span></p>\n\n"
+            "<p class=\"calibre5\"><span class=\"koboSpan\" id=\"kobo.5.1\">"
+            "Rayya hétévesen jött Amerikába.</span></p>";
+    const QByteArray kepubExpected =
+            "<p class=\"noind1\"><span class=\"inic\">"
+            "<span class=\"koboSpan\" id=\"kobo.3.1\">R</span></span>"
+            "<span class=\"koboSpan\" id=\"kobo.3.2\">ayya Mokdessy Elias.</span>"
+            "<br/><span class=\"koboSpan\" id=\"kobo.4.1\">"
+            "Szíriában született, Detroitban nőtt fel.</span></p>\n\n"
+            "<p class=\"calibre5\"><span class=\"koboSpan\" id=\"kobo.5.1\">"
+            "Rayya hétévesen jött Amerikába.</span></p>";
+    require(withShortDropcapContinuations(kepubChapter) == kepubExpected,
+            "Nested Kobo koboSpan XHTML drop-cap continuation was not joined");
+    require(withShortDropcapContinuations(kepubExpected) == kepubExpected,
+            "Drop-cap normalization is not idempotent");
     const QByteArray independentLong =
             "<p class='noind1'><span class='inic'>R</span>"
             "emarkably lengthy introductory prose should remain an independent paragraph "
