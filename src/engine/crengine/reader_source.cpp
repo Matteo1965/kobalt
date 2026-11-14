@@ -52,7 +52,19 @@ int repairShortDropcapParagraphs(ldomDocument *doc)
             continue;
         for (int i = 0; i + 1 < parent->getChildCount(); ++i) {
             auto *first = parent->getChildNode(i);
-            auto *second = parent->getChildNode(i + 1);
+            // Real EPUB chapters often contain whitespace-only text nodes
+            // between consecutive <p> elements. These are not paragraphs.
+            int secondIndex = i + 1;
+            while (secondIndex < parent->getChildCount()) {
+                auto *between = parent->getChildNode(secondIndex);
+                if (!between || !between->isText()
+                    || !qstring(between->getText()).trimmed().isEmpty())
+                    break;
+                ++secondIndex;
+            }
+            if (secondIndex >= parent->getChildCount())
+                continue;
+            auto *second = parent->getChildNode(secondIndex);
             if (!first || !second || !first->isElement() || !second->isElement()
                 || first->getNodeId() != pId || second->getNodeId() != pId
                 || first->hasAttribute(idAttr) || second->hasAttribute(idAttr))
@@ -115,7 +127,11 @@ int repairShortDropcapParagraphs(ldomDocument *doc)
             if (!first->insertChildElement(brId))
                 continue;
             second->moveItemsTo(first, 0, 0);
-            parent->removeChild(i + 1);
+            parent->removeChild(secondIndex);
+            // Consume only the insignificant separators between the merged
+            // paragraphs. Keep all neighboring non-whitespace text intact.
+            for (int between = secondIndex - 1; between > i; --between)
+                parent->removeChild(between);
             ++repairs;
         }
         for (int i = parent->getChildCount() - 1; i >= 0; --i)
