@@ -459,6 +459,27 @@ int main(int argc, char **argv)
             qPrintable(error));
     require(originalShort.image(0) == manuallyJoined.image(0),
             "A short .inic paragraph was not joined to its continuation with a line break");
+    // Match a real Calibre EPUB chapter: an enclosing div, heading, and
+    // whitespace/newline text nodes between <p> siblings.
+    const QByteArray chapterPrefix =
+            "<div class='pbr' id='calibre_pb_2'>"
+            "<h2 id='fej2'>A CHAPTER TITLE</h2>\n\n    ";
+    const QByteArray chapterEnd = "\n\n    <p class='calibre5'>An independent later paragraph.</p></div>";
+    const QByteArray spacedOriginal =
+            chapterPrefix + shortFirst + "\n\n    " + continuation + chapterEnd;
+    const QByteArray spacedJoined =
+            chapterPrefix + expectedJoined + chapterEnd;
+    EngineDocument spacedShort(test::readerFonts()), spacedExpected(test::readerFonts());
+    require(spacedShort.openResources(fixture(spacedOriginal, sizes, shortInitialCss),
+                                      sizes, { 500, 750 }, {}, &error)
+                    && spacedExpected.openResources(fixture(spacedJoined, sizes, shortInitialCss),
+                                                    sizes, { 500, 750 }, {}, &error),
+            qPrintable(error));
+    require(spacedShort.pages() == spacedExpected.pages(),
+            "A whitespace-separated .inic continuation changed pagination");
+    for (int page = 0; page < spacedExpected.pages(); ++page)
+        require(spacedShort.image(page) == spacedExpected.image(page),
+                "Whitespace-separated .inic paragraphs were not joined with <br>");
     const auto continuationHit = find(originalShort, "Beyond the valley");
     require(!continuationHit.start.isEmpty(),
             "Drop-cap continuation disappeared during structural merging");
