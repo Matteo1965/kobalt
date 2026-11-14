@@ -44,9 +44,10 @@ inline QByteArray withShortDropcapContinuations(const QByteArray &bytes)
             break;
         const int start = int(opening.capturedStart());
         offset = start + 2; // Check every paragraph, not just disjoint pairs.
-        const auto found = pair.match(source, start, QRegularExpression::NormalMatch,
-                                     QRegularExpression::AnchoredMatchOption);
-        if (!found.hasMatch())
+        const auto found = pair.match(source, start);
+        // Require a match at the exact current paragraph without relying on
+        // the deprecated AnchoredMatchOption (Qt 6.11 treats it as an error).
+        if (!found.hasMatch() || found.capturedStart() != start)
             continue;
         const auto firstOpen = found.captured(1), firstBody = found.captured(2);
         const auto secondOpen = found.captured(5), secondBody = found.captured(6);
