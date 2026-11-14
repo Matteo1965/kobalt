@@ -2,6 +2,7 @@
 #include <QByteArray>
 #include <QRegularExpression>
 #include <QXmlStreamReader>
+#include <QVector>
 
 namespace kobalt {
 // Repair conservative, publisher-separated drop caps while the original XHTML
