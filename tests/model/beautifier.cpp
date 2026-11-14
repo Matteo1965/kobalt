@@ -1,4 +1,5 @@
 #include "engine/crengine/engine_document.h"
+#include "engine/crengine/kobo_styles.h"
 #include "reading/appearance_settings.h"
 #include "publication/local_resources.h"
 #include "publication/publication.h"
@@ -465,6 +466,30 @@ int main(int argc, char **argv)
             "<div class='pbr' id='calibre_pb_2'>"
             "<h2 id='fej2'>A CHAPTER TITLE</h2>\n\n    ";
     const QByteArray chapterEnd = "\n\n    <p class='calibre5'>An independent later paragraph.</p></div>";
+    // Exercise the exact source-level conversion used by ContentContainer,
+    // not only equivalent rendered screenshots of synthetic EPUBs.
+    const QByteArray chapterFromCalibre =
+            "<div class=\"pbr\" id=\"calibre_pb_2\">\n"
+            "    <h2>CHAPTER TITLE</h2>\n\n"
+            "    <p class=\"noind1\"><span class=\"inic\">R</span>ayya Mokdessy Elias.</p>\n\n"
+            "    <p class=\"calibre5\">Szíriában született, Detroitban nőtt fel.</p>\n"
+            "</div>";
+    const QByteArray chapterNormalized =
+            "<div class=\"pbr\" id=\"calibre_pb_2\">\n"
+            "    <h2>CHAPTER TITLE</h2>\n\n"
+            "    <p class=\"noind1\"><span class=\"inic\">R</span>ayya Mokdessy Elias."
+            "<br/>Szíriában született, Detroitban nőtt fel.</p>\n"
+            "</div>";
+    require(withShortDropcapContinuations(chapterFromCalibre) == chapterNormalized,
+            "Calibre XHTML drop-cap source was not normalized before parsing");
+    const QByteArray independentLong =
+            "<p class='noind1'><span class='inic'>R</span>"
+            "emarkably lengthy introductory prose should remain an independent paragraph "
+            "because it continues beyond a single printed line on a narrow display.</p>"
+            "\n<p class='calibre5'>An independent later paragraph follows.</p>";
+    require(withShortDropcapContinuations(independentLong) == independentLong,
+            "Long introductory paragraph was incorrectly merged in source XHTML");
+
     const QByteArray spacedOriginal =
             chapterPrefix + shortFirst + "\n\n    " + continuation + chapterEnd;
     const QByteArray spacedJoined =
