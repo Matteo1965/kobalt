@@ -49,7 +49,6 @@ class HungarianPipelineContract(unittest.TestCase):
         self.assertIn("hu252RenderedPrefixWidth(", HELPERS)
         self.assertIn("word->width = painted + hyphen_width;", HELPERS)
 
-    @unittest.skip("Beta 8 does not yet contain the Beta 5 Hungarian optical-hyphen patch; audit separately")
     def test_hungarian_optical_hyphen_hanging_only(self):
         optical = OPTICAL_PATH.read_text(encoding="utf-8")
         self.assertIn("if (isHungarian())", optical)
