@@ -14,7 +14,6 @@
 #include <QElapsedTimer>
 #include <QDir>
 #include <QFileInfo>
-#include <QFile>
 #include <textlang.h>
 #include <QRegularExpression>
 #include <QXmlStreamReader>
