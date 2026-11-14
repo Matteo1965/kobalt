@@ -5,11 +5,9 @@
 #include <QVector>
 
 namespace kobalt {
-// Repair conservative, publisher-separated drop caps while the original XHTML
-// structure still exists. CREngine may wrap or split <p> nodes during parsing,
-// making a post-parse repair unreliable on real Calibre EPUB chapters.
-// Do not alter books with non-UTF8 content, links, nested following paragraphs,
-// IDs on the affected paragraphs, or nontrivial inline markup.
+// Join a publisher's short drop-cap lead-in with the next paragraph before
+// CREngine parses it. KEPUB adds nested koboSpan elements and IDs inside spans;
+// preserve those intact so location anchors continue to work.
 inline QByteArray withShortDropcapContinuations(const QByteArray &bytes)
 {
     if (!bytes.contains("inic") && !bytes.contains("initial")
@@ -18,28 +16,57 @@ inline QByteArray withShortDropcapContinuations(const QByteArray &bytes)
     QString source = QString::fromUtf8(bytes);
     if (source.toUtf8() != bytes)
         return bytes;
+
+    static const QRegularExpression paragraphOpen(
+            QStringLiteral(R"RX(<p\b)RX"), QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression pair(
-            QStringLiteral(R"RX((<p\b[^>]*>\s*<span\b[^>]*\bclass\s*=\s*["'][^"']*(?:inic|initial|drop-?cap)[^"']*["'][^>]*>[^<]{1,3}</span>[^<]{1,64})</p>(\s*)<p\b[^>]*>([^<]{8,2000})</p>)RX"),
+            QStringLiteral(R"RX((<p\b[^>]*>)([\s\S]{1,1200}?)(</p>)(\s*)(<p\b[^>]*>)([\s\S]{8,3000}?)(</p>))RX"),
             QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression initial(
+            QStringLiteral(R"RX(^\s*<span\b[^>]*\bclass\s*=\s*["'][^"']*\b(?:inic|initial|initiale|dropcap|drop-cap)\b[^"']*["'])RX"),
+            QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression tag(QStringLiteral(R"RX(<[^>]*>)RX"));
+    static const QRegularExpression forbiddenMarkup(
+            QStringLiteral(R"RX(<\s*/?\s*(?!span\b)[a-z][^>]*>)RX"),
+            QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression paragraphId(
+            QStringLiteral(R"RX(\bid\s*=)RX"), QRegularExpression::CaseInsensitiveOption);
     struct Fix {
         int begin;
         int length;
         QString replacement;
     };
     QVector<Fix> fixes;
-    auto match = pair.globalMatch(source);
-    while (match.hasNext() && fixes.size() < 128) {
-        const auto found = match.next();
-        const auto first = found.captured(1);
-        const auto second = found.captured(3);
-        // Do not coalesce titled/anchored blocks, and require a genuinely
-        // short introductory paragraph rather than ordinary running text.
-        if (first.contains(QRegularExpression(QStringLiteral(R"RX(\bid\s*=)RX"),
-                                               QRegularExpression::CaseInsensitiveOption))
-            || first.size() > 180 || second.trimmed().size() < 8)
+    int offset = 0;
+    while (offset < source.size() && fixes.size() < 128) {
+        const auto opening = paragraphOpen.match(source, offset);
+        if (!opening.hasMatch())
+            break;
+        const int start = int(opening.capturedStart());
+        offset = start + 2; // Check every paragraph, not just disjoint pairs.
+        const auto found = pair.match(source, start, QRegularExpression::NormalMatch,
+                                     QRegularExpression::AnchoredMatchOption);
+        if (!found.hasMatch())
             continue;
-        fixes.append({int(found.capturedStart()), int(found.capturedLength()),
-                      first + QStringLiteral("<br/>") + second + QStringLiteral("</p>")});
+        const auto firstOpen = found.captured(1), firstBody = found.captured(2);
+        const auto secondOpen = found.captured(5), secondBody = found.captured(6);
+        if (paragraphId.match(firstOpen).hasMatch()
+            || paragraphId.match(secondOpen).hasMatch()
+            || !initial.match(firstBody).hasMatch()
+            || forbiddenMarkup.match(firstBody).hasMatch()
+            || forbiddenMarkup.match(secondBody).hasMatch())
+            continue;
+        QString firstPlain = firstBody;
+        firstPlain.remove(tag);
+        QString secondPlain = secondBody;
+        secondPlain.remove(tag);
+        if (firstPlain.trimmed().size() < 8 || firstPlain.trimmed().size() > 64
+            || secondPlain.trimmed().size() < 8)
+            continue;
+        fixes.append({start, int(found.capturedLength()),
+                      firstOpen + firstBody + QStringLiteral("<br/>")
+                          + secondBody + QStringLiteral("</p>")});
+        offset = start + int(found.capturedLength());
     }
     for (int i = fixes.size() - 1; i >= 0; --i)
         source.replace(fixes[i].begin, fixes[i].length, fixes[i].replacement);
