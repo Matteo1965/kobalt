@@ -172,6 +172,33 @@ int main(int argc, char **argv)
                         "300 percent indentation did not apply to div prose");
             }
 
+            // Real Calibre EPUB chapters wrap ordinary paragraphs inside a
+            // transparent 1px top border for pagination. Such an invisible
+            // border must not protect the paragraphs from user indentation.
+            {
+                const auto chapter = resources(
+                        "<div class='chapter' style='border-top:1px solid transparent;"
+                        "margin-top:.2em;padding-top:.2em'>"
+                        "<h2>Chapter title</h2>"
+                        "<p style='text-indent:1.5em'>Chaptermarker ordinary prose paragraph.</p>"
+                        "<p style='text-indent:1.5em'>Additionalmarker continued prose paragraph.</p>"
+                        "</div>",
+                        sizes);
+                kobalt::EngineDocument chapterBook(kobalt::test::readerFonts());
+                require(chapterBook.openResources(chapter, sizes, size, settings, &error),
+                        qPrintable(error));
+                const int publisherIndent = word(chapterBook, "Chaptermarker").left();
+                require(chapterBook.applyAppearance({ { "paragraph_indent", 0 } }),
+                        "Cannot disable indent inside transparent-border chapter");
+                const int none = word(chapterBook, "Chaptermarker").left();
+                require(none < publisherIndent,
+                        "Transparent chapter wrapper blocked zero indentation");
+                require(chapterBook.applyAppearance({ { "paragraph_indent", 300 } }),
+                        "Cannot apply 300 percent chapter indentation");
+                require(word(chapterBook, "Chaptermarker").left() - none == 120,
+                        "Transparent chapter wrapper blocked 300 percent indentation");
+            }
+
             // Each example contains only protected content, so every pixel must stay.
             for (const auto &body :
                  { QByteArray("<h2>Heading</h2><p class='chapter-title'>Paragraph heading</p>"),
