@@ -167,6 +167,9 @@ public:
 
     const QString &dictionaryChoice() const { return dictionaryChoice_; }
 
+    const QString &textPreset() const { return textPreset_; }
+    void setTextPreset(const QString &id) { textPreset_ = id; }
+
     bool saveDictionaryChoice(const QString &id);
     QJsonObject imageView(const QString &id) const;
     // Memory only. The caller can queue the existing background checkpoint.
@@ -237,5 +240,6 @@ private:
     std::unique_ptr<storage::RecordWriter> writer, speedWriter;
     std::shared_ptr<ReadingBook *> alive = std::make_shared<ReadingBook *>(this);
     QString dictionaryChoice_;
+    QString textPreset_;
 };
 } // namespace kobalt
