@@ -46,6 +46,7 @@ int main() {
         {U"meggyullad",3},{U"meggyújtotta",3},{U"meggyaláz",3},{U"meggyón",3},
         {U"arccsont",3},{U"kisszék",3},{U"színnyomás",4},
         {U"cipősszekrény",5},{U"gyorsszolgálat",5},
+        {U"gyorssztráda",5},{U"gyorssztrádákon",5},
         {U"okosszemüveg",4},{U"tánccsoport",4},
     };
     int failed=0;
@@ -58,6 +59,8 @@ int main() {
         flags[c.split-1] = LCHAR_ALLOW_HYPH_WRAP_AFTER | LCHAR_HUNGARIAN_HYPH_REPLACE;
         if(c.split<len) flags[c.split] = LCHAR_ALLOW_HYPH_WRAP_AFTER;
         huAddExtendedHyphenation(c.word,len,flags.data(),2,2);
+        // The right side starts with "sz", not a compact doubled
+        // consonant requiring an extra "z" on the preceding compound.
         bool good=(flags[c.split-1] & LCHAR_ALLOW_HYPH_WRAP_AFTER)
              && !(flags[c.split-1] & LCHAR_HUNGARIAN_HYPH_REPLACE)
              && !(flags[c.split] & LCHAR_ALLOW_HYPH_WRAP_AFTER);
@@ -85,6 +88,8 @@ int main() {
         {U"meggyón", 3, U"meg", U"gyón"},
         {U"cipősszekrény", 5, U"cipős", U"szekrény"},
         {U"gyorsszolgálat", 5, U"gyors", U"szolgálat"},
+        {U"gyorssztráda", 5, U"gyors", U"sztráda"},
+        {U"gyorssztrádákon", 5, U"gyors", U"sztrádákon"},
         {U"kisszék", 3, U"kis", U"szék"},
         {U"arccsont", 3, U"arc", U"csont"},
         {U"színnyomás", 4, U"szín", U"nyomás"},
