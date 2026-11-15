@@ -2,6 +2,7 @@
 #include "support/qt_compat.h"
 #include "page_navigation.h"
 #include "header_footer.h"
+#include "text_presets.h"
 #include "sleep_screen.h"
 #include "session_timeout.h"
 #include <QStringList>
@@ -171,6 +172,7 @@ QJsonObject cleanPreferences(QJsonObject preferences)
     choice("marks_sort", { "position", "newest", "oldest" });
     choice("sleep_screen", { "stock", "cover", "page", "overlay" });
     choice("sleep_tile", { "card", "bookmark", "none" });
+    textpresets::clean(preferences);
     choice("time_remaining_format", { "detailed", "approximate" });
     if (preferences.contains(sessionTimeout::preferenceKey)
         && !sessionTimeout::valid(preferences.value(sessionTimeout::preferenceKey)))
