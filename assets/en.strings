@@ -1342,7 +1342,6 @@
 "stats.page_unit_short" = "pages";
 "sleep.time_left_minutes" = "%1 to go";
 
-// Beta 8 text presets
 "text_presets.title" = "Text presets";
 "text_presets.gallery_title" = "Text Presets";
 "text_presets.example_kobalt" = "Kobalt";
