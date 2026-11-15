@@ -155,7 +155,7 @@ int main(int argc, char **argv)
             {
                 const auto divSource = resources(
                         "<div style='text-indent:1em'>Divmarker standalone prose paragraph.</div>"
-                        "<div style='text-indent:1em'>Nextdivmarker another prose paragraph.</div>",
+                        "<div style='text-indent:1em'>Secondmarkerdiv another prose paragraph.</div>",
                         sizes);
                 kobalt::EngineDocument divBook(kobalt::test::readerFonts());
                 require(divBook.openResources(divSource, sizes, size, settings, &error),
