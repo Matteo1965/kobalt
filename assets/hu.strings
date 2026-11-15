@@ -572,6 +572,8 @@
 "settings.paragraph_spacing_description" = "Az értékek a betűméret százalékai: 12 pontos szövegnél a 100%-os behúzás 12 pont. Minden könyvre érvényes. A címsorok és a különleges szövegblokkok megtartják saját formázásukat.";
 "settings.paragraph_choices_description" = "Az „Eredeti” beállítás az adott tulajdonságnál megtartja a könyv eredeti formázását. A ferde vonalak a bekezdések közötti többlet térközt jelzik.";
 "reader.publisher_spacing" = "Eredeti";
+"settings.reverse_swipe_direction" = "Lapozó suhintások megfordítása";
+"settings.reverse_swipe_direction_hint" = "A lapozó suhintások irányát megfordítja, az érintési zónákat nem módosítja.";
 "settings.paragraph_gap" = "Bekezdésköz";
 "settings.paragraph_indent" = "Első sor behúzása";
 "settings.vertical_spacing" = "Függőleges oldalkitöltés";
