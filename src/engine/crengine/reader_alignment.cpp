@@ -116,8 +116,13 @@ void markBodyAlignment(ldomDocument *document)
         const bool block = frame.block;
         if (block && frame.words && !frame.blocked && !frame.protectedChild && !frame.blockChild)
             node->setAttributeValue(0, attribute, U"1");
-        if (node->isElement() && text(node->getNodeName()) == "p" && frame.words
-            && !frame.paragraphBlocked && !frame.protectedChild && !frame.blockChild)
+        // Some EPUBs encode ordinary prose paragraphs as text-only <div> blocks.
+        // A container div with child paragraphs is excluded by blockChild, while
+        // protected headings, quotations, lists and decorative blocks stay excluded.
+        if (node->isElement() && (text(node->getNodeName()) == "p"
+                                  || text(node->getNodeName()) == "div")
+            && frame.words && !frame.paragraphBlocked && !frame.protectedChild
+            && !frame.blockChild)
             node->setAttributeValue(0, paragraphAttribute, U"1");
         const auto finished = frame;
         stack.pop_back();
