@@ -106,7 +106,7 @@ protected:
         const int left = (width() - icon - gap - labelWidth) / 2;
         ui::controlIcon(glyph, color)
                 .paint(&painter,
-                       QRect(left, (height() - icon) / 2 + ui::iconInkOffset(glyph, icon), icon,
+                       QRect(left, (height() - icon) / 2 + 0, icon,
                              icon));
         ui::drawOpticalText(painter, QRectF(left + icon + gap, 0, labelWidth + 2, height()), label);
     }
@@ -232,7 +232,7 @@ void TextPresetToggle::paintEvent(QPaintEvent *)
     ui::controlIcon(glyph, color)
             .paint(&painter,
                    QRect(left + textWidth + starWidth + gap,
-                         (body - icon) / 2 + ui::iconInkOffset(glyph, icon), icon, icon));
+                         (body - icon) / 2 + 0, icon, icon));
 }
 
 TextPresetCard::TextPresetCard(QWidget *parent) : ui::Button(parent)
@@ -326,7 +326,7 @@ void TextPresetCard::paintEvent(QPaintEvent *)
     } else {
         painter.setPen(colors.ink);
         if (!ui::drawFontPreview(painter, sampleArea, QStringLiteral("Aa"), font, ui::px(44),
-                                 thickness, false, true, false, axisWeight)) {
+                                 thickness, false, true, false)) {
             painter.setFont(ui::interfaceFont(sample * 3 / 4));
             ui::drawInterfaceText(painter, sampleArea, QStringLiteral("Aa"), Qt::AlignCenter);
         }
@@ -725,7 +725,7 @@ TextPresetGallery::TextPresetGallery(QWidget *parent) : ui::Panel(parent)
     auto *headingRows = new QHBoxLayout(heading);
     headingRows->setContentsMargins(0, 0, 0, chrome::heavyRule);
     headingRows->setSpacing(0);
-    title = new SettingsTitle(strings::get("text_presets.gallery_title"), heading);
+    title = new ui::InterfaceLabel(strings::get("text_presets.gallery_title"), heading);
     title->setObjectName("rrTextPresetGalleryTitle");
     title->setContentsMargins(chrome::inset, 0, chrome::inset, 0);
     ui::readerStyle(title, ui::styles::brand(chrome::titleText) + "background:transparent;");
