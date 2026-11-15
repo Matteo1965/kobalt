@@ -633,6 +633,8 @@
 "reader.landscape_upside_down" = "Landscape, upside down";
 "reader.line_spacing" = "Line spacing: ";
 "reader.publisher_spacing" = "Publisher";
+"settings.reverse_swipe_direction" = "Reverse swipe direction";
+"settings.reverse_swipe_direction_hint" = "Swap the direction of page-turn swipes without changing tap zones.";
 "settings.section_paragraphs" = "Paragraphs";
 "settings.paragraph_spacing" = "Paragraph adjustments";
 "settings.paragraph_spacing_summary" = "Adjust spacing and first-line indents.";
