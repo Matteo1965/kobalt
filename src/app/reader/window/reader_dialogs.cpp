@@ -1383,6 +1383,32 @@ void Reader::openPageNavigation()
     };
     card->rows()->addWidget(choices);
     choices->setFixedHeight(choices->heightForWidth(cardWidth - 4));
+    // Beta 8: keep swipe direction independent of tap zones and navigation mode.
+    auto *reverse = new ui::DescribedOption(
+            strings::get("settings.reverse_swipe_direction"),
+            strings::get("settings.reverse_swipe_direction_hint"), card);
+    reverse->setObjectName("rrReverseSwipeDirection");
+    auto reverseLook = reverse->presentation();
+    reverseLook.indicator = ui::DescribedOption::Indicator::Square;
+    reverseLook.minimumRowHeight = chrome::listActionHeight;
+    reverseLook.horizontalInset = chrome::inset;
+    reverseLook.dividers = Qt::TopEdge;
+    reverse->setPresentation(reverseLook);
+    reverse->setChecked(preferences.value(pageNavigation::reverseSwipesKey).toBool(false));
+    connect(reverse, &QCheckBox::clicked, this, [this, reverse](bool checked) {
+        auto next = preferences;
+        next[pageNavigation::reverseSwipesKey] = checked;
+        if (writePreferences(next)) {
+            preferences = next;
+            settingsError->clear();
+            settingsError->hide();
+        } else {
+            reverse->setChecked(!checked);
+            settingsError->setText(strings::get("reader.could_not_save_reader_settings"));
+            settingsError->show();
+        }
+    });
+    card->rows()->addWidget(reverse);
     card->fitToWidth(cardWidth);
     pageNavigationPopup->centerCard();
     for (auto *widget : pageNavigationPopup->findChildren<QWidget *>()) {
