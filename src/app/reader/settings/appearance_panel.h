@@ -35,12 +35,14 @@ class AppearanceSheet final : public ui::Panel
 public:
     explicit AppearanceSheet(QWidget *parent);
     AppearanceLayout controls() const;
+    void setTopSection(QWidget *section);
     int fitHeight(int width, int availableHeight);
     QStackedWidget *pages;
     QLabel *message;
 
 private:
     QWidget *clip;
+    QWidget *topSection = nullptr;
     ui::PagerBar *pager;
     // The top and bottom of each page of rows, in the selected page's coordinates.
     QVector<QPair<int, int>> rowPages;
