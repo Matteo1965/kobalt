@@ -150,6 +150,28 @@ int main(int argc, char **argv)
                                 && model.image(0) == publisher,
                         "Invalid indentation changed the book");
 
+            // EPUBs can use a standalone div instead of p for each prose paragraph.
+            // Both the zero setting and a large indent must visibly apply.
+            {
+                const auto divSource = resources(
+                        "<div style='text-indent:1em'>Divmarker standalone prose paragraph.</div>"
+                        "<div style='text-indent:1em'>Nextdivmarker another prose paragraph.</div>",
+                        sizes);
+                kobalt::EngineDocument divBook(kobalt::test::readerFonts());
+                require(divBook.openResources(divSource, sizes, size, settings, &error),
+                        qPrintable(error));
+                const int originalDivIndent = word(divBook, "Divmarker").left();
+                require(divBook.applyAppearance({ { "paragraph_indent", 0 } }),
+                        "Cannot disable indentation on div-based prose");
+                const int zeroDivIndent = word(divBook, "Divmarker").left();
+                require(zeroDivIndent < originalDivIndent,
+                        "Zero indentation did not override div publisher CSS");
+                require(divBook.applyAppearance({ { "paragraph_indent", 300 } }),
+                        "Cannot increase indentation on div-based prose");
+                require(word(divBook, "Divmarker").left() - zeroDivIndent == 120,
+                        "300 percent indentation did not apply to div prose");
+            }
+
             // Each example contains only protected content, so every pixel must stay.
             for (const auto &body :
                  { QByteArray("<h2>Heading</h2><p class='chapter-title'>Paragraph heading</p>"),
