@@ -120,6 +120,7 @@ public:
                         *denseGraphOption = nullptr;
     ui::DescribedOption *linkIndicatorOption = nullptr, *hideNonlinearOption = nullptr;
     ui::DescribedOption *automaticOpeningOption = nullptr, *minimalAnnotationOption = nullptr;
+    ui::CaptionButton *textForNewBooksButton = nullptr;
     ui::CaptionButton *defaultFontButton = nullptr, *languageButton = nullptr, *uiFontButton = nullptr,
                       *uiMonoFontButton = nullptr, *headerFooterFontButton = nullptr,
                       *headerFooterWeightButton = nullptr;
