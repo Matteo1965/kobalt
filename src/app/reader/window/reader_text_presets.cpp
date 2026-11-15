@@ -235,7 +235,7 @@ void Reader::applyTextPreset(const QString &id)
     }
     const auto values = textpresets::values(*preset);
     mutateAppearance([values](ReaderSession &preview) {
-        preview.editAppearance(appearance::Patch(values));
+        preview.apply(values);
     });
 }
 
@@ -495,7 +495,8 @@ void Reader::showTextPresetActions(const QString &id)
     const auto rename =
             ui::actionItem(strings::get("text_presets.rename"), "rrTextPresetRename",
                            ui::ControlIcon::EditHighlight, [this, id] { editTextPresetName(id); });
-    auto *actions = new ui::ActionMenu(this, header, items, rename);
+    items.prepend(rename);
+    auto *actions = new ui::ActionMenu(this, header, items);
     textPresetActions = actions;
     actions->setObjectName("rrTextPresetActions");
     actions->dismissed = [this] {
