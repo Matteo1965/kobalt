@@ -42,8 +42,11 @@ bool initial(ldomNode *node)
 {
     if (text(node->getNodeName()) != "span")
         return false;
-    static const QRegularExpression name("drop.?cap|initial",
-                                         QRegularExpression::CaseInsensitiveOption);
+    // Recognize only complete publisher class tokens (including Beta 5 names).
+    // Avoid accidental matches in unrelated longer class names.
+    static const QRegularExpression name(
+            R"((?:^|[\s_-])(?:inic|initial|initiale|dropcap|drop-cap)(?:$|[\s_-]))",
+            QRegularExpression::CaseInsensitiveOption);
     const auto style = node->getStyle();
     // Some publishers use generic names such as "big". A floated
     // single letter is also evidence of a text initial, regardless of its name.
