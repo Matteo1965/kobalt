@@ -263,7 +263,16 @@ QJsonObject bookDefaults(const QJsonObject &preferences)
     defaults["justification_tracking"] = preferences.value("justification_tracking").toInt(0);
     defaults["hanging_punctuation"] = preferences.value("hanging_punctuation").toBool(false);
     defaults["widows_orphans"] = preferences.value("widows_orphans").toString("publisher");
-    if (!preferences.value(inheritTextLayoutKey).toBool(true)) {
+    const auto newBook = textpresets::newBookChoice(preferences);
+    if (newBook == "book")
+        return defaults;
+    if (newBook != "last") {
+        const auto presets = textpresets::load(preferences);
+        if (const auto *preset = textpresets::find(presets, newBook)) {
+            const auto chosen = textpresets::values(*preset);
+            for (auto it = chosen.begin(); it != chosen.end(); ++it)
+                defaults[it.key()] = it.value();
+        }
         return defaults;
     }
     auto last = preferences.value(lastTextLayoutKey).toObject();
