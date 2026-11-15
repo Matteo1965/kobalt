@@ -550,6 +550,9 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                   strings::get("settings.inherit_text_layout_description"));
     defaultsRows->addWidget(inheritTextLayoutOption);
     inheritTextLayoutOption->setChecked(true);
+    textForNewBooksButton =
+            ui::makeCaptionButton(defaultsPage, defaultsRows, "rrTextForNewBooks",
+                                  strings::get("settings.text_for_new_books"), [] { });
     section(defaultsPage, defaultsRows, "rrDefaultsGlobalFontSection",
             strings::get("settings.section_default_global_font"));
     defaultFontButton = ui::makeCaptionButton(defaultsPage, nullptr, "rrDefaultFont",
