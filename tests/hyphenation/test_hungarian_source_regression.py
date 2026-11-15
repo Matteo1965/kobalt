@@ -20,6 +20,7 @@ CASES = {
     ("okos", "szemüveg"): "okos-szemüveg",
     ("tánc", "csoport"): "tánc-csoport",
     ("gyors", "szolgálat"): "gyors-szolgálat",
+    ("gyors", "sztráda"): "gyors-sztráda",
     ("hús", "szelet"): "hús-szelet",
     ("cipős", "szekrény"): "cipős-szekrény",
     ("ruhás", "szekrény"): "ruhás-szekrény",
@@ -45,6 +46,13 @@ class HungarianSourceRegression(unittest.TestCase):
             self.assertEqual(expected, left + "-" + right)
             self.assertTrue(any(word.startswith(a + b) and a == left for a, b in families),
                             f"Missing curated compound entry for {word}")
+
+    def test_gyorssztrada_suffixes_use_plain_compound_boundary(self):
+        # The stem match must cover both gyorssztráda and
+        # gyorssztrádákon without inserting a false restored "z".
+        self.assertIn('{U"gyors", U"sztráda"}', self.patch)
+        section = self.patch.split("static bool huAddExtendedHyphenation(", 1)[1].split("return found;", 1)[0]
+        self.assertIn("flags[compound - 1] &= ~LCHAR_HUNGARIAN_HYPH_REPLACE", section)
 
     def test_compound_priority_before_replacement_marking(self):
         section = self.patch.split("static bool huAddExtendedHyphenation(", 1)[1].split("return found;", 1)[0]
