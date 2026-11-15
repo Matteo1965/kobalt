@@ -138,8 +138,9 @@ public:
                       *navigationBarButton = nullptr, *tappableLinksButton = nullptr,
                       *chapterGroupsButton = nullptr, *buttonControlsButton = nullptr;
     ui::DescribedOption *bionicOption = nullptr;
-    ui::CaptionButton *refreshButton = nullptr, *resetDefaults = nullptr;
+    ui::CaptionButton *refreshButton = nullptr, *resetDefaults = nullptr, *resetPresets = nullptr;
     QPushButton *keepDefaults = nullptr, *confirmDefaults = nullptr;
+    QPushButton *keepPresets = nullptr, *confirmPresets = nullptr;
     QPushButton *openAcknowledgments = nullptr, *debugProgress = nullptr;
     DictionariesPage *dictionaries = nullptr;
     KosyncPage *kosync = nullptr;
@@ -170,7 +171,7 @@ private:
     void showOptionsPage(int page);
     void fitRail(int availableHeight = 0);
     QLabel *aboutDescription = nullptr;
-    QPointer<ui::ChoiceModal> restoreDialog;
+    QPointer<ui::ChoiceModal> restoreDialog, restorePresetsDialog;
     QHash<int, StyleSample> stylingSamples;
     // The open styling sheet, if any, and the option its preview shows.
     QPointer<QWidget> stylingPreview;
