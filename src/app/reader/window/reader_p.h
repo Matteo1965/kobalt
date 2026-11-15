@@ -32,6 +32,10 @@
 #include "app/reader/panels/link_panel.h"
 #include "app/reader/panels/search_panel.h"
 #include "app/reader/settings/appearance_panel.h"
+#include "app/reader/settings/text_presets_panel.h"
+#include "reading/text_presets.h"
+#include "reading/style_sample_cache.h"
+#include "storage/preview_store.h"
 #include "appearance_edit_session.h"
 #include "app/reader/views/navigation.h"
 #include "platform/api/reader_host_services.h"
@@ -560,6 +564,74 @@ private:
     void openSleepTile();
     void openSessionTimeout();
 
+    // Text presets: the bar and cards of the Text panel, All presets, the
+    // save and rename dialog, and their part of Settings > Defaults.
+    void buildTextPresets();
+    void syncTextPresets();
+    ReaderSession *textPresetSettings();
+    kobalt::reader::TextPresetView textPresetView(const kobalt::textpresets::Preset &preset);
+    void applyTextPreset(const QString &id);
+    bool saveTextPresets(QJsonObject next, const QVector<kobalt::textpresets::Preset> &presets);
+    void updateTextPreset(const QString &id);
+    void saveNewTextPreset();
+    void editTextPresetName(const QString &id);
+    // The gallery page whose previews are rendering or shown, as the sample
+    // keys of its previews, and the flag that stops its renders when another
+    // page or a close replaces it.
+    QVector<QByteArray> textPresetPreviewKeys;
+    std::shared_ptr<std::atomic_bool> textPresetPreviewRender;
+    kobalt::StyleSampleRequest textPresetPreviewRequest(const kobalt::textpresets::Preset &preset,
+                                                        QSize size);
+
+    struct TextPresetPreview
+    {
+        QString id, face;
+        kobalt::StyleSampleRequest request;
+        // Everything that decides the finished tile's pixels.
+        QByteArray tile;
+    };
+
+    QVector<TextPresetPreview>
+    textPresetPreviews(const QVector<kobalt::textpresets::Preset> &presets, const QStringList &ids,
+                       QSize size);
+    // Lays the preview out on the engine, keeps the finished tile and calls
+    // `finished` with it, or with a null image when it failed or was cancelled.
+    void renderTextPresetTile(TextPresetPreview preview, QSize size,
+                              std::shared_ptr<std::atomic_bool> cancelled,
+                              std::function<void(const QImage &)> finished);
+    kobalt::storage::PreviewStore &textPresetTiles();
+    std::unique_ptr<kobalt::storage::PreviewStore> textPresetTileStore;
+    // The presets, the one in force and whether the text differs from it.
+    void textPresetChoice(QVector<kobalt::textpresets::Preset> *presets, QString *selected,
+                          bool *modified);
+    void setTextPresetGalleryPresets(kobalt::reader::TextPresetGallery *gallery,
+                                     const QVector<kobalt::textpresets::Preset> &presets,
+                                     const QString &selected);
+    QRect textPresetGalleryBounds() const;
+    // Once a book shows its first page, the reader prepares the All grid's
+    // first page: from storage, or else on the engine, one tile at a time
+    // and only while the reader is idle. Opening All then shows a complete
+    // page in one screen update.
+    void startTextPresetPrerender();
+    void prerenderTextPresets();
+    void prerenderNextTextPreset();
+    // Continues a prerender that waits for the engine. ReaderSession::idle
+    // calls it, so no timer wakes the reader while it sits open.
+    void resumeTextPresetPrerender();
+    bool textPresetPrerenderStarted = false;
+    bool textPresetPrerenderWaiting = false;
+    QWidget *textPresetProbeHost = nullptr;
+    QVector<TextPresetPreview> textPresetPrerenderQueue;
+    QSize textPresetPrerenderSize;
+    std::shared_ptr<std::atomic_bool> textPresetPrerenderCancel;
+    void showTextPresetActions(const QString &id);
+    void confirmDeleteTextPreset(const QString &id);
+    void openTextPresetGallery();
+    void renderTextPresetGallery();
+    void closeTextPresetGallery();
+    void showTextPresetSettings();
+    void openNewBookText();
+
     struct SleepOption
     {
         QString value, label, explanation;
@@ -643,6 +715,15 @@ private:
     kobalt::ui::CaptionButton *sleepScreenButton = nullptr, *sessionTimeoutButton = nullptr,
                               *sleepTileButton = nullptr;
     QPointer<kobalt::ui::ModalOverlay> sleepPopup;
+    kobalt::reader::TextPresetSection *textPresetSection = nullptr;
+    QPointer<kobalt::reader::TextPresetGallery> textPresetGallery;
+    QPointer<kobalt::ui::ChoiceModal> textPresetEditor;
+    QPointer<kobalt::ui::ModalOverlay> textPresetActions;
+    std::unique_ptr<kobalt::KeyboardController> textPresetKeyboard;
+    // The presets the All grid shows: the saved ones, or for Text for new
+    // books also the book defaults and the last book's text.
+    QVector<kobalt::textpresets::Preset> textPresetGalleryEntries;
+    bool textPresetChoosingNewBook = false;
     kobalt::ui::CaptionButton *pageNavigationButton = nullptr, *tapZonesButton = nullptr,
                               *navigationBarButton = nullptr, *chapterGroupsButton = nullptr,
                               *buttonControlsButton = nullptr;
