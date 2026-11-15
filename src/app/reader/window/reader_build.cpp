@@ -1058,6 +1058,7 @@ void Reader::buildAppearance(const kobalt::reader::AppearanceLayout &layout)
     spacingSlider = appearance.spacingSlider;
     marginSlider = appearance.marginSlider;
     verticalMarginSlider = appearance.verticalMarginSlider;
+    buildTextPresets();
     alignmentButtons = appearance.alignmentButtons;
     hyphenButtons = appearance.hyphenButtons;
     rotationButtons = appearance.rotationButtons;
