@@ -89,7 +89,7 @@ QByteArray styleSampleKey(const EngineFontInputs &fonts, const StyleSampleReques
     QJsonArray values;
     for (const auto &value : request.values)
         values.append(value);
-    stream << QByteArray(KOBALT_RENDERING_POLICY)
+    stream << QByteArray("hungarian-style-sample-cache-v2")
            << QJsonDocument(request.settings).toJson(QJsonDocument::Compact) << request.key
            << QJsonDocument(values).toJson(QJsonDocument::Compact) << request.page
            << request.thumbnail << request.crop << request.cropOrigin << request.marginGuides
