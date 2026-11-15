@@ -60,6 +60,11 @@ QString Paths::database() const
     return child(directory, "kobalt.sqlite");
 }
 
+QString Paths::previews() const
+{
+    return child(directory, "cache/text-preset-previews");
+}
+
 QString Paths::layoutCache() const
 {
     return child(directory, "cache/reopen-layout.json");
