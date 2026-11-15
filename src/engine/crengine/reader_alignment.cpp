@@ -86,19 +86,26 @@ void markBodyAlignment(ldomDocument *document)
             const auto style = node->getStyle();
             // Publisher exports can leave a border style on a zero-width frame.
             // Only borders with width need to protect the text inside it.
-            if (!style.isNull())
+            if (!style.isNull()) {
+                // EPUB exporters sometimes place all chapter paragraphs inside
+                // a page-break container with an invisible 1px border. It must
+                // not disable paragraph controls for the whole chapter.
+                const auto visibleBorder = [style](css_border_style_type_t border, int side) {
+                    return border != css_border_none && border != css_border_hidden
+                            && style->border_width[side].value > 0
+                            && !(style->border_color[side].type == css_val_color
+                                 && lUInt32(style->border_color[side].value)
+                                         == CSS_COLOR_TRANSPARENT);
+                };
                 frame.paragraphBlocked = frame.paragraphBlocked || style->white_space == css_ws_pre
                         || style->white_space == css_ws_pre_wrap || style->float_ != css_f_none
-                        || (style->border_style_top != css_border_none
-                            && style->border_width[0].value > 0)
-                        || (style->border_style_right != css_border_none
-                            && style->border_width[1].value > 0)
-                        || (style->border_style_bottom != css_border_none
-                            && style->border_width[2].value > 0)
-                        || (style->border_style_left != css_border_none
-                            && style->border_width[3].value > 0)
+                        || visibleBorder(style->border_style_top, 0)
+                        || visibleBorder(style->border_style_right, 1)
+                        || visibleBorder(style->border_style_bottom, 2)
+                        || visibleBorder(style->border_style_left, 3)
                         || (name == "p"
                             && lUInt32(style->background_color.value) != CSS_COLOR_TRANSPARENT);
+            }
             if (node->hasAttribute(attribute))
                 node->setAttributeValue(0, attribute, U"");
             if (node->hasAttribute(paragraphAttribute))
