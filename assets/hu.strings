@@ -802,7 +802,6 @@
 "stats.page_unit_short" = "lap";
 "sleep.time_left_minutes" = "%1";
 
-// Beta 8 text preset translations
 "text_presets.title" = "Szövegprofilok";
 "text_presets.gallery_title" = "Szövegprofilok";
 "text_presets.example_kobalt" = "Kobalt";
