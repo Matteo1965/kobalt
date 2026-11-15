@@ -835,3 +835,5 @@
 "text_presets.gallery_hint" = "Érintés: alkalmazás · Hosszú érintés: további műveletek";
 "text_presets.save_current" = "Aktuális szövegbeállítások mentése";
 "text_presets.used_for_new_books" = "Új könyvekhez használt profil";
+"settings.text_for_new_books_title" = "Szöveg új könyvekhez";
+"settings.new_book_text_heading" = "Az új könyvek kezdő szövegbeállítása";
