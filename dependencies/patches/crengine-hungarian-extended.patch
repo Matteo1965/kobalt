@@ -175,7 +175,7 @@
 +    {U"meg", U"gyaláz"}, {U"kis", U"szék"}, {U"kis", U"szoba"},
 +    {U"kis", U"szekrény"}, {U"ruhás", U"szekrény"}, {U"vas", U"szeg"},
 +    {U"cipős", U"szekrény"}, {U"hús", U"szelet"}, {U"ideg", U"gyógyász"},
-+    {U"gyors", U"szolgálat"}, {U"okos", U"szemüveg"}, {U"nyolc", U"csillag"},
++    {U"gyors", U"szolgálat"}, {U"gyors", U"sztráda"}, {U"okos", U"szemüveg"}, {U"nyolc", U"csillag"},
 +    {U"arc", U"csont"}, {U"szín", U"nyom"}, {U"tánc", U"csoport"},
 +    {U"rossz", U"indulat"}, {U"rossz", U"íz"}
 +};
