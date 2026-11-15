@@ -1219,10 +1219,10 @@ void EngineDocument::applyStyleSheet()
     }
     if (paragraphSpacing_ >= 0)
         overrides +=
-                QString("p[data-kobalt-paragraph=\"1\"] { margin-top:0 !important; margin-bottom:%1em !important; padding-top:0 !important; padding-bottom:0 !important; }\n")
+                QString("p[data-kobalt-paragraph=\"1\"], div[data-kobalt-paragraph=\"1\"] { margin-top:0 !important; margin-bottom:%1em !important; padding-top:0 !important; padding-bottom:0 !important; }\n")
                         .arg(paragraphSpacing_ / 100.0, 0, 'f', 2);
     if (paragraphIndent_ >= 0)
-        overrides += QString("p[data-kobalt-paragraph=\"1\"] { text-indent:%1em !important; }\n")
+        overrides += QString("p[data-kobalt-paragraph=\"1\"], div[data-kobalt-paragraph=\"1\"] { text-indent:%1em !important; }\n")
                              .arg(paragraphIndent_ / 100.0, 0, 'f', 2);
     // Only marked text blocks override publisher alignment; decorative blocks keep it.
     if (alignment_ != "publisher")
