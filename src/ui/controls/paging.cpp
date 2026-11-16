@@ -232,20 +232,10 @@ void PagerBar::setBlankArea(const QRect &bounds)
 
 void PagerBar::updateHint()
 {
-    const auto hint = continuationHint->sizeHint();
-    const int minimumHeight = qMax(ui::px(48), hint.height() + 2 * ui::px(8));
-    const bool fits = blankArea.height() >= minimumHeight && blankArea.width() >= hint.width();
-    if (page + 1 >= count || !fits) {
-        // Hide at the old bounds so Qt5 invalidates every painted hint pixel.
-        // Resizing to an empty blank area first can leave those pixels behind.
+    // Hungarian Edition: the continuation caption is intentionally omitted in
+    // every paginated view. Paging controls and page count remain unchanged.
+    if (continuationHint)
         continuationHint->hide();
-        return;
-    }
-    continuationHint->setGeometry(
-            { blankArea.topLeft(),
-              QSize(qMax(0, blankArea.width()), qMax(0, blankArea.height())) });
-    continuationHint->show();
-    continuationHint->raise();
 }
 
 void PagerBar::resizeEvent(QResizeEvent *)
