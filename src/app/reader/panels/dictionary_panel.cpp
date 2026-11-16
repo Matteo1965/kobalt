@@ -481,18 +481,25 @@ void DictionaryPanel::arrange()
     const int cell = isNarrowWidth(width(), ui::density()) ? int(chrome::compactCellWidth)
                                                            : int(chrome::cellWidth);
     int selectorWidth = dictionary->sizeHint().width();
-    const int actionCells = editing ? 2 : saveAvailable ? 4 : 3;
-    const int wordRoom = width() - actionCells * cell - 2 * int(chrome::inset);
     const int wordWanted = qMin(ui::interfaceTextWidth(word, headwordFont), width() / 2);
+    // On small screens move the save control below the toolbar rather than
+    // truncating the searched word when the dictionary selector is present.
+    const bool saveBelow = !editing && saveAvailable
+            && width() - 4 * cell - 2 * int(chrome::inset)
+                            - qMax(cell, dictionary->sizeHint().width()) < wordWanted;
+    const int actionCells = editing ? 2 : saveAvailable && !saveBelow ? 4 : 3;
+    const int wordRoom = width() - actionCells * cell - 2 * int(chrome::inset);
     if (wordRoom - selectorWidth < wordWanted)
         selectorWidth = qMin(selectorWidth, qMax(cell, wordRoom - wordWanted));
     const int selectorLeft = width() - cell - selectorWidth;
     dictionary->setGeometry(selectorLeft, top, selectorWidth, chrome::actionHeight);
     close->setGeometry(width() - cell, top, cell, chrome::actionHeight);
     const int saveLeft = selectorLeft - cell;
-    const int editorLeft = saveLeft - (editing || !saveAvailable ? 0 : cell);
+    const int editorLeft = saveLeft - (editing || !saveAvailable || saveBelow ? 0 : cell);
     const int editLeft = editorLeft - (editing ? 0 : cell);
-    save->setGeometry(saveLeft, top, cell, chrome::actionHeight);
+    save->setGeometry(saveBelow ? width() - cell : saveLeft,
+                      saveBelow ? top + chrome::actionHeight + metrics::control::border : top,
+                      cell, chrome::actionHeight);
     edit->setGeometry(editLeft, top, cell, chrome::actionHeight);
     search->setGeometry(editorLeft, top, cell, chrome::actionHeight);
     submit->setGeometry(search->geometry());
@@ -501,6 +508,8 @@ void DictionaryPanel::arrange()
     headword->setGeometry(chrome::inset, top, wordWidth, chrome::actionHeight);
     headword->setText(ui::elideInterfaceText(word, headwordFont, wordWidth));
     int textTop = top + chrome::actionHeight + metrics::control::border;
+    if (saveBelow)
+        textTop += chrome::actionHeight;
     if (editing) {
         const int hintWidth = qMax(1, width() - 2 * chrome::inset);
         const int hintHeight = editHint->heightForWidth(hintWidth);
