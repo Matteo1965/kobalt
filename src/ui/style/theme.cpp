@@ -17,7 +17,7 @@ const ThemeColors &themeColors(bool dark)
         colors.paper = QColor(Qt::white);
         colors.ink = QColor(Qt::black);
         colors.secondaryInk = QColor(0x1a1a1a);
-        colors.disabledInk = QColor(0x555555);
+        colors.disabledInk = QColor(0x333333);
         colors.divider = QColor(0xb8b8b8);
         colors.outline = QColor(0x666666);
         colors.pressedPaper = QColor(0xdddddd);
