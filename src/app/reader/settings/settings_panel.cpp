@@ -736,6 +736,9 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                                   strings::get("settings.dictionary_font_size"), [] { });
     systemRows->addWidget(dictionaryFontButton);
     systemRows->addWidget(dictionaryFontSizeButton);
+    saveWordsOption = check(systemPage, "rrSaveWords", strings::get("settings.save_words"),
+                            strings::get("settings.save_words_description"));
+    systemRows->addWidget(saveWordsOption);
     systemRows->addStretch(1);
     auto *aboutPage = new QWidget(settingsPages);
     aboutPage->setObjectName("rrAbout");
@@ -875,6 +878,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                                                lightGestureFeedbackOption,
                                                denseGraphOption,
                                                hideTabLabelsOption,
+                                               saveWordsOption,
                                                wifiPowerSaverOption,
                                                automaticOpeningOption,
                                                minimalAnnotationOption };
