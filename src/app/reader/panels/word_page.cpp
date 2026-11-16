@@ -246,7 +246,7 @@ void WordPage::arrange()
     definition->setGeometry(0, y, width(), definitionHeight);
     // A definition that fits keeps the sentence right below it.
     if (definition->pages() == 1) {
-        definitionHeight = qMin(definitionHeight, definition->contentHeight());
+        definitionHeight = qMin(definitionHeight, definition->sizeHint().height());
         definition->setGeometry(0, y, width(), definitionHeight);
     }
     y += definitionHeight;
