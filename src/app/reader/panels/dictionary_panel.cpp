@@ -485,7 +485,7 @@ void DictionaryPanel::arrange()
     const int wordRoom = width() - actionCells * cell - 2 * int(chrome::inset);
     const int wordWanted = qMin(ui::interfaceTextWidth(word, headwordFont), width() / 2);
     if (wordRoom - selectorWidth < wordWanted)
-        selectorWidth = dictionary->widthForLabel(qMax(cell, wordRoom - wordWanted));
+        selectorWidth = qMin(selectorWidth, qMax(cell, wordRoom - wordWanted));
     const int selectorLeft = width() - cell - selectorWidth;
     dictionary->setGeometry(selectorLeft, top, selectorWidth, chrome::actionHeight);
     close->setGeometry(width() - cell, top, cell, chrome::actionHeight);
