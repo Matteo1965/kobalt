@@ -89,9 +89,8 @@ void Reader::placeWordNotice()
 // The Library's key for this file: the host's source key, or a local path.
 QString Reader::wordsSource() const
 {
-    return book->sourceKey().isEmpty() && book->identity().startsWith("file://")
-            ? QUrl(book->identity()).toLocalFile()
-            : book->sourceKey();
+    const QString identity = book->identity();
+    return identity.startsWith("file://") ? QUrl(identity).toLocalFile() : identity;
 }
 
 QString Reader::wordsBook() const
