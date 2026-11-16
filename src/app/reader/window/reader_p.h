@@ -393,6 +393,9 @@ private:
     kobalt::ui::LightSwipeNotice *brightnessNotice = nullptr;
     kobalt::ui::AnnotationModeNotice *annotationModeNotice = nullptr;
     QTimer annotationModeHide;
+    kobalt::ui::ButtonFeedback *wordNotice = nullptr;
+    void showWordNotice(const QString &text);
+    void placeWordNotice();
     bool raisingPopups = false;
     QPointer<kobalt::ui::ModalOverlay> debugDialog;
     QTimer brightnessHide;
