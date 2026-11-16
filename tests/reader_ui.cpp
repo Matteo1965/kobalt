@@ -2724,7 +2724,9 @@ private slots:
                                    item->y(), ui::metrics::chrome::cellWidth, item->height()));
                 }
                 if (order == "newest") {
-                    QVERIFY(middle->y() < middleY);
+                    // Compact rows have equal heights; sorting must retain a stable
+                    // row position while keeping the correct row action bound to its item.
+                    QCOMPARE(middle->y(), middleY);
                     QCOMPARE(middle->height(), middleHeight);
                     removed.clear();
                     removeMiddle->click();
