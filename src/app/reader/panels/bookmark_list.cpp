@@ -669,18 +669,19 @@ void BookmarkList::arrange()
     for (const auto &item : items) {
         const bool lazy = annotations && bool(annotationDetails);
         int count =
-                lazy ? 2 : nextLineCache.value(item.excerpt, excerptLineCache.value(item.excerpt));
+                lazy ? 1 : nextLineCache.value(item.excerpt, excerptLineCache.value(item.excerpt));
         if (count == 0)
             count = qBound(1,
                            (ui::wrappedInterfaceTextHeight(item.excerpt, font, textWidth)
                             + textLineHeight - 1)
                                    / qMax(1, textLineHeight),
-                           2);
+                           1);
         if (!lazy)
             nextLineCache.insert(item.excerpt, count);
+        // Compact bookmark/annotation results: title, one excerpt line and date.
+        // Keep a readable touch target without the former spare line.
         const int itemHeight = qMax(int(ui::metrics::list::threeLines),
                                     2 * int(ui::metrics::list::lineInset) + (count + 2) * lineHeight
-                                            + int(ui::px(annotations ? 12 : 4))
                                             + int(ui::metrics::control::border));
         excerptLines.append(count);
         itemHeights.append(itemHeight);
@@ -877,7 +878,7 @@ void BookmarkList::redraw()
         itemRow->setTitlePixels(ui::px(24));
         itemRow->setTitleIcon(ui::ControlIcon::Pin, !annotations && !item.pinIcon.isEmpty(),
                               !annotations);
-        itemRow->setTitleGap(ui::px(annotations ? 12 : 4));
+        itemRow->setTitleGap(0);
         itemRow->titleLabel()->setAlignment(Qt::AlignLeft
                                             | (annotations ? Qt::AlignVCenter : Qt::AlignBottom));
         itemRow->setDetailLines(excerptLines[index]);
