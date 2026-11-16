@@ -132,6 +132,15 @@ DictionaryPanel::DictionaryPanel(QWidget *parent, KeyboardFactory makeKeyboard)
         if (searchRequested && !word.isEmpty())
             searchRequested(word);
     });
+    save = new ui::CellButton(ui::ControlIcon::Plus, this);
+    save->setObjectName("rrDictionarySave");
+    save->setRule(Qt::LeftEdge);
+    save->setAccessibleName(strings::get("dictionary_panel.save_to_words"));
+    save->hide();
+    connect(save, &QPushButton::clicked, this, [this] {
+        if (saveToggled)
+            saveToggled(!saved);
+    });
     text = new ui::PagedText(this);
     text->setObjectName("rrDefinition");
     text->setTextFont(ui::interfaceFont(chrome::labelText));
@@ -352,6 +361,21 @@ void DictionaryPanel::setChoices(QVector<DictionaryChoice> values)
     dictionary->setEnabled(!editing && options.size() > 1);
 }
 
+QWidget *DictionaryPanel::saveActionButton() const
+{
+    return save;
+}
+
+void DictionaryPanel::setSaved(bool value, bool available)
+{
+    saved = value;
+    saveAvailable = available;
+    save->setGlyph(saved ? ui::ControlIcon::Check : ui::ControlIcon::Plus);
+    save->setAccessibleName(strings::get(saved ? "dictionary_panel.remove_from_words"
+                                               : "dictionary_panel.save_to_words"));
+    arrange();
+}
+
 void DictionaryPanel::resizeEvent(QResizeEvent *)
 {
     arrange();
@@ -446,6 +470,7 @@ void DictionaryPanel::arrange()
     editHint->setVisible(editing);
     submit->setVisible(editing);
     search->setVisible(!editing);
+    save->setVisible(!editing && saveAvailable);
     close->setAccessibleName(strings::get(editing ? "dictionary_panel.cancel_edit"
                                                   : "dictionary_panel.close_definition"));
     dictionary->setEnabled(!editing && options.size() > 1);
@@ -456,7 +481,7 @@ void DictionaryPanel::arrange()
     const int cell = isNarrowWidth(width(), ui::density()) ? int(chrome::compactCellWidth)
                                                            : int(chrome::cellWidth);
     int selectorWidth = dictionary->sizeHint().width();
-    const int actionCells = editing ? 2 : 3;
+    const int actionCells = editing ? 2 : saveAvailable ? 4 : 3;
     const int wordRoom = width() - actionCells * cell - 2 * int(chrome::inset);
     const int wordWanted = qMin(ui::interfaceTextWidth(word, headwordFont), width() / 2);
     if (wordRoom - selectorWidth < wordWanted)
@@ -464,8 +489,10 @@ void DictionaryPanel::arrange()
     const int selectorLeft = width() - cell - selectorWidth;
     dictionary->setGeometry(selectorLeft, top, selectorWidth, chrome::actionHeight);
     close->setGeometry(width() - cell, top, cell, chrome::actionHeight);
-    const int editorLeft = selectorLeft - cell;
+    const int saveLeft = selectorLeft - cell;
+    const int editorLeft = saveLeft - (editing || !saveAvailable ? 0 : cell);
     const int editLeft = editorLeft - (editing ? 0 : cell);
+    save->setGeometry(saveLeft, top, cell, chrome::actionHeight);
     edit->setGeometry(editLeft, top, cell, chrome::actionHeight);
     search->setGeometry(editorLeft, top, cell, chrome::actionHeight);
     submit->setGeometry(search->geometry());
