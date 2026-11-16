@@ -429,7 +429,7 @@ int main(int argc, char **argv)
             applyReaderPalette(caption, colors);
             require(caption->styleSheet().contains("color:" + theme.swipeCaptionInk.name() + ';'),
                     "Theme replay left the swipe caption in its previous theme");
-            require(theme.swipeCaptionInk == QColor(dark ? "#aaaaaa" : "#666666")
+            require(theme.swipeCaptionInk == QColor(dark ? "#dddddd" : "#333333")
                             && theme.lightHintPaper == QColor(dark ? "#222222" : "#e6e6e6")
                             && theme.sleepPaper == QColor(dark ? "#202020" : "#ffffff")
                             && theme.overviewPaper == QColor(dark ? "#242424" : "#f1f1f1")
