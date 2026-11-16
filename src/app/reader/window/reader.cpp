@@ -1734,7 +1734,7 @@ void Reader::lookupSelection()
                 guard->dictionaryPanel->setChoices(guard->dictionary->choices());
                 guard->dictionaryPanel->setBookFont(guard->bookFace());
                 guard->dictionaryPanel->open(query, result, guard->lookupBounds);
-                guard->lookupContext = range.context;
+                guard->lookupContext = range.text;
                 guard->lookupPosition = range.start;
                 guard->recordLookup(query, result);
                 timing.finish(guard->dictionaryPanel);
