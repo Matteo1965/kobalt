@@ -598,7 +598,7 @@ int main(int argc, char **argv)
                                 applyReaderPalette(small, readerPalette(controls.palette(), dark));
                                 const auto image = small->grab().toImage();
                                 const auto color = !enabled
-                                        ? QColor("#999999")
+                                        ? themeColors(dark).disabledInk
                                         : controls.palette().color(checked || pressed
                                                                            ? QPalette::Window
                                                                            : QPalette::WindowText);
