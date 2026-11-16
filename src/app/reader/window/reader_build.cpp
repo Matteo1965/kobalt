@@ -980,10 +980,13 @@ void Reader::buildOverlays()
     bookmarkList->sortRequested = [this](const QString &order) {
         auto next = preferences;
         next["marks_sort"] = order;
-        if (writePreferences(next))
+        if (writePreferences(next)) {
             preferences = next;
-        else
+            if (wordList)
+                wordList->setSortOrder(order);
+        } else {
             bookmarkList->setSortOrder(preferences.value("marks_sort").toString("position"));
+        }
     };
     bookmarkList->selected = [this](const QString &position) {
         if (bookmarkList->annotationsShown()) {
