@@ -266,6 +266,8 @@ Reader::Reader(std::unique_ptr<kobalt::ReadingBook> openedBook,
                                    kobalt::DiagnosticSeverity::Error);
         }
     }
+    if (kobalt::annotationDatabaseEnabled())
+        savedWords = std::make_unique<kobalt::SavedWords>(book->paths().directory);
     bookmarks = std::make_unique<kobalt::BookmarkSession>(
             *session, [this] { return layoutKey(); }, book->paths().annotations(), book->identity(),
             book->fingerprint(), session->title(), book->paths().database());
@@ -1019,6 +1021,7 @@ void Reader::buildOverlays()
             askRemoveBookmark(position);
         }
     };
+    buildWords();
     choices->changed = [this] {
         if (choosingTypography && choices->isVisible())
             syncNavigation();
