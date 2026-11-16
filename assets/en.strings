@@ -1408,3 +1408,7 @@
 "words.remove_confirm" = "Remove";
 "words.no_entry" = "No dictionary entry · Added by you";
 "words.no_entry_detail" = "The dictionary had no entry for this word. You added it to My Words yourself.";
+"dictionary_panel.save_to_words" = "Save to My Words";
+"dictionary_panel.remove_from_words" = "Remove from My Words";
+"settings.save_words" = "Save looked-up words";
+"settings.save_words_description" = "Automatically save words looked up in the dictionary.";
