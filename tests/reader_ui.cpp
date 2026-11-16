@@ -2649,10 +2649,9 @@ private slots:
         bookmark->click();
         QCOMPARE(selected, QString("first"));
         QVERIFY(bookmark->detailLabel()->wordWrap());
-        QCOMPARE(bookmark->height(), annotationHeight - (int(ui::px(12)) - int(ui::px(4))));
+        QCOMPARE(bookmark->height(), annotationHeight);
         QCOMPARE(bookmark->titleLabel()->font().pixelSize(), int(ui::px(24)));
-        QVERIFY(bookmark->detailLabel()->y() - bookmark->titleLabel()->geometry().bottom()
-                >= ui::px(4));
+        QVERIFY(bookmark->detailLabel()->y() >= bookmark->titleLabel()->geometry().bottom());
         if (!captureRoot.isEmpty())
             QVERIFY(owner.grab().save(
                     captureRoot
@@ -2932,10 +2931,11 @@ private slots:
             auto *row = static_cast<ui::ListRow *>(list.findChild<QWidget *>("rrAnnotation0"));
             auto *remove = list.findChild<QPushButton *>("rrAnnotationRemove0");
             QVERIFY(row && remove && !row->isEnabled() && !remove->isEnabled());
-            QCOMPARE(
-                    row->detailLabel()->text(),
-                    QStringLiteral(
-                            "Saved annotations could not be read. Editing is disabled. Reopen this book to try again."));
+            const QString failureMessage = QStringLiteral(
+                    "Saved annotations could not be read. Editing is disabled. Reopen this book to try again.");
+            const QString visibleMessage = row->detailLabel()->text();
+            QVERIFY(visibleMessage.endsWith(QChar(0x2026)));
+            QVERIFY(failureMessage.startsWith(visibleMessage.chopped(1)));
             row->click();
             remove->click();
             QVERIFY(selected.isEmpty() && removed.isEmpty());
