@@ -177,6 +177,7 @@
 +    {U"cipős", U"szekrény"}, {U"hús", U"szelet"}, {U"ideg", U"gyógyász"},
 +    {U"gyors", U"szolgálat"}, {U"gyors", U"sztráda"}, {U"gyors", U"sztrádá"}, {U"okos", U"szemüveg"}, {U"nyolc", U"csillag"},
 +    {U"arc", U"csont"}, {U"szín", U"nyom"}, {U"tánc", U"csoport"},
++    {U"habarcs", U"szerű"}, {U"leg", U"gyors"},
 +    {U"rossz", U"indulat"}, {U"rossz", U"íz"}
 +};
 +
