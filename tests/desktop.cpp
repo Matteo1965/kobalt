@@ -4298,8 +4298,14 @@ printf '[{"file":"%s.png","scene":"%s"}]' "$3" "$KOBALT_GALLERY_CAPTURE" > "$2/p
         QCOMPARE(selector->height(), action->height());
         QVERIFY(selector->text().isEmpty());
         QVERIFY(!action->geometry().intersects(selector->geometry()));
+        // On narrow screens, My Words puts its save action below the toolbar.
+        // The definition starts just below the bottommost visible action.
+        auto *saveAction = fixture.widget("rrDictionarySave");
+        const int lastActionBottom = saveAction && saveAction->isVisible()
+                ? qMax(action->geometry().bottom(), saveAction->geometry().bottom())
+                : action->geometry().bottom();
         QVERIFY(fixture.widget("rrDefinition")->y()
-                <= action->geometry().bottom() + 1 + int(ui::metrics::control::border));
+                <= lastActionBottom + 1 + int(ui::metrics::control::border));
         QVERIFY(fixture.press("rrDictionarySearch"));
         QTRY_VERIFY(fixture.visible("rrSearchResult0"));
         QCOMPARE(query->text(), selected);
