@@ -382,6 +382,7 @@ private:
             *lightGestureFeedbackOption, *denseGraphOption;
     QCheckBox *automaticOpeningOption = nullptr, *minimalAnnotationOption = nullptr,
               *hideTabLabelsOption = nullptr;
+    QCheckBox *saveWordsOption = nullptr;
     QCheckBox *wifiPowerSaverOption = nullptr;
     QPushButton *autoRotateOption;
     bool hideNativeStatus() const;
