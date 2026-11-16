@@ -1459,6 +1459,8 @@ void Reader::buildSettings()
     minimalAnnotationOption = settings->minimalAnnotationOption;
     automaticOpeningOption = settings->automaticOpeningOption;
     hideTabLabelsOption = settings->hideTabLabelsOption;
+    saveWordsOption = settings->saveWordsOption;
+    saveWordsOption->setVisible(bool(savedWords));
     wifiPowerSaverOption = settings->wifiPowerSaverOption;
     settings->showPowerManagement(wifiPowerSaverVisible());
     hideTabLabelsOption->setVisible(!services.phoneLayout);
@@ -1651,6 +1653,7 @@ void Reader::buildSettings()
         settingsHeaderFooterWeight = 2;
         settingsTimeRemainingFormat = "detailed";
         hideTabLabelsOption->setChecked(false);
+        saveWordsOption->setChecked(true);
         if (wifiPowerSaverOption)
             wifiPowerSaverOption->setChecked(false);
         for (const auto *key : appearance::fallbackFontKeys)
