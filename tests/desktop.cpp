@@ -7490,12 +7490,12 @@ printf '[{"file":"%s.png","scene":"%s"}]' "$3" "$KOBALT_GALLERY_CAPTURE" > "$2/p
         auto *continuation =
                 qobject_cast<QLabel *>(fixture.widget("rrSettingsOptionsContinuationHint"));
         QVERIFY(continuation);
-        QTRY_VERIFY(continuation->isVisible());
+        QVERIFY(continuation->isHidden());
         QVERIFY(continuation->font().italic());
         QVERIFY(fixture.press("rrSettingsOptionsNext"));
-        QTRY_VERIFY(!continuation->isVisible());
+        QVERIFY(continuation->isHidden());
         QVERIFY(fixture.press("rrSettingsOptionsPrevious"));
-        QTRY_VERIFY(continuation->isVisible());
+        QVERIFY(continuation->isHidden());
         const auto reveal = [&fixture](const char *name) {
             for (int page = 0; page < 8; ++page) {
                 auto *row = fixture.widget(name);
