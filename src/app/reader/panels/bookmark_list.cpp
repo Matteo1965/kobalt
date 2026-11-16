@@ -111,14 +111,61 @@ BookmarkList::BookmarkList(QWidget *parent, KeyboardFactory factory)
     moreButton->setRule(Qt::LeftEdge);
     connect(moreButton, &QPushButton::clicked, this, [this] {
         closeSort();
-        if (actionsRequested)
+        if (words) {
+            if (allWordsRequested)
+                allWordsRequested();
+        } else if (actionsRequested) {
             actionsRequested();
+        }
     });
     sortButton->setObjectName("rrMarksSort");
     sortButton->setAccessibleName(strings::get("marks.sort_title"));
     sortButton->setRule(Qt::LeftEdge);
     connect(sortButton, &QPushButton::clicked, this, [this] { openSort(); });
     hide();
+}
+
+void BookmarkList::setWordsView(QWidget *view)
+{
+    wordsView = view;
+    wordsTab = new ui::Button(strings::get("words.tab"), this);
+    wordsTab->setObjectName("rrWordsTab");
+    wordsTab->setCheckable(true);
+    static_cast<ui::Button *>(wordsTab)->setPaintMode(ui::ButtonPaintMode::ToolbarCell);
+    wordsTab->setFont(ui::brandFont(chrome::titleText));
+    ui::readerStyle(wordsTab, "QPushButton{border:none;padding:0;min-height:0;"
+                                     + ui::styles::brand(chrome::titleText) + "}");
+    connect(wordsTab, &QPushButton::clicked, this, [this] {
+        if (wordsRequested)
+            wordsRequested();
+    });
+    wordsView->hide();
+    arrange();
+}
+
+void BookmarkList::addCoveringPanel(QWidget *panel)
+{
+    coveringPanels.append(panel);
+    panel->setGeometry(rect());
+    panel->hide();
+}
+
+void BookmarkList::showWords()
+{
+    if (!wordsView)
+        return;
+    if (loading && annotations && loadingCancelled)
+        loadingCancelled();
+    closePin();
+    closeSort();
+    words = true;
+    annotations = loading = false;
+    arrange();
+    redraw();
+    show();
+    raise();
+    wordsView->show();
+    wordsView->raise();
 }
 
 void BookmarkList::setSortOrder(const QString &value)
@@ -523,7 +570,10 @@ void BookmarkList::showItems(QVector<BookmarkRow> list, bool annotationTab, bool
 {
     if (loading && annotations && !annotationTab && loadingCancelled)
         loadingCancelled();
-    const bool reopening = !isVisible() || annotations != annotationTab;
+    const bool reopening = !isVisible() || annotations != annotationTab || words;
+    words = false;
+    if (wordsView)
+        wordsView->hide();
     annotations = annotationTab;
     loading = pending;
     visibleDetailIds.clear();
@@ -652,13 +702,22 @@ void BookmarkList::arrange()
         ++page;
     rows = (page + 1 < pageStarts.size() ? pageStarts[page + 1] : items.size()) - pageStarts[page];
     const int barHeight = chrome::actionHeight - chrome::heavyRule;
-    moreButton->setEnabled(bool(actionsRequested) && !loading);
+    moreButton->setEnabled(words || (bool(actionsRequested) && !loading));
     const int reserved = 3 * chrome::cellWidth;
-    const int tabWidth = qMax(1, (width() - reserved) / 2);
+    const int tabWidth = qMax(1, (width() - reserved) / (wordsTab ? 3 : 2));
     close->setGeometry(0, 0, chrome::cellWidth, barHeight);
     annotationsTab->setGeometry(chrome::cellWidth, 0, tabWidth, barHeight);
     bookmarksTab->setGeometry(chrome::cellWidth + tabWidth, 0,
-                              qMax(1, width() - reserved - tabWidth), barHeight);
+                              wordsTab ? tabWidth : qMax(1, width() - reserved - tabWidth),
+                              barHeight);
+    if (wordsTab)
+        wordsTab->setGeometry(chrome::cellWidth + 2 * tabWidth, 0,
+                              qMax(1, width() - reserved - 2 * tabWidth), barHeight);
+    if (wordsView)
+        wordsView->setGeometry(0, chrome::actionHeight, width(),
+                               qMax(1, height() - chrome::actionHeight));
+    for (auto *panel : coveringPanels)
+        panel->setGeometry(rect());
     moreButton->setGeometry(width() - chrome::cellWidth, 0, chrome::cellWidth, barHeight);
     listHeader->setGeometry(0, chrome::actionHeight, width(), ui::metrics::list::headerHeight);
     sortButton->setGeometry(width() - 2 * chrome::cellWidth, 0, chrome::cellWidth, barHeight);
@@ -713,15 +772,19 @@ void BookmarkList::redraw()
             details = visibleDetails;
         }
     }
-    bookmarksTab->setChecked(!annotations);
-    annotationsTab->setChecked(annotations);
+    bookmarksTab->setChecked(!annotations && !words);
+    annotationsTab->setChecked(annotations && !words);
+    if (wordsTab)
+        wordsTab->setChecked(words);
     const bool currentBookmarked = std::any_of(items.cbegin(), items.cend(),
                                                [](const BookmarkRow &row) { return row.current; });
-    moreButton->setGlyph(annotations                 ? ui::ControlIcon::ExportAction
+    moreButton->setGlyph(words                       ? ui::ControlIcon::Books
+                                 : annotations                 ? ui::ControlIcon::ExportAction
                                  : currentBookmarked ? ui::ControlIcon::BookmarkRemove
                                                      : ui::ControlIcon::BookmarkAdd);
     moreButton->setAccessibleName(
-            strings::get(annotations ? "annotations.export" : "bookmarks.actions"));
+            strings::get(words ? "words.all_books"
+                               : annotations ? "annotations.export" : "bookmarks.actions"));
     empty->setText(strings::get(loading               ? "annotations.loading"
                                         : annotations ? "annotations.empty"
                                                       : "bookmarks.empty"));
