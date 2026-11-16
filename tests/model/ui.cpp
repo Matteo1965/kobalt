@@ -675,7 +675,7 @@ int main(int argc, char **argv)
                                 == first.palette().color(QPalette::Window),
                         "Applying the theme erased the selected row label color");
                 row.setEnabled(false);
-                labelInk(row.titleLabel(), QColor("#999999"));
+                labelInk(row.titleLabel(), themeColors(dark).disabledInk);
                 row.setEnabled(true);
                 row.setChecked(false);
                 labelInk(row.detailLabel(), noteColor(&row));
