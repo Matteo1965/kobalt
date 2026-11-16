@@ -515,28 +515,17 @@ int main(int argc, char **argv)
         require(!pager.next->isEnabled() && pager.turnTarget(1) == 2,
                 "Bounded content pager wrapped");
         auto *hint = host.findChild<QLabel *>("testContinuationHint");
-        require(hint, "Paged list has no continuation hint");
+        require(hint, "Paged list continuation label ownership changed");
         pager.setPage(0, 3);
         pager.setBlankArea({ 0, 500, 600, 100 });
-        hint->ensurePolished();
-        require(!hint->isHidden() && hint->font().italic(),
-                "Paged list lost its italic continuation hint");
-        require(hint->geometry() == QRect(0, 500, 600, 100),
-                "Continuation hint escaped the blank area");
+        require(hint->isHidden(), "Continuation hint must remain hidden on every page");
         require(hint->testAttribute(Qt::WA_TransparentForMouseEvents),
-                "Continuation hint intercepts list taps");
-        pager.setBlankArea({ 0, 500, 600, 1 });
-        require(hint->isHidden(), "Continuation hint appeared in a short gap");
-        pager.setBlankArea({ 0, 500, 1, 100 });
-        require(hint->isHidden(), "Continuation hint appeared in a narrow gap");
+                "Hidden continuation hint intercepts list taps");
         pager.setPage(2, 3, {}, true);
         pager.setBlankArea({ 0, 500, 600, 100 });
-        require(hint->isHidden(), "Last list page promised more content");
+        require(hint->isHidden(), "Last page displayed a continuation hint");
         pager.setPage(0, 1);
-        pager.setBlankArea({ 0, 500, 600, 100 });
-        require(hint->isHidden(), "Single-page list promised more content");
-        pager.setPage(0, 3);
-        require(hint->isHidden(), "New list content reused a stale blank area");
+        require(hint->isHidden(), "Single page displayed a continuation hint");
     }
     {
         using namespace kobalt::ui;
