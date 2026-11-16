@@ -62,7 +62,7 @@ private:
     QHash<QString, int> pages;
     ui::CellButton *backButton = nullptr, *sortButton = nullptr;
     QLabel *title = nullptr, *count = nullptr, *empty, *emptyHint;
-    ui::CaptionDropdown *filter = nullptr;
+    ui::Button *filter = nullptr;
     ui::PagerBar *pager;
     QVector<ui::ListRow *> buttons;
     QVector<QPushButton *> removes;
