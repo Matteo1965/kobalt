@@ -868,3 +868,7 @@
 "words.remove_confirm" = "Eltávolítás";
 "words.no_entry" = "Nincs szótári találat · Saját mentés";
 "words.no_entry_detail" = "A szótárban nem volt találat erre a szóra. Saját magad adtad hozzá a Saját szavakhoz.";
+"dictionary_panel.save_to_words" = "Hozzáadás a Saját szavakhoz";
+"dictionary_panel.remove_from_words" = "Eltávolítás a Saját szavakból";
+"settings.save_words" = "Szótári keresések mentése";
+"settings.save_words_description" = "A szótári keresések szavainak automatikus mentése a Saját szavak listába.";
