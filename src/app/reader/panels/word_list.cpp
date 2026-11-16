@@ -83,10 +83,10 @@ WordList::WordList(QWidget *parent, Scope scope) : ui::Panel(parent), scope(scop
         ui::readerStyle(sortButton, "QPushButton{min-height:0;}");
         sortButton->setMinimumHeight(0);
         connect(sortButton, &QPushButton::clicked, this, [this] { openSort(); });
-        filter = new ui::CaptionDropdown(this);
+        filter = new ui::Button(this);
         filter->setObjectName("rrWordsFilter");
         filter->setAccessibleName(strings::get("words.filter"));
-        filter->label = strings::get("words.filter");
+        filter->setContentAlignment(Qt::AlignLeft);
         connect(filter, &QPushButton::clicked, this, [this] { openFilter(); });
     }
     empty = new ui::InterfaceLabel(strings::get("words.empty"), this);
@@ -202,7 +202,7 @@ void WordList::filterItems()
 
 int WordList::top() const
 {
-    return scope == Scope::Book ? 0 : int(chrome::actionHeight + chrome::toolStripHeight);
+    return scope == Scope::Book ? 0 : int(chrome::actionHeight + ui::px(68));
 }
 
 // The bookmark row: a caption, one line in the book's face and a caption below.
@@ -256,7 +256,7 @@ void WordList::arrange()
         count->setGeometry(countRight - countWidth, 0, countWidth, bar);
         title->setGeometry(titleLeft, 0,
                            qMax(1, countRight - countWidth - chrome::inset - titleLeft), bar);
-        const int stripHeight = chrome::toolStripHeight;
+        const int stripHeight = ui::px(68);
         filter->setGeometry(0, chrome::actionHeight, width() - chrome::cellWidth,
                             stripHeight - ui::metrics::control::border);
         sortButton->setGeometry(width() - chrome::cellWidth, chrome::actionHeight,
@@ -363,7 +363,7 @@ void WordList::redraw()
         item->setActionIcon(ui::ControlIcon::Trash);
         item->setDetailFont(excerptFont());
         item->setMetadataFont(ui::interfaceFont(chrome::captionText));
-        item->setCaptionFont(glossFont);
+        item->captionLabel()->setFont(glossFont);
         // In the Library, the caption names the book; in a book, its chapter.
         item->setTitle(scope == Scope::Book ? word.chapter
                                             : (word.title.isEmpty() ? strings::get("words.untitled")
