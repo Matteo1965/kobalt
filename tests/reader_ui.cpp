@@ -2358,7 +2358,7 @@ private slots:
         QCOMPARE(notice.grab().toImage().pixelColor(0, 0), backdrop.pixelColor(0, 0));
     }
 
-    // Checks that the continuation-hint area repaints blank after paging to the last page, a one-page list, a smaller gap or a page reset.
+    // Hungarian Edition keeps the continuation caption hidden on all pages.
     void continuationHintClears_data() { variants(); }
 
     void continuationHintClears()
@@ -2378,19 +2378,12 @@ private slots:
         const QRect gap(ui::px(40), ui::px(400), owner.width() - ui::px(80), ui::px(200));
         auto *hint = owner.findChild<QLabel *>("hintContinuationHint");
         QVERIFY(hint);
-        PaintRegions paints;
-        owner.installEventFilter(&paints);
         owner.show();
         for (int change = 0; change < 4; ++change) {
             pager.setPage(0, 2);
             pager.setBlankArea(gap);
-            QTRY_VERIFY(hint->isVisible());
             QCoreApplication::processEvents();
-            const auto visible = owner.grab().toImage().copy(gap);
-            QImage blank(visible.size(), visible.format());
-            blank.fill(paper);
-            QVERIFY(visible != blank);
-            paints.painted = {};
+            QVERIFY(hint->isHidden());
             if (change == 0)
                 pager.setPage(1, 2);
             else if (change == 1)
@@ -2400,10 +2393,8 @@ private slots:
             else
                 pager.setPage(0, 2);
             QVERIFY(hint->isHidden());
-            // Check the actual damage before grab() can force a fresh render.
-            QTRY_VERIFY(paints.painted.contains(gap));
-            QCOMPARE(owner.grab().toImage().copy(gap), blank);
         }
+        QVERIFY(hint->testAttribute(Qt::WA_TransparentForMouseEvents));
     }
 
     // Checks that rows, trailing row actions and menu actions press gray, while a selected row and a pressed toolbar cell fill with ink.
