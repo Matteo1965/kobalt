@@ -36,6 +36,9 @@
 #include "reading/text_presets.h"
 #include "reading/style_sample_cache.h"
 #include "storage/preview_store.h"
+#include "storage/saved_words.h"
+#include "app/reader/panels/word_list.h"
+#include "app/reader/panels/word_page.h"
 #include "appearance_edit_session.h"
 #include "app/reader/views/navigation.h"
 #include "platform/api/reader_host_services.h"
@@ -525,6 +528,24 @@ private:
     void dismissLookup(bool keepGesture = false);
     void dismissDictionary();
     void lookupSelection();
+    // My Words. Null with the JSON diagnostic backend, which has no database.
+    std::unique_ptr<kobalt::SavedWords> savedWords;
+    kobalt::WordList *wordList = nullptr, *allWords = nullptr;
+    kobalt::WordPage *wordPage = nullptr;
+    QString lookupContext, lookupPosition;
+    // The latest lookup as the sheet's save cell would save it.
+    kobalt::SavedWord lookupSnapshot;
+    quint64 savedLookupEpoch = 0;
+    void buildWords();
+    // The annotation key that saved words share with bookmarks and highlights.
+    QString wordsBook() const;
+    QString wordsSource() const;
+    // Saves a lookup that found a definition and shows the sheet's save cell.
+    void recordLookup(const QString &query, const kobalt::DictionaryResult &result);
+    void showWords();
+    void showAllWords();
+    void reloadWords();
+    void openWord(const kobalt::SavedWord &word);
     void resizeText();
     // The host's cutout and corner bands for the current size.
     kobalt::SafeArea safeArea() const;
