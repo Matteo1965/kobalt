@@ -592,10 +592,14 @@ void CaptionButton::paintEvent(QPaintEvent *)
                          isEnabled() && isDown() ? themeColors(this).pressedPaper
                                                  : palette().color(QPalette::Window));
         paintEdges(painter, rect(), rule, dividerColor(this));
-        if (!isEnabled())
-            painter.setOpacity(.45);
-        painter.setPen(palette().color(QPalette::WindowText));
+        // List actions paint their own text: using opacity here makes disabled
+        // labels too pale, regardless of the QPalette disabled-text roles.
+        // Paint the requested 50% gray directly and keep normal labels regular.
+        const auto labelInk = isEnabled() ? palette().color(QPalette::WindowText)
+                                          : themeColors(this).disabledInk;
+        painter.setPen(labelInk);
         QFont label = font();
+        label.setWeight(QFont::Normal);
         painter.setFont(label);
         const bool actionIcon = iconVisible;
         const int left = chrome::inset + (actionIcon ? chrome::cellIcon + px(20) : 0);
