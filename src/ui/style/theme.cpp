@@ -206,7 +206,7 @@ void readerStyle(QWidget *widget, const QString &source)
         style.replace(placeholders[1], escapedFamily(families[1]));
         style.replace(placeholders[2], "\"" + escapedFamily(families[2]) + "\"");
         style += " QPushButton:disabled,QPushButton:checked:disabled,QPushButton:pressed:disabled{"
-                 "color:palette(mid);background:palette(window);border-color:palette(midlight);}";
+                 "color:palette(mid);background:palette(window);border-color:palette(mid);}";
         style.replace("palette(window-text)", colors.ink.name());
         style.replace("palette(window)", colors.paper.name());
         style.replace("palette(midlight)", colors.pressedPaper.name());
