@@ -410,7 +410,11 @@ int main(int argc, char **argv)
                                        qMakePair(QPalette::Dark, theme.outline) })
                 for (const auto group :
                      { QPalette::Active, QPalette::Inactive, QPalette::Disabled })
-                    require(button.palette().color(group, entry.first) == entry.second,
+                    require(button.palette().color(group, entry.first)
+                                    == (group == QPalette::Disabled
+                                                && entry.first == QPalette::WindowText
+                                            ? theme.disabledInk
+                                            : entry.second),
                             "Styled widget retained a platform color instead of the fixed theme");
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
             require(button.palette().color(QPalette::PlaceholderText) == theme.secondaryInk,
