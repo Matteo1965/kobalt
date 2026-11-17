@@ -1,26 +1,18 @@
 {
-  "qt5-base": {
-    "url": "https://codeload.github.com/kobolabs/qtbase/tar.gz/9b14885d92502f872aa92ab264c14ecd3137c200",
-    "sha256": "6126ab01472b41bebad006b63c3d237f288927e881bb8d325d8ec6e517e99ebe",
-    "file": "qt5-base-9b14885d.tar.gz",
-    "description": "Qt 5 source matching the pinned SDK headers with the included NickelTC patches"
-  },
-  "qt5-sensors": {
-    "url": "https://codeload.github.com/kobolabs/qtsensors/tar.gz/61a596cdbb7cb084c22ca5f2a83e203f55f712aa",
-    "sha256": "4a9652198b855c528e9e0479968f1cf83e9d754009987b8f8347ca151326bf7d",
-    "file": "qt5-sensors.tar.gz",
-    "description": "Qt 5 Sensors source"
-  },
-  "nickeltc": {
-    "url": "https://codeload.github.com/pgaskin/NickelTC/tar.gz/9779f94e3b7e0f6673dcff92890ce43a14c5e797",
-    "sha256": "a8a19d1e76a33d1ba3fc11cca4ac9d5250357f42646bada72e4586f1ceff305c",
-    "file": "nickeltc.tar.gz",
-    "description": "NickelTC build recipes and patches"
-  },
   "ebook-fonts": {
     "url": "https://codeload.github.com/nicoverbruggen/ebook-fonts/tar.gz/13834303660d071657b1aa885da02c2d075b5368",
-    "sha256": "57b448edd090cdef0dd33d03cc9fe3e04fc55653572ce81db255b29860e26fb0",
-    "file": "ebook-fonts.tar.gz",
-    "description": "Reading font inputs, build scripts and licenses"
+    "sha256": "57b448edd090cdef0dd33d03cc9fe3e04fc55653572ce81db255b29860e26fb0"
+  },
+  "libron": {
+    "url": "https://codeload.github.com/nicoverbruggen/libron/tar.gz/refs/tags/v0.32",
+    "sha256": "6f8f4f95271a7d4bf1ea8d6141c72a1ce9c53e84c9568cf4b73cbd3862e60afd"
+  },
+  "qtbase-android": {
+    "url": "https://codeload.github.com/qt/qtbase/tar.gz/138f955f0b5e50e4a6c2ee1e78a2279db52ae9e3",
+    "sha256": "2743e6bb0122277d71b1952343245827ba7313909d5d594f6f86a2ed7dbd8400"
+  },
+  "qtsensors-android": {
+    "url": "https://codeload.github.com/qt/qtsensors/tar.gz/30f06d8b10eb1e5f3d7d592fb2802bebee1ea541",
+    "sha256": "8b7a6d6659f01fed40ebd78e02d15d010bca3940572c628cea4fd27023d148c4"
   }
 }

@@ -1,0 +1,111 @@
+name: Hungarian Edition - beta7 HU Dictionary Morphology Qt5
+
+on:
+  push:
+    branches: [hungarian-edition-beta7-hu-dictionary-morphology]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hu-beta7-hu-morphology-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify retained Hungarian features
+        run: python3 tests/integration/test_hu_beta6_lowrisk.py
+      - name: Validate release tooling
+        run: bash platforms/ci/test.sh
+      - name: Verify package scope and localized preferences
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          locale = Path("assets/hu.strings").read_text()
+          for key in ("settings.light_gesture_feedback", "settings.light_gesture_feedback_description",
+                      "settings.hanging_punctuation", "settings.hanging_punctuation_description"):
+              assert f'"{key}"' in locale, key
+          settings = Path("src/app/reader/settings/settings_panel.cpp").read_text()
+          assert "rrLightDarkModeShortcut" not in settings
+          refresh = Path("src/app/reader/window/reader_refresh.cpp").read_text()
+          assert "setDarkModeShortcut(true, dark, darkEnabled)" in refresh
+          sync = Path("src/sync/kosync.cpp").read_text()
+          assert "object.size() == 1" in sync and "timedOut" in sync
+          panel = Path("src/app/reader/settings/settings_panel.cpp").read_text()
+          assert 'reader_native_rail_text' in panel
+          assert 'rrChapterGroups' in panel
+          chapter = Path("src/app/reader/panels/chapter_contents.cpp").read_text()
+          assert 'toggleGroup' in chapter and 'rebuildVisible' in chapter
+          assert '"settings.chapter_groups_current"' in locale
+          assert '"buttons.upper"' in locale and '"buttons.next"' in locale
+          assert 'rrButtonControls' in panel
+          assert 'pageButtons::direction' in Path("src/app/reader/window/reader.cpp").read_text()
+          keyboard = Path("src/ui/controls/keyboard.cpp").read_text()
+          host = Path("platforms/kobo/common/reader_host_services.cpp").read_text()
+          for vowel in "áéíóöőúüű":
+              assert vowel in keyboard, vowel
+          assert '0123456789öüó' in keyboard
+          assert 'qwertzuiopőú' in keyboard
+          assert 'key->setText(shown);' in keyboard
+          assert 'symbols->setProperty("reader_invert_pressed", true)' in keyboard
+          assert 'result.downloadableDictionaries = true;' in host
+          assert 'painter.setBrush(ui::themeColors(this).paper)' in Path("src/app/reader/window/reader_build.cpp").read_text()
+          assert '"sleep.sleeping" = "Alvó mód";' in locale
+          assert '"sleep.time_left" = "%1 van hátra";' in locale
+          assert '"stats.pages_left" = "lap van hátra";' in locale
+          graph = Path("src/app/reader/panels/chapter_graph.cpp").read_text()
+          assert 'stats.pages_left_compact' in graph
+          assert 'const int unitLines' not in graph
+          stardict = Path("src/dictionaries/stardict.cpp").read_text()
+          tests = Path("tests/model/dictionary_store.cpp").read_text()
+          assert 'probes >= 64' in stardict
+          assert 'Hungarian exact possessive headword must beat stemmed coat' in tests
+          assert 'Hungarian case-suffixed form must resolve to house' in tests
+          assert '"dictionaries.local"' in locale
+          dictionary = Path("src/app/reader/window/reader_build.cpp").read_text()
+          assert 'dictionarySettings->setLocalDictionaryIds(local)' in dictionary
+          assert 'dictionaryPanel->setChoices(choices)' in dictionary
+          assert 'ui::makeLocalizedWidgetKeyboard(parent, editor, QStringLiteral("hu"))' in host
+          assert 'strings::language()' in host
+          assert '"widgetKeyboardShift"' in Path("tests/desktop.cpp").read_text()
+          PY
+
+  native-tests:
+    needs: validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Native regression suite
+        env:
+          KOBALT_TEST_INTERFACE_LANGUAGE: en
+        run: bash platforms/ci/native-tests.sh
+
+  build-kobo-qt5:
+    needs: [validation, native-tests]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build Qt5 package
+        env:
+          CONTAINER_ENGINE: docker
+          KOBALT_RELEASE_VERSION: v1.0-beta7-HU-DICT-MORPH
+        run: bash platforms/ci/build.sh qt5
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kobalt-hu-beta7-hu-morphology-${{ github.run_number }}-qt5
+          path: build/release/*
+          if-no-files-found: error
+          compression-level: 0

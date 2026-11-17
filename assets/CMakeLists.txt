@@ -1,0 +1,63 @@
+# Stage the runtime files separately from source metadata, artwork and notices.
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/manifest.json" manifest)
+set(runtime "${CMAKE_CURRENT_BINARY_DIR}/runtime")
+string(JSON count LENGTH "${manifest}" files)
+if(count LESS 1)
+    message(FATAL_ERROR "The runtime asset manifest is empty.")
+endif()
+math(EXPR last "${count} - 1")
+set(managed manifest.json)
+foreach(index RANGE ${last})
+    string(JSON name GET "${manifest}" files ${index} path)
+    if(NOT name MATCHES "^(fonts|hyph)/" OR name MATCHES "(^|/)\\.\\.(/|$)" OR name MATCHES "\\\\")
+        message(FATAL_ERROR "Invalid runtime asset path: ${name}")
+    endif()
+    string(JSON expected GET "${manifest}" files ${index} sha256)
+    file(SHA256 "${CMAKE_CURRENT_SOURCE_DIR}/${name}" actual)
+    if(NOT actual STREQUAL expected)
+        message(FATAL_ERROR "Runtime asset checksum mismatch: ${name}")
+    endif()
+    configure_file("${name}" "${runtime}/${name}" COPYONLY)
+    list(APPEND managed "${name}")
+endforeach()
+# Removed assets must not survive an incremental configuration.
+file(GLOB_RECURSE previous LIST_DIRECTORIES false RELATIVE "${runtime}" "${runtime}/*")
+foreach(name IN LISTS previous)
+    if(NOT name IN_LIST managed)
+        file(REMOVE "${runtime}/${name}")
+    endif()
+endforeach()
+include("${CMAKE_CURRENT_SOURCE_DIR}/../platforms/release-version.cmake")
+string(JSON fallback GET "${manifest}" version)
+kobalt_release_version(version "${fallback}")
+if(version STREQUAL fallback)
+    configure_file(manifest.json "${runtime}/manifest.json" COPYONLY)
+else()
+    string(JSON manifest SET "${manifest}" version "\"${version}\"")
+    file(CONFIGURE OUTPUT "${runtime}/manifest.json" CONTENT "${manifest}" @ONLY)
+endif()
+set(KOBALT_ASSETS "${runtime}" PARENT_SCOPE)
+
+list(TRANSFORM managed PREPEND "${runtime}/")
+set(KOBALT_ASSET_INPUTS "${managed}" PARENT_SCOPE)
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/../platforms/strings.cmake")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/en.strings" "${CMAKE_CURRENT_SOURCE_DIR}/hu.strings")
+file(GLOB_RECURSE string_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/../src/*.h")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${string_sources})
+kobalt_generate_strings("${CMAKE_CURRENT_SOURCE_DIR}/en.strings" "${CMAKE_CURRENT_BINARY_DIR}/../kobalt_strings.inc" ${string_sources})
+kobalt_generate_strings("${CMAKE_CURRENT_SOURCE_DIR}/hu.strings" "${CMAKE_CURRENT_BINARY_DIR}/../kobalt_strings_hu.inc")
+
+# Data that C++ code embeds goes next to the generated strings, in the
+# platform's binary folder, which every platform adds to its include path.
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/dictionaries.json" DICTIONARY_CATALOG)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../src/dictionaries/catalog.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/../dictionary_catalog.h" @ONLY)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/export/annotations.css" ANNOTATION_EXPORT_STYLE)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/export/annotations.js" ANNOTATION_EXPORT_SEARCH)
+# The script ends the inline <script> element without a trailing newline.
+string(REGEX REPLACE "\n$" "" ANNOTATION_EXPORT_SEARCH "${ANNOTATION_EXPORT_SEARCH}")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../src/storage/annotation_export_html.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/../annotation_export_html.h" @ONLY)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/dictionaries.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/export/annotations.css" "${CMAKE_CURRENT_SOURCE_DIR}/export/annotations.js")

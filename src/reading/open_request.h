@@ -8,7 +8,8 @@ namespace kobalt {
 // Prepared by the host after its eligibility and source-open checks. The
 // factory runs on the engine worker and owns values, never borrowed handles.
 // Path is a materialized local archive used for revision/legacy hash checks.
-struct OpenRequest {
+struct OpenRequest
+{
     QString identity, path;
     QSize size;
     QJsonObject saved;
@@ -21,5 +22,16 @@ struct OpenRequest {
     // A host may pin one opening without saving its appearance. Keep the raw
     // stored appearance separately so checkpoints retain absent keys too.
     QJsonObject temporaryAppearance{}, originalAppearance{};
+    // Optional user CSS. Read on the engine worker for every opening.
+    QString userStyleSheetPath{};
+    // Applied after checking the saved publication fingerprint, before temporary appearance.
+    QJsonObject appearanceDefaults{};
+    // Original basename when the host materializes the book under another name.
+    // Null uses path; explicitly empty means the source filename is unavailable.
+    QString syncFilename{};
+    // A host library can mark a book finished independently of its checkpoint.
+    bool restartAtStart = false;
+    // The same optional host cover used by the sleep screen.
+    QString coverImagePath{};
 };
-}
+} // namespace kobalt

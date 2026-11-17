@@ -1,4 +1,5 @@
 #include "manager.h"
+#include "support/main_thread.h"
 #include "stardict.h"
 #include "dictionary_catalog.h"
 #include "publication/zip_resource.h"
@@ -26,7 +27,7 @@
 namespace kobalt {
 namespace {
 bool validId(const QString &id) {
-    return QRegularExpression("^[a-z]{2,3}-[a-z]{2,3}$").match(id).hasMatch();
+    return id.size() <= 64 && QRegularExpression("^[a-z]{2,3}-[a-z]{2,3}(?:-[a-z0-9]+)*$").match(id).hasMatch();
 }
 bool fail(QString *error, const QString &message) {
     if (error)
@@ -36,6 +37,135 @@ bool fail(QString *error, const QString &message) {
 QString folder(const QString &root, const QString &id) {
     return QDir(root).filePath(id);
 }
+
+// Local StarDict packages can use a distinctive suffix (e.g. hu-en-wiktionary).
+// An archive must be extracted to one flat, safely named dictionary directory.
+QStringList localDictionaryIds(const QString &root) {
+    QStringList ids;
+    for (const QFileInfo &dir : QDir(root).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
+        if (!validId(dir.fileName()))
+            continue;
+        if (storage::readJson(folder(dir.absoluteFilePath(), "installed.json"))["id"].toString() == dir.fileName())
+            ids.append(dir.fileName());
+    }
+    ids.sort(Qt::CaseInsensitive);
+    return ids;
+}
+bool prepareLocalDictionary(const QString &root, const QString &id) {
+    const QString dir = folder(root, id);
+    const QFileInfo info(dir);
+    if (!validId(id) || info.isSymLink() || !info.isDir())
+        return false;
+    const QString prefix = folder(dir, id);
+    if (!QFileInfo(prefix + ".ifo").isFile() || !QFileInfo(prefix + ".idx").isFile() ||
+        (!QFileInfo(prefix + ".dict").isFile() && !QFileInfo(prefix + ".dict.dz").isFile()))
+        return false;
+    // Never overwrite a managed dictionary or a user-supplied metadata file.
+    if (QFileInfo::exists(folder(dir, "installed.json")))
+        return false;
+    QFile ifo(prefix + ".ifo");
+    if (!ifo.open(QIODevice::ReadOnly) || ifo.size() > 65536)
+        return false;
+    QString title;
+    for (const QByteArray &line : ifo.readAll().split('\n')) {
+        if (line.startsWith("bookname=")) {
+            title = QString::fromUtf8(line.mid(9)).trimmed();
+            break;
+        }
+    }
+    if (title.isEmpty()) title = id;
+    title = title.left(160);
+    QString error;
+    if (!StarDict::prepare(dir, id, &error))
+        return false;
+    const QStringList parts = id.split('-');
+    return storage::writeJson(folder(dir, "installed.json"), qt::object({
+        {"id", id}, {"name", title}, {"language", parts.at(0)}, {"target", parts.at(1)}, {"local", true}
+    }));
+}
+void discoverLocalDictionaries(const QString &root) {
+    const QFileInfo info(root);
+    if (info.isSymLink() || !info.isDir())
+        return;
+    for (const QFileInfo &dir : QDir(root).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks))
+        prepareLocalDictionary(root, dir.fileName());
+}
+
+QString dictionarySourceLanguage(const QString &root, const QString &id, const QVector<DownloadDictionary> &entries) {
+    // Existing installs may predate language metadata; keep catalog fallback.
+    const auto metadata = storage::readJson(folder(folder(root, id), "installed.json"));
+    const QString declared = DictionaryManager::normalizeLanguage(metadata["language"].toString());
+    if (!declared.isEmpty())
+        return declared;
+    for (const auto &entry : entries)
+        if (entry.id == id)
+            return DictionaryManager::normalizeLanguage(entry.language);
+    return id == QStringLiteral("hu-hu") ? QStringLiteral("hu") : QString();
+}
+
+bool importHungarianDictionary(const QString &root) {
+    const QString id = QStringLiteral("hu-hu");
+    const QString archive = QStringLiteral("/mnt/onboard/.kobo/custom-dict/HU_HU_Merged_v3.zip");
+    const QString destination = folder(root, id);
+    if (QFileInfo::exists(folder(destination, "installed.json"))) {
+
+        return true;
+    }
+    if (!QFileInfo(archive).isFile() || !QDir().mkpath(root) || QFileInfo::exists(destination)) {
+
+        return false;
+    }
+    QTemporaryDir staging(folder(root, ".hu-import-XXXXXX"));
+    if (!staging.isValid()) {
+
+        return false;
+    }
+    const QString prefix = QStringLiteral("hungarian-dictionary-merged-v3.");
+    for (const auto &ext : {QStringLiteral("ifo"), QStringLiteral("idx"), QStringLiteral("dict")}) {
+        ZipResource input;
+        if (!input.open(archive, prefix + ext, ext == "dict" ? 64LL * 1024 * 1024 : 8LL * 1024 * 1024)) {
+
+            return false;
+        }
+        QFile output(folder(staging.path(), id + "." + ext));
+        if (!output.open(QIODevice::WriteOnly)) {
+
+            return false;
+        }
+        while (input.valid() && !input.finished()) {
+            const auto chunk = input.next();
+            if (output.write(chunk) != chunk.size()) {
+
+                return false;
+            }
+        }
+        if (!input.valid()) {
+
+            return false;
+        }
+        output.close();
+
+    }
+    QString error;
+    if (!StarDict::prepare(staging.path(), id, &error)) {
+
+        return false;
+    }
+
+    if (!storage::writeJson(folder(staging.path(), "installed.json"),
+           qt::object({{"id", id}, {"name", QStringLiteral("Magyar értelmező szótár")}, {"language", QStringLiteral("hu")}, {"target", QStringLiteral("hu")}}))) {
+
+        return false;
+    }
+    if (!QDir().rename(staging.path(), destination)) {
+
+        return false;
+    }
+
+    staging.setAutoRemove(false);
+    return true;
+}
+
 class InstallJob final : public QThread {
 public:
     QString root, zip, error;
@@ -68,6 +198,8 @@ DictionaryManager::DictionaryManager(QString directory, std::unique_ptr<Dictiona
                                      QNetworkAccessManager *network)
     : QObject(parent), data(std::make_unique<Data>()) {
     data->root = std::move(directory);
+    importHungarianDictionary(data->root);
+    discoverLocalDictionaries(data->root);
     data->fallback = std::move(fallback);
     if (network)
         data->requests = network;
@@ -119,6 +251,23 @@ QVector<DictionaryChoice> DictionaryManager::choices() const {
                                           false};
             (choice.language == data->language ? current : other).append(choice);
         }
+    if (installed("hu-hu")) {
+        const DictionaryChoice choice{"downloaded:hu-hu", QStringLiteral("Magyar értelmező szótár"), QStringLiteral("hu"), false};
+        (data->language == "hu" ? current : other).append(choice);
+    }
+    // Installed local dictionaries are not necessarily present in the download catalog.
+    for (const QString &id : localDictionaryIds(data->root)) {
+        if (id == "hu-hu") continue;
+        bool managed = false;
+        for (const auto &entry : catalog())
+            if (entry.id == id) { managed = true; break; }
+        if (managed) continue;
+        const QJsonObject meta = storage::readJson(folder(folder(data->root, id), "installed.json"));
+        const QString name = meta["name"].toString(id);
+        const QString language = normalizeLanguage(meta["language"].toString(id.section('-', 0, 0)));
+        const DictionaryChoice option{"downloaded:" + id, name, language, false};
+        (language == data->language ? current : other).append(option);
+    }
     for (auto choice : data->fallback->choices()) {
         choice.fallback = true;
         choice.language = normalizeLanguage(choice.language);
@@ -136,7 +285,8 @@ bool DictionaryManager::select(const QString &book, const QString &id, QString *
             auto active = std::make_unique<StarDict>();
             if (!active->open(folder(data->root, pair), pair, error))
                 return false;
-            data->active = std::move(active);
+            active->setHungarianSource(dictionarySourceLanguage(data->root, pair, catalog()) == QStringLiteral("hu"));
+        data->active = std::move(active);
             data->activeId = pair;
         }
     } else if (!data->fallback->select(book, id, error))
@@ -186,17 +336,27 @@ DictionaryResult DictionaryManager::lookup(const QString &book, const QString &w
             result.error = error;
             return result;
         }
-        data->active = std::move(active);
+        active->setHungarianSource(dictionarySourceLanguage(data->root, pair, catalog()) == QStringLiteral("hu"));
+            data->active = std::move(active);
         data->activeId = pair;
     }
     auto result = data->active->lookup(word);
     result.dictionaryId = id;
+    if (pair == "hu-hu") {
+        result.dictionary = QStringLiteral("Magyar értelmező szótár");
+        result.language = QStringLiteral("hu");
+    }
     for (const auto &entry : catalog())
         if (entry.id == pair) {
             result.dictionary = entry.name;
             result.language = entry.language;
             break;
         }
+    const auto meta = storage::readJson(folder(folder(data->root, pair), "installed.json"));
+    if (result.dictionary == pair || meta["local"].toBool(false)) {
+        result.dictionary = meta["name"].toString(pair);
+        result.language = normalizeLanguage(meta["language"].toString());
+    }
     return result;
 }
 bool DictionaryManager::busy() const {
@@ -215,15 +375,15 @@ DictionaryTransfer DictionaryManager::transfer() const {
 }
 QHash<QString, qint64> DictionaryManager::installedSizes() const {
     QHash<QString, qint64> result;
-    for (const auto &entry : catalog())
-        if (installed(entry.id)) {
+    for (const QString &id : localDictionaryIds(data->root))
+        if (installed(id)) {
             qint64 bytes = 0;
             // Installations are flat directories. Do not follow user-added symlinks.
             for (const auto &file :
-                 QDir(folder(data->root, entry.id)).entryInfoList(QDir::Files | QDir::NoDotAndDotDot))
+                 QDir(folder(data->root, id)).entryInfoList(QDir::Files | QDir::NoDotAndDotDot))
                 if (!file.isSymLink())
                     bytes += file.size();
-            result.insert(entry.id, bytes);
+            result.insert(id, bytes);
         }
     return result;
 }
@@ -437,6 +597,7 @@ bool DictionaryManager::installArchive(const QString &directory, const DownloadD
                 continue;
             return fail(error, "Dictionary archive is missing required files.");
         }
+        mainthread::BlockingOperation blockingOperation("dictionary-install-write");
         QFile output(folder(stage.path(), name));
         if (!output.open(QIODevice::WriteOnly))
             return fail(error, "Cannot save dictionary files.");
@@ -455,7 +616,7 @@ bool DictionaryManager::installArchive(const QString &directory, const DownloadD
     if (!storage::writeJson(
             folder(stage.path(), "installed.json"),
             qt::object(
-                {{"id", entry.id}, {"name", entry.name}, {"sha256", QString::fromLatin1(entry.sha256.toHex())}})))
+                {{"id", entry.id}, {"name", entry.name}, {"language", normalizeLanguage(entry.language)}, {"target", normalizeLanguage(entry.target)}, {"sha256", QString::fromLatin1(entry.sha256.toHex())}})))
         return fail(error, "Cannot save dictionary metadata.");
     if (cancelled && cancelled())
         return fail(error, "Installation cancelled.");

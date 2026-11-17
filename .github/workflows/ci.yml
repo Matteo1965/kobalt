@@ -2,7 +2,7 @@ name: Build and release
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, hungarian-edition-beta8-integration, hungarian-edition-beta8-text-presets, hungarian-edition-beta8-my-words]
     tags: ['v*']
   workflow_dispatch:
 
@@ -11,128 +11,64 @@ permissions:
 
 concurrency:
   group: kobalt-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   CONTAINER_ENGINE: docker
-  PYTHONUNBUFFERED: '1'
   KOBALT_RELEASE_VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
 
 jobs:
   validation:
-    name: Validation
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - name: Validate release notes
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-          RELEASE_REPOSITORY: ${{ github.repository }}
-        run: python3 tools/draft_release.py --notes-only --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY"
-
-  tests:
-    name: Test Suite
-    needs: validation
-    if: vars.KOBALT_NATIVE_TESTS == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/cache@v6
-        with:
-          path: .cache/kobalt
-          key: native-sources-${{ hashFiles('dependencies/manifest.json', 'toolchains/qt6/source/source.json') }}
-      - name: Check C++ style and run native tests with coverage
-        run: sh tools/ci_native_tests.sh
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: native-results
-          path: |
-            build/tests/linux-*/tests-coverage/native.xml
-            build/tests/linux-*/tests-coverage/Testing/Temporary/LastTest.log
-            build/tests/linux-*/tests-coverage/coverage/run-*/run.json
-            build/tests/linux-*/tests-coverage/coverage/run-*/summary.json
-            build/tests/linux-*/tests-coverage/coverage/run-*/regions.json
-          if-no-files-found: warn
-
-  build-kobo:
-    name: Build Kobo Builds
-    needs: [validation, tests]
-    if: >-
-      ${{ !cancelled() && needs.validation.result == 'success' &&
-          (needs.tests.result == 'success' || needs.tests.result == 'skipped') }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [qt5, qt6]
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - name: Build device package
-        env:
-          TARGET: ${{ matrix.target }}
-        run: python3 tools/ci_build.py --target "$TARGET" --jobs 2 --sdk-image "ghcr.io/nicoverbruggen/kobuild:$TARGET-v0.1.0"
-      - uses: actions/upload-artifact@v7
-        with:
-          name: kobalt-${{ matrix.target }}
-          path: build/release/*
-          if-no-files-found: error
-          compression-level: 0
-
-  archive-source:
-    name: Archive Sources
-    needs: validation
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - name: Collect source and asset bundle
-        run: python3 tools/release_sources.py
-      - uses: actions/upload-artifact@v7
-        with:
-          name: kobalt-source
-          path: build/release/*
-          if-no-files-found: error
-          compression-level: 0
-
-  release-draft:
-    name: Release Draft
-    if: >-
-      ${{ !cancelled() && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') &&
-          needs.validation.result == 'success' &&
-          (needs.tests.result == 'success' || needs.tests.result == 'skipped') &&
-          needs.build-kobo.result == 'success' && needs.archive-source.result == 'success' }}
-    needs: [validation, tests, build-kobo, archive-source]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    permissions:
-      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/download-artifact@v8
+      - id: version
+        run: echo "version=$(bash platforms/ci/version.sh)" >> "$GITHUB_OUTPUT"
+      - name: Check release helpers
+        run: bash platforms/ci/test.sh
+      - name: Hungarian hyphenation regression tests (Beta 5 restored)
+        run: python3 -m unittest discover -s tests/hyphenation -p 'test_hungarian_*.py' -v
+
+  native-tests:
+    needs: validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
         with:
-          pattern: kobalt-*
-          merge-multiple: true
-          path: build/release
-      - name: Create or update the draft
+          persist-credentials: false
+      - name: Build and run native tests (all variants on tags)
         env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
-          RELEASE_REPOSITORY: ${{ github.repository }}
-        run: python3 tools/draft_release.py --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY"
+          KOBALT_TEST_INTERFACE_LANGUAGE: en
+        run: bash platforms/ci/native-tests.sh
+
+  build-kobo-qt5:
+    needs: [validation, native-tests]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build and verify Kobo Qt5 package
+        env:
+          KOBALT_RELEASE_VERSION: ${{ needs.validation.outputs.version }}
+        run: bash platforms/ci/build.sh qt5
+      - name: Name ZIP for this Hungarian Edition build
+        run: |
+          name="Kobalt-Hungarian-Edition-Beta8-Build-${GITHUB_RUN_NUMBER}-Run-${GITHUB_RUN_ID}-Qt5"
+          mv build/release/Kobalt-qt5.zip "build/release/${name}.zip"
+          echo "ARTIFACT_NAME=${name}" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            build/release/Kobalt-Hungarian-Edition-Beta8-Build-*-Run-*-Qt5.zip
+            build/release/build-qt5.json
+          if-no-files-found: error
+          compression-level: 0

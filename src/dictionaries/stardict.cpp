@@ -1,14 +1,46 @@
 #include "stardict.h"
+#include "support/main_thread.h"
+#include "hu_stemmer.h"
 #include <QFile>
 #include <QDir>
 #include <QtEndian>
 #include <QMap>
+#include <QStringList>
 #include <QSaveFile>
 #include <zlib.h>
 #include <cstring>
+#include <algorithm>
+#include <QElapsedTimer>
 
 namespace kobalt {
 namespace {
+QString sourceSummary(const QString &attribution) {
+    QStringList sources;
+    bool inSources = false;
+    for (auto line : attribution.split('\n')) {
+        line = line.trimmed();
+        if (line == "It is built from the following sources:") {
+            inSources = true;
+            continue;
+        }
+        if (inSources && line.startsWith("-- "))
+            break;
+        if (!inSources || !line.startsWith("* "))
+            continue;
+        const int colon = line.indexOf(':', 2);
+        if (colon < 0)
+            continue;
+        const auto id = line.mid(2, colon - 2).trimmed();
+        auto name = line.mid(colon + 1).simplified();
+        // Keep the originating project, rather than the archive's import path.
+        name = name.section(", via ", 0, 0).section(" via ", 0, 0).trimmed();
+        if (id == "pwn30")
+            name = "WordNet 3.0";
+        if (!name.isEmpty() && !sources.contains(name))
+            sources.append(name);
+    }
+    return sources.join(QString::fromUtf8(" · "));
+}
 quint32 be32(const char *p) {
     return qFromBigEndian<quint32>(reinterpret_cast<const uchar *>(p));
 }
@@ -156,11 +188,15 @@ struct Body {
 bool index(const QString &path, int suffix, quint32 bodyLength, quint32 wordCount, QString *error,
            const std::function<bool()> &cancelled, quint32 expectedCount) {
     QFile file(path);
+    mainthread::BlockingOperation blockingOperation("dictionary-index-write");
     QSaveFile positions(path + ".kobalt");
     if (!file.open(QIODevice::ReadOnly) || !positions.open(QIODevice::WriteOnly))
         return fail(error, "Cannot read dictionary index.");
-    QByteArray previous;
-    quint32 count = 0;
+    struct Entry { QByteArray word; quint32 position; };
+    QVector<Entry> entries;
+    if (wordCount > 2000000)
+        return fail(error, "Dictionary has too many words.");
+    entries.reserve(int(wordCount));
     while (!file.atEnd()) {
         if (cancelled && cancelled())
             return fail(error, "Installation cancelled.");
@@ -180,21 +216,29 @@ bool index(const QString &path, int suffix, quint32 bodyLength, quint32 wordCoun
             word.append(c);
         }
         const auto value = file.read(suffix);
-        if (!ended || word.isEmpty() || QString::fromUtf8(word).toUtf8() != word || value.size() != suffix ||
-            (!previous.isEmpty() && compare(previous, word) > 0))
+        if (!ended || word.isEmpty() || QString::fromUtf8(word).toUtf8() != word || value.size() != suffix)
             return fail(error, "Invalid StarDict index.");
         if (suffix == 8 ? quint64(be32(value.constData())) + be32(value.constData() + 4) > bodyLength
                         : be32(value.constData()) >= wordCount)
             return fail(error, "Dictionary index points outside its data.");
+        entries.append({word, quint32(position)});
+        if (entries.size() > int(expectedCount))
+            return fail(error, "StarDict word count differs from its index.");
+    }
+    if (entries.size() != int(expectedCount))
+        return fail(error, "StarDict word count differs from its index.");
+    // User-provided StarDict indexes may not be sorted (CrossPoint accepts
+    // such dictionaries). Sort only the Kobalt offset map; do not rewrite
+    // the source IDX or dictionary data.
+    std::sort(entries.begin(), entries.end(), [](const Entry &a, const Entry &b) {
+        return compare(a.word, b.word) < 0;
+    });
+    for (const auto &entry : entries) {
         char bytes[4];
-        qToBigEndian<quint32>(position, reinterpret_cast<uchar *>(bytes));
+        qToBigEndian<quint32>(entry.position, reinterpret_cast<uchar *>(bytes));
         if (positions.write(bytes, 4) != 4)
             return fail(error, "Cannot save dictionary index.");
-        previous = word;
-        ++count;
     }
-    if (count != expectedCount)
-        return fail(error, "StarDict word count differs from its index.");
     if (!positions.commit())
         return fail(error, "Cannot save dictionary index.");
     return true;
@@ -234,6 +278,8 @@ qint64 find(Mapped &offsets, QFile &indexFile, const QByteArray &word) {
 }
 struct StarDict::Data {
     QString id, name, source;
+    bool plainText = false;
+    bool hungarianSource = false;
     Body body;
     QFile idx, syn;
     std::unique_ptr<Mapped> words, synonyms;
@@ -257,13 +303,16 @@ bool StarDict::prepare(const QString &directory, const QString &id, QString *err
     }
     bool valid = false;
     const quint32 words = values["wordcount"].toUInt(&valid);
-    if (!valid || !words || values["version"] != "2.4.2" || values["sametypesequence"] != "h")
+    const bool supportedVersion = values["version"] == "2.4.2" || values["version"] == "3.0.0";
+    const bool supportedIndex = values.value("idxoffsetbits", "32") == "32";
+    if (!valid || !words || !supportedVersion || !supportedIndex ||
+        (values["sametypesequence"] != "h" && values["sametypesequence"] != "m"))
         return fail(error, "Unsupported StarDict format.");
     const auto indexSize = values["idxfilesize"].toULongLong(&valid);
     if (!valid || indexSize != quint64(QFile(prefix + ".idx").size()))
         return fail(error, "StarDict index size differs.");
     Body body;
-    if (!body.open(prefix + ".dict.dz"))
+    if (!body.open(QFile::exists(prefix + ".dict.dz") ? prefix + ".dict.dz" : prefix + ".dict"))
         return fail(error, "Invalid dictzip data.");
     if (!index(prefix + ".idx", 8, body.length, words, error, cancelled, words))
         return false;
@@ -280,11 +329,14 @@ bool StarDict::open(const QString &directory, const QString &id, QString *error)
     next->id = id;
     next->name = id;
     const auto prefix = QDir(directory).filePath(id);
+    QFile meta(prefix + ".ifo");
+    if (meta.open(QIODevice::ReadOnly))
+        next->plainText = meta.readAll().contains("sametypesequence=m");
     next->idx.setFileName(prefix + ".idx");
     next->syn.setFileName(prefix + ".syn");
     next->words = std::make_unique<Mapped>(prefix + ".idx.kobalt");
     if (!next->words->bytes || next->words->file.size() % 4 || !next->idx.open(QIODevice::ReadOnly) ||
-        !next->body.open(prefix + ".dict.dz"))
+        !next->body.open(QFile::exists(prefix + ".dict.dz") ? prefix + ".dict.dz" : prefix + ".dict"))
         return fail(error, "Installed dictionary is damaged.");
     if (next->syn.exists() && next->syn.size() > 0) {
         next->synonyms = std::make_unique<Mapped>(prefix + ".syn.kobalt");
@@ -293,9 +345,13 @@ bool StarDict::open(const QString &directory, const QString &id, QString *error)
     }
     QFile credits(QDir(directory).filePath("ATTRIBUTION"));
     if (credits.open(QIODevice::ReadOnly))
-        next->source = QString::fromUtf8(credits.read(65536)).toHtmlEscaped().replace("\n", "<br>");
+        next->source = sourceSummary(QString::fromUtf8(credits.read(65536))).toHtmlEscaped();
     data = std::move(next);
     return true;
+}
+void StarDict::setHungarianSource(bool enabled) {
+    if (data)
+        data->hungarianSource = enabled;
 }
 DictionaryResult StarDict::lookup(const QString &word) {
     DictionaryResult result;
@@ -308,14 +364,90 @@ DictionaryResult StarDict::lookup(const QString &word) {
     result.dictionary = data->name;
     result.dictionaryId = "downloaded:" + data->id;
     result.source = data->source;
-    auto number = find(*data->words, data->idx, word.toUtf8());
-    if (number < 0 && data->synonyms) {
-        const auto synonym = find(*data->synonyms, data->syn, word.toUtf8());
+    // CPHUN-224 priority order: canonical lemmas, exact, direct possessives,
+    // dictionary-authored synonyms, then bounded Hungarian morphology.
+    const bool hungarian = data->hungarianSource || data->id == "hu-hu";
+    QString normalized = word.normalized(QString::NormalizationForm_C).toLower();
+    if (hungarian) {
+        // CPHUN-163 edge punctuation handling; retain inner hyphens in compounds.
+        while (!normalized.isEmpty() && !normalized.at(0).isLetterOrNumber() && normalized.at(0) != QChar('-'))
+            normalized.remove(0, 1);
+        while (!normalized.isEmpty() && !normalized.at(normalized.size() - 1).isLetterOrNumber() &&
+               normalized.at(normalized.size() - 1) != QChar('-'))
+            normalized.chop(1);
+    }
+    const QString cleaned = hungarian ? normalized : word;
+    const QByteArray key = cleaned.toUtf8();
+    // Do not remap complete dictionary headwords through hard-coded examples.
+    // An exact entry is always more trustworthy than a generated stem.
+    const QByteArray lookupKey = key;
+    QElapsedTimer timer;
+    timer.start();
+    const auto expired = [&]() { return timer.elapsed() >= 3000; };
+    const auto probe = [&](const QByteArray &candidate) -> qint64 {
+        if (candidate.isEmpty() || expired())
+            return -1;
+        const qint64 found = find(*data->words, data->idx, candidate);
+        if (found < 0 || !hungarian)
+            return found;
+        // Some Hungarian Wiktionary archives contain generated entries with
+        // no definition. Do not let those stop the morphological fallback.
+        // Inspect only a bounded prefix of the matched definition, without
+        // treating other entries or dictionary markup as empty.
+        if (found >= data->words->file.size() / 4
+            || !data->idx.seek(be32(reinterpret_cast<const char *>(data->words->bytes)
+                                     + found * 4)))
+            return found;
+        const QByteArray entry = data->idx.read(264);
+        const int zero = entry.indexOf('\0');
+        if (zero <= 0 || zero + 9 > entry.size())
+            return found;
+        const quint32 offset = be32(entry.constData() + zero + 1);
+        const quint32 length = be32(entry.constData() + zero + 5);
+        const QByteArray preview = data->body.read(offset, qMin<quint32>(length, 4096));
+        // Preserve ordinary definitions even if they mention Wiktionary.
+        if (QString::fromUtf8(preview).contains(
+                    QStringLiteral("nem áll rendelkezésre egyértelmű magyar jelentés"),
+                    Qt::CaseInsensitive))
+            return -1;
+        return found;
+    };
+    // Try the original spelling first; lower-case normalization remains a
+    // fallback for Hungarian lookup, not a reason to lose an exact headword.
+    auto number = probe(word.normalized(QString::NormalizationForm_C).toUtf8());
+    if (number < 0 && hungarian)
+        number = probe(lookupKey);
+    if (number < 0 && hungarian) {
+        for (const auto &ending : {QStringLiteral("ja"), QStringLiteral("je")}) {
+            if (!cleaned.endsWith(ending) || cleaned.size() <= ending.size()) continue;
+            const QString base = cleaned.left(cleaned.size() - ending.size());
+            number = probe(base.toUtf8());
+            if (number < 0 && base.endsWith(QStringLiteral("nő")))
+                number = probe(base.left(base.size() - 2).toUtf8());
+            if (number >= 0) break;
+        }
+    }
+    if (number < 0 && data->synonyms && !expired()) {
+        const auto synonym = find(*data->synonyms, data->syn, lookupKey);
         if (synonym >= 0 && data->syn.seek(be32(reinterpret_cast<char *>(data->synonyms->bytes) + synonym * 4))) {
             const auto entry = data->syn.read(260);
             const int zero = entry.indexOf('\0');
             if (zero > 0 && zero + 5 <= entry.size())
                 number = be32(entry.constData() + zero + 1);
+        }
+    }
+    if (number < 0 && hungarian && !expired()) {
+        std::vector<std::string> candidates;
+        const std::string input(lookupKey.constData(), size_t(lookupKey.size()));
+        hungarianStemVariants(input, candidates);
+        QElapsedTimer fallback;
+        fallback.start();
+        int probes = 0;
+        for (const auto &candidate : candidates) {
+            if (probes >= 64 || fallback.elapsed() >= 1200 || expired()) break;
+            ++probes;
+            number = probe(QByteArray(candidate.data(), int(candidate.size())));
+            if (number >= 0) break;
         }
     }
     if (number < 0)
@@ -335,7 +467,7 @@ DictionaryResult StarDict::lookup(const QString &word) {
     if (html.isEmpty())
         result.error = "Dictionary definition is damaged.";
     else
-        result.html = QString::fromUtf8(html);
+        result.html = data->plainText ? QString::fromUtf8(html).toHtmlEscaped().replace("\n", "<br>") : QString::fromUtf8(html);
     return result;
 }
 }
