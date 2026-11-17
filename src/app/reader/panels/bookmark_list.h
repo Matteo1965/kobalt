@@ -39,6 +39,11 @@ public:
     void showBookmarks(QVector<BookmarkRow> rows);
     void showAnnotations(QVector<BookmarkRow> rows, bool loading = false);
     void setSortOrder(const QString &order);
+    void setWordsView(QWidget *view);
+    void showWords();
+    void addCoveringPanel(QWidget *panel);
+    bool wordsShown() const { return words; }
+    std::function<void()> wordsRequested, allWordsRequested;
 
     QString sortOrder() const { return order; }
 
@@ -80,7 +85,9 @@ private:
     void openRowActions(const BookmarkRow &row);
     void closePin();
     void placePin();
-    QPushButton *bookmarksTab, *annotationsTab;
+    QPushButton *bookmarksTab, *annotationsTab, *wordsTab = nullptr;
+    QWidget *wordsView = nullptr;
+    QVector<QWidget *> coveringPanels;
     ui::CellButton *sortButton;
     ui::CellButton *moreButton;
     QPointer<ui::ModalOverlay> sortPopup;
@@ -91,7 +98,7 @@ private:
     QFont excerptCacheFont;
     int excerptCacheWidth = -1, excerptCacheLineHeight = -1;
     QString order = QStringLiteral("position");
-    bool annotations = false;
+    bool annotations = false, words = false;
     bool loading = false;
     QString excerptFamily;
     int listTop() const;

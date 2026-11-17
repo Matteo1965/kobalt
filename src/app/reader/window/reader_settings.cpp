@@ -305,6 +305,7 @@ void Reader::openSettings()
     settingsTimeRemainingFormat =
             remainingTime::approximate(preferences) ? "approximate" : "detailed";
     hideTabLabelsOption->setChecked(preferences.value("hide_tab_labels").toBool(false));
+    saveWordsOption->setChecked(preferences.value("save_looked_up_words").toBool(true));
     if (wifiPowerSaverOption)
         wifiPowerSaverOption->setChecked(preferences.value(wifiPowerSaverKey).toBool(false));
     for (auto *face : { &settingsUiFontFace, &settingsUiMonoFontFace, &settingsHeaderFooterFontFace,
@@ -673,6 +674,7 @@ void Reader::applySettings()
     next["dictionary_font_size"] = settingsDictionaryFontSize;
     next["header_footer_added_weight"] = settingsHeaderFooterWeight;
     next["hide_tab_labels"] = hideTabLabelsOption->isChecked();
+    next["save_looked_up_words"] = saveWordsOption->isChecked();
     if (wifiPowerSaverOption)
         next[wifiPowerSaverKey] = wifiPowerSaverOption->isChecked();
     next[remainingTime::preferenceKey] = settingsTimeRemainingFormat;

@@ -24,6 +24,8 @@ CASES = {
     ("hús", "szelet"): "hús-szelet",
     ("cipős", "szekrény"): "cipős-szekrény",
     ("ruhás", "szekrény"): "ruhás-szekrény",
+    ("habarcs", "szerű"): "habarcs-szerű",
+    ("leg", "gyorsabban"): "leg-gyorsabban",
 }
 RESTORATIONS = {
     "asszonnyal": "asz-szonnyal",

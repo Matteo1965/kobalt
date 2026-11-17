@@ -274,13 +274,16 @@ QVector<QRect> paragraphGaps(EngineDocument &engine, const QRect &area,
 StyleSample render(const EngineFontInputs &fonts, const StyleSampleRequest &request)
 {
     StyleSample result;
+    result.cropRatio = request.cropRatio;
     if (request.values.isEmpty() || request.page.isEmpty())
         return result;
-    const auto document =
+    auto document =
             sampleDocument(request.key == "word_spacing" || request.key == "justification_tracking",
                            request.key == "hanging_punctuation");
     if (document.blocks.isEmpty())
         return result;
+    if (request.boldHeading)
+        document.prefix.replace("</head>", "<style>h2{font-weight:bold}</style></head>");
     QStringList paragraphTexts;
     for (const auto &block : document.blocks)
         if (block.paragraph && paragraphTexts.size() < paragraphSampleCount)
@@ -297,11 +300,20 @@ StyleSample render(const EngineFontInputs &fonts, const StyleSampleRequest &requ
         engine = std::make_unique<EngineDocument>(fonts);
         QMap<QString, qint64> sizes;
         QString error;
-        if (!engine->openResources(
-                    sampleBook(document, variant, &sizes, request.key == "paragraph_spacing"),
-                    sizes, request.page, settings, &error)
+        const bool opening =
+                request.key == "paragraph_spacing" || (request.firstPageOnly && !pages);
+        if (!engine->openResources(sampleBook(document, variant, &sizes, opening), sizes,
+                                   request.page, settings, &error)
             || engine->pages() < 1)
             return {};
+        if (opening && request.key != "paragraph_spacing" && engine->pages() < 2) {
+            engine = std::make_unique<EngineDocument>(fonts);
+            sizes.clear();
+            if (!engine->openResources(sampleBook(document, variant, &sizes, false), sizes,
+                                       request.page, settings, &error)
+                || engine->pages() < 1)
+                return {};
+        }
         if (!pages) {
             result.differs = true;
             break;
@@ -357,7 +369,8 @@ StyleSample render(const EngineFontInputs &fonts, const StyleSampleRequest &requ
         if (!apply(*engine, request, value))
             return {};
         QVector<QImage> spread;
-        for (int index = result.page; index < qMin(result.page + 2, engine->pages()); ++index) {
+        const int drawn = request.firstPageOnly && !pages ? 1 : 2;
+        for (int index = result.page; index < qMin(result.page + drawn, engine->pages()); ++index) {
             const auto image = engine->image(index);
             if (index == 0 && !pages) {
                 result.crops.append(image.copy(QRect(request.cropOrigin, request.crop)));

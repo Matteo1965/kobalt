@@ -363,6 +363,48 @@ protected:
 };
 } // namespace
 
+ButtonFeedback::ButtonFeedback(QWidget *parent) : ModalOverlay(parent), hideTimer(this)
+{
+    setInputBarrier(false);
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+    label = card()->message({}, "rrButtonFeedbackText");
+    readerStyle(label, styles::font(metrics::chrome::labelText));
+    hideTimer.setSingleShot(true);
+    hideTimer.setInterval(1500);
+    connect(&hideTimer, &QTimer::timeout, this, &QWidget::hide);
+    hide();
+}
+
+void ButtonFeedback::showFor(QWidget *button, const QString &text)
+{
+    if (!button || !button->isVisible())
+        return;
+    target = button;
+    label->setText(text);
+    setGeometry(parentWidget()->rect());
+    reposition();
+    show();
+    raise();
+    hideTimer.start();
+}
+
+void ButtonFeedback::reposition()
+{
+    if (!target)
+        return;
+    const int width = qMin<int>(card()->sizeHint().width(),
+                                this->width() - 2 * metrics::notice::sideClearance);
+    card()->fitToWidth(qMax(1, width));
+    const QRect bounds(target->mapTo(parentWidget(), QPoint()), target->size());
+    anchorTo(bounds);
+}
+
+void ButtonFeedback::hideEvent(QHideEvent *event)
+{
+    hideTimer.stop();
+    ModalOverlay::hideEvent(event);
+}
+
 ModalOverlay::ModalOverlay(QWidget *parent) : QWidget(parent)
 {
     setObjectName("rrModalBackdrop");

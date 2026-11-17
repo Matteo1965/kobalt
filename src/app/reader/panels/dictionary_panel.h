@@ -19,6 +19,9 @@ public:
     std::function<void(QString)> chosen;
     std::function<void(QString)> requested, searchRequested;
     std::function<void(const QFont &)> prepareEditorFont;
+    void setSaved(bool value, bool available = true);
+    QWidget *saveActionButton() const;
+    std::function<void(bool)> saveToggled;
     void setChoices(QVector<DictionaryChoice> values);
     void setLanguage(const QString &language);
     // The resolved book face supplies the header and default definition text.
@@ -39,10 +42,10 @@ protected:
 private:
     ui::PagerBar *pages, *choicesPaging;
     std::unique_ptr<KeyboardController> keyboard;
-    ui::CellButton *dictionary, *close, *edit, *submit, *search;
+    ui::CellButton *dictionary, *close, *edit, *submit, *search, *save = nullptr;
     QLineEdit *query;
     QRect selection;
-    bool editing = false;
+    bool editing = false, saved = false, saveAvailable = false;
     QLabel *headword, *editHint;
     QString word, bookFamily, language, definitionFamily;
     QString definitionHtml, sourceText, renderedHtml;

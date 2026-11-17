@@ -410,7 +410,11 @@ int main(int argc, char **argv)
                                        qMakePair(QPalette::Dark, theme.outline) })
                 for (const auto group :
                      { QPalette::Active, QPalette::Inactive, QPalette::Disabled })
-                    require(button.palette().color(group, entry.first) == entry.second,
+                    require(button.palette().color(group, entry.first)
+                                    == (group == QPalette::Disabled
+                                                && entry.first == QPalette::WindowText
+                                            ? theme.disabledInk
+                                            : entry.second),
                             "Styled widget retained a platform color instead of the fixed theme");
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
             require(button.palette().color(QPalette::PlaceholderText) == theme.secondaryInk,
@@ -429,7 +433,7 @@ int main(int argc, char **argv)
             applyReaderPalette(caption, colors);
             require(caption->styleSheet().contains("color:" + theme.swipeCaptionInk.name() + ';'),
                     "Theme replay left the swipe caption in its previous theme");
-            require(theme.swipeCaptionInk == QColor(dark ? "#aaaaaa" : "#666666")
+            require(theme.swipeCaptionInk == QColor(dark ? "#dddddd" : "#333333")
                             && theme.lightHintPaper == QColor(dark ? "#222222" : "#e6e6e6")
                             && theme.sleepPaper == QColor(dark ? "#202020" : "#ffffff")
                             && theme.overviewPaper == QColor(dark ? "#242424" : "#f1f1f1")
@@ -515,28 +519,17 @@ int main(int argc, char **argv)
         require(!pager.next->isEnabled() && pager.turnTarget(1) == 2,
                 "Bounded content pager wrapped");
         auto *hint = host.findChild<QLabel *>("testContinuationHint");
-        require(hint, "Paged list has no continuation hint");
+        require(hint, "Paged list continuation label ownership changed");
         pager.setPage(0, 3);
         pager.setBlankArea({ 0, 500, 600, 100 });
-        hint->ensurePolished();
-        require(!hint->isHidden() && hint->font().italic(),
-                "Paged list lost its italic continuation hint");
-        require(hint->geometry() == QRect(0, 500, 600, 100),
-                "Continuation hint escaped the blank area");
+        require(hint->isHidden(), "Continuation hint must remain hidden on every page");
         require(hint->testAttribute(Qt::WA_TransparentForMouseEvents),
-                "Continuation hint intercepts list taps");
-        pager.setBlankArea({ 0, 500, 600, 1 });
-        require(hint->isHidden(), "Continuation hint appeared in a short gap");
-        pager.setBlankArea({ 0, 500, 1, 100 });
-        require(hint->isHidden(), "Continuation hint appeared in a narrow gap");
+                "Hidden continuation hint intercepts list taps");
         pager.setPage(2, 3, {}, true);
         pager.setBlankArea({ 0, 500, 600, 100 });
-        require(hint->isHidden(), "Last list page promised more content");
+        require(hint->isHidden(), "Last page displayed a continuation hint");
         pager.setPage(0, 1);
-        pager.setBlankArea({ 0, 500, 600, 100 });
-        require(hint->isHidden(), "Single-page list promised more content");
-        pager.setPage(0, 3);
-        require(hint->isHidden(), "New list content reused a stale blank area");
+        require(hint->isHidden(), "Single page displayed a continuation hint");
     }
     {
         using namespace kobalt::ui;
@@ -598,7 +591,7 @@ int main(int argc, char **argv)
                                 applyReaderPalette(small, readerPalette(controls.palette(), dark));
                                 const auto image = small->grab().toImage();
                                 const auto color = !enabled
-                                        ? QColor("#999999")
+                                        ? themeColors(dark).disabledInk
                                         : controls.palette().color(checked || pressed
                                                                            ? QPalette::Window
                                                                            : QPalette::WindowText);
@@ -675,7 +668,7 @@ int main(int argc, char **argv)
                                 == first.palette().color(QPalette::Window),
                         "Applying the theme erased the selected row label color");
                 row.setEnabled(false);
-                labelInk(row.titleLabel(), QColor("#999999"));
+                labelInk(row.titleLabel(), themeColors(dark).disabledInk);
                 row.setEnabled(true);
                 row.setChecked(false);
                 labelInk(row.detailLabel(), noteColor(&row));

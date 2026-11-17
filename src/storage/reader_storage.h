@@ -20,6 +20,7 @@ struct Paths
     QString annotations() const;
     QString database() const;
     QString layoutCache() const;
+    QString previews() const;
     QString sleepScreen() const;
     // Parsed books, owned by CREngine. It deletes any other file it finds there.
     QString documentCache() const;

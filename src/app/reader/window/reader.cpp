@@ -59,6 +59,7 @@ Reader::~Reader()
         kosyncClient->persistSyncTime();
     if (closeWithoutSaving)
         book->discardPendingSaves();
+    savedWords.reset();
     flushDiagnostics(1000);
     // Member destruction can send events before QObject removes our filters.
     qApp->removeEventFilter(this);
@@ -1733,6 +1734,9 @@ void Reader::lookupSelection()
                 guard->dictionaryPanel->setChoices(guard->dictionary->choices());
                 guard->dictionaryPanel->setBookFont(guard->bookFace());
                 guard->dictionaryPanel->open(query, result, guard->lookupBounds);
+                guard->lookupContext = range.text;
+                guard->lookupPosition = range.start;
+                guard->recordLookup(query, result);
                 timing.finish(guard->dictionaryPanel);
                 guard->syncAnnotationControls();
                 guard->updateOrientationBlock();

@@ -550,6 +550,9 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                   strings::get("settings.inherit_text_layout_description"));
     defaultsRows->addWidget(inheritTextLayoutOption);
     inheritTextLayoutOption->setChecked(true);
+    textForNewBooksButton =
+            ui::makeCaptionButton(defaultsPage, defaultsRows, "rrTextForNewBooks",
+                                  strings::get("settings.text_for_new_books"), [] { });
     section(defaultsPage, defaultsRows, "rrDefaultsGlobalFontSection",
             strings::get("settings.section_default_global_font"));
     defaultFontButton = ui::makeCaptionButton(defaultsPage, nullptr, "rrDefaultFont",
@@ -583,6 +586,20 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     readerStyle(resetDefaults, styles::font(metrics::text::secondary));
     resetDefaults->setFixedHeight(metrics::about::actionHeight);
     resetRow->addStretch(1);
+    auto *presetsRow = kobalt::ui::horizontalRow();
+    defaultsRows->addLayout(presetsRow);
+    presetsRow->addStretch(1);
+    resetPresets = ui::makeCaptionButton(defaultsPage, presetsRow, "rrRestorePresets",
+                                         strings::get("text_presets.restore"), [this] {
+        settingsPages->setCurrentIndex(int(SettingsPage::Defaults));
+        restorePresetsDialog->fitCard();
+        restorePresetsDialog->show();
+        restorePresetsDialog->raise();
+        restorePresetsDialog->setFocus();
+    });
+    readerStyle(resetPresets, styles::font(metrics::text::secondary));
+    resetPresets->setFixedHeight(metrics::about::actionHeight);
+    presetsRow->addStretch(1);
     defaultsRows->addStretch(1);
     auto *stylingPage = new QWidget(settingsPages);
     stylingPage->setObjectName("rrStylingOptions");
@@ -719,6 +736,9 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                                   strings::get("settings.dictionary_font_size"), [] { });
     systemRows->addWidget(dictionaryFontButton);
     systemRows->addWidget(dictionaryFontSizeButton);
+    saveWordsOption = check(systemPage, "rrSaveWords", strings::get("settings.save_words"),
+                            strings::get("settings.save_words_description"));
+    systemRows->addWidget(saveWordsOption);
     systemRows->addStretch(1);
     auto *aboutPage = new QWidget(settingsPages);
     aboutPage->setObjectName("rrAbout");
@@ -825,6 +845,19 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     connect(keepDefaults, &QPushButton::clicked, this, [this] { dismissRestore(); });
     connect(confirmDefaults, &QPushButton::clicked, this, [this] { dismissRestore(); });
     restoreDialog->dismissed = [this] { dismissRestore(); };
+    restorePresetsDialog = new ui::ChoiceModal(
+            parent,
+            { strings::get("text_presets.restore_detail"),
+              strings::get("text_presets.restore_prompt"), {} },
+            { strings::get("common.cancel"), "rrKeepPresets" },
+            { strings::get("text_presets.restore_confirm"), "rrConfirmPresets" });
+    restorePresetsDialog->setObjectName("rrRestorePresetsConfirmation");
+    restorePresetsDialog->setDimmed(true);
+    keepPresets = restorePresetsDialog->secondaryButton();
+    confirmPresets = restorePresetsDialog->primaryButton();
+    connect(keepPresets, &QPushButton::clicked, this, [this] { dismissRestore(); });
+    connect(confirmPresets, &QPushButton::clicked, this, [this] { dismissRestore(); });
+    restorePresetsDialog->dismissed = [this] { dismissRestore(); };
     settingsError = new ui::InterfaceLabel(this);
     settingsError->setWordWrap(true);
     settingsError->hide();
@@ -845,6 +878,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
                                                lightGestureFeedbackOption,
                                                denseGraphOption,
                                                hideTabLabelsOption,
+                                               saveWordsOption,
                                                wifiPowerSaverOption,
                                                automaticOpeningOption,
                                                minimalAnnotationOption };
@@ -2084,10 +2118,14 @@ void SettingsPanel::dismissFontChoices()
 
 void SettingsPanel::dismissRestore()
 {
-    if (!restoreDialog || restoreDialog->isHidden())
-        return;
-    restoreDialog->hide();
-    resetDefaults->setFocus();
+    if (restoreDialog && !restoreDialog->isHidden()) {
+        restoreDialog->hide();
+        resetDefaults->setFocus();
+    }
+    if (restorePresetsDialog && !restorePresetsDialog->isHidden()) {
+        restorePresetsDialog->hide();
+        resetPresets->setFocus();
+    }
 }
 
 void SettingsPanel::hideEvent(QHideEvent *event)

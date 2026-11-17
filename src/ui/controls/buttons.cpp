@@ -592,10 +592,16 @@ void CaptionButton::paintEvent(QPaintEvent *)
                          isEnabled() && isDown() ? themeColors(this).pressedPaper
                                                  : palette().color(QPalette::Window));
         paintEdges(painter, rect(), rule, dividerColor(this));
-        if (!isEnabled())
-            painter.setOpacity(.45);
-        painter.setPen(palette().color(QPalette::WindowText));
-        QFont label = font();
+        // List actions paint their own text: using opacity here makes disabled
+        // labels too pale, regardless of the QPalette disabled-text roles.
+        // Paint the requested 50% gray directly and keep normal labels regular.
+        const auto labelInk = isEnabled() ? palette().color(QPalette::WindowText)
+                                          : themeColors(this).disabledInk;
+        painter.setPen(labelInk);
+        // Use the same regular interface face as neighbouring settings rows.
+        // Inheriting the widget's QSS font can retain a bold face on Kobo Qt5.
+        QFont label = interfaceFont(font().pixelSize() > 0 ? font().pixelSize()
+                                                            : int(chrome::labelText));
         painter.setFont(label);
         const bool actionIcon = iconVisible;
         const int left = chrome::inset + (actionIcon ? chrome::cellIcon + px(20) : 0);
@@ -637,7 +643,7 @@ void CaptionButton::paintEvent(QPaintEvent *)
         }
         if (!description.isEmpty()) {
             painter.setFont(descriptionFont);
-            painter.setPen(noteColor(this));
+            painter.setPen(isEnabled() ? noteColor(this) : themeColors(this).disabledInk);
             drawWrappedInterfaceText(
                     painter, QRect(left, top + titleHeight + px(12), textWidth, descriptionHeight),
                     description);
@@ -651,7 +657,7 @@ void CaptionButton::paintEvent(QPaintEvent *)
         }
         if (!note.isEmpty()) {
             painter.setFont(noteFont);
-            painter.setPen(noteColor(this));
+            painter.setPen(isEnabled() ? noteColor(this) : themeColors(this).disabledInk);
             drawInterfaceText(painter,
                               QRect(left, top + labelHeight / 2 + pitch - noteHeight / 2, textWidth,
                                     noteHeight),

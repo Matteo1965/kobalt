@@ -2,6 +2,7 @@
 #include "support/qt_compat.h"
 #include "page_navigation.h"
 #include "header_footer.h"
+#include "text_presets.h"
 #include "sleep_screen.h"
 #include "session_timeout.h"
 #include <QStringList>
@@ -171,6 +172,7 @@ QJsonObject cleanPreferences(QJsonObject preferences)
     choice("marks_sort", { "position", "newest", "oldest" });
     choice("sleep_screen", { "stock", "cover", "page", "overlay" });
     choice("sleep_tile", { "card", "bookmark", "none" });
+    textpresets::clean(preferences);
     choice("time_remaining_format", { "detailed", "approximate" });
     if (preferences.contains(sessionTimeout::preferenceKey)
         && !sessionTimeout::valid(preferences.value(sessionTimeout::preferenceKey)))
@@ -261,7 +263,16 @@ QJsonObject bookDefaults(const QJsonObject &preferences)
     defaults["justification_tracking"] = preferences.value("justification_tracking").toInt(0);
     defaults["hanging_punctuation"] = preferences.value("hanging_punctuation").toBool(false);
     defaults["widows_orphans"] = preferences.value("widows_orphans").toString("publisher");
-    if (!preferences.value(inheritTextLayoutKey).toBool(true)) {
+    const auto newBook = textpresets::newBookChoice(preferences);
+    if (newBook == "book")
+        return defaults;
+    if (newBook != "last") {
+        const auto presets = textpresets::load(preferences);
+        if (const auto *preset = textpresets::find(presets, newBook)) {
+            const auto chosen = textpresets::values(*preset);
+            for (auto it = chosen.begin(); it != chosen.end(); ++it)
+                defaults[it.key()] = it.value();
+        }
         return defaults;
     }
     auto last = preferences.value(lastTextLayoutKey).toObject();

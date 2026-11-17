@@ -266,6 +266,8 @@ Reader::Reader(std::unique_ptr<kobalt::ReadingBook> openedBook,
                                    kobalt::DiagnosticSeverity::Error);
         }
     }
+    if (kobalt::annotationDatabaseEnabled())
+        savedWords = std::make_unique<kobalt::SavedWords>(book->paths().directory);
     bookmarks = std::make_unique<kobalt::BookmarkSession>(
             *session, [this] { return layoutKey(); }, book->paths().annotations(), book->identity(),
             book->fingerprint(), session->title(), book->paths().database());
@@ -978,10 +980,13 @@ void Reader::buildOverlays()
     bookmarkList->sortRequested = [this](const QString &order) {
         auto next = preferences;
         next["marks_sort"] = order;
-        if (writePreferences(next))
+        if (writePreferences(next)) {
             preferences = next;
-        else
+            if (wordList)
+                wordList->setSortOrder(order);
+        } else {
             bookmarkList->setSortOrder(preferences.value("marks_sort").toString("position"));
+        }
     };
     bookmarkList->selected = [this](const QString &position) {
         if (bookmarkList->annotationsShown()) {
@@ -1019,6 +1024,7 @@ void Reader::buildOverlays()
             askRemoveBookmark(position);
         }
     };
+    buildWords();
     choices->changed = [this] {
         if (choosingTypography && choices->isVisible())
             syncNavigation();
@@ -1058,6 +1064,7 @@ void Reader::buildAppearance(const kobalt::reader::AppearanceLayout &layout)
     spacingSlider = appearance.spacingSlider;
     marginSlider = appearance.marginSlider;
     verticalMarginSlider = appearance.verticalMarginSlider;
+    buildTextPresets();
     alignmentButtons = appearance.alignmentButtons;
     hyphenButtons = appearance.hyphenButtons;
     rotationButtons = appearance.rotationButtons;
@@ -1455,6 +1462,8 @@ void Reader::buildSettings()
     minimalAnnotationOption = settings->minimalAnnotationOption;
     automaticOpeningOption = settings->automaticOpeningOption;
     hideTabLabelsOption = settings->hideTabLabelsOption;
+    saveWordsOption = settings->saveWordsOption;
+    saveWordsOption->setVisible(bool(savedWords));
     wifiPowerSaverOption = settings->wifiPowerSaverOption;
     settings->showPowerManagement(wifiPowerSaverVisible());
     hideTabLabelsOption->setVisible(!services.phoneLayout);
@@ -1647,6 +1656,7 @@ void Reader::buildSettings()
         settingsHeaderFooterWeight = 2;
         settingsTimeRemainingFormat = "detailed";
         hideTabLabelsOption->setChecked(false);
+        saveWordsOption->setChecked(true);
         if (wifiPowerSaverOption)
             wifiPowerSaverOption->setChecked(false);
         for (const auto *key : appearance::fallbackFontKeys)

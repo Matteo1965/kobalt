@@ -132,6 +132,15 @@ DictionaryPanel::DictionaryPanel(QWidget *parent, KeyboardFactory makeKeyboard)
         if (searchRequested && !word.isEmpty())
             searchRequested(word);
     });
+    save = new ui::CellButton(ui::ControlIcon::Plus, this);
+    save->setObjectName("rrDictionarySave");
+    save->setRule(Qt::LeftEdge);
+    save->setAccessibleName(strings::get("dictionary_panel.save_to_words"));
+    save->hide();
+    connect(save, &QPushButton::clicked, this, [this] {
+        if (saveToggled)
+            saveToggled(!saved);
+    });
     text = new ui::PagedText(this);
     text->setObjectName("rrDefinition");
     text->setTextFont(ui::interfaceFont(chrome::labelText));
@@ -352,6 +361,21 @@ void DictionaryPanel::setChoices(QVector<DictionaryChoice> values)
     dictionary->setEnabled(!editing && options.size() > 1);
 }
 
+QWidget *DictionaryPanel::saveActionButton() const
+{
+    return save;
+}
+
+void DictionaryPanel::setSaved(bool value, bool available)
+{
+    saved = value;
+    saveAvailable = available;
+    save->setGlyph(saved ? ui::ControlIcon::Check : ui::ControlIcon::Plus);
+    save->setAccessibleName(strings::get(saved ? "dictionary_panel.remove_from_words"
+                                               : "dictionary_panel.save_to_words"));
+    arrange();
+}
+
 void DictionaryPanel::resizeEvent(QResizeEvent *)
 {
     arrange();
@@ -446,6 +470,7 @@ void DictionaryPanel::arrange()
     editHint->setVisible(editing);
     submit->setVisible(editing);
     search->setVisible(!editing);
+    save->setVisible(!editing && saveAvailable);
     close->setAccessibleName(strings::get(editing ? "dictionary_panel.cancel_edit"
                                                   : "dictionary_panel.close_definition"));
     dictionary->setEnabled(!editing && options.size() > 1);
@@ -456,16 +481,25 @@ void DictionaryPanel::arrange()
     const int cell = isNarrowWidth(width(), ui::density()) ? int(chrome::compactCellWidth)
                                                            : int(chrome::cellWidth);
     int selectorWidth = dictionary->sizeHint().width();
-    const int actionCells = editing ? 2 : 3;
-    const int wordRoom = width() - actionCells * cell - 2 * int(chrome::inset);
     const int wordWanted = qMin(ui::interfaceTextWidth(word, headwordFont), width() / 2);
+    // On small screens move the save control below the toolbar rather than
+    // truncating the searched word when the dictionary selector is present.
+    const bool saveBelow = !editing && saveAvailable
+            && width() - 4 * cell - 2 * int(chrome::inset)
+                            - qMax(cell, dictionary->sizeHint().width()) < wordWanted;
+    const int actionCells = editing ? 2 : saveAvailable && !saveBelow ? 4 : 3;
+    const int wordRoom = width() - actionCells * cell - 2 * int(chrome::inset);
     if (wordRoom - selectorWidth < wordWanted)
-        selectorWidth = dictionary->widthForLabel(qMax(cell, wordRoom - wordWanted));
+        selectorWidth = qMin(selectorWidth, qMax(cell, wordRoom - wordWanted));
     const int selectorLeft = width() - cell - selectorWidth;
     dictionary->setGeometry(selectorLeft, top, selectorWidth, chrome::actionHeight);
     close->setGeometry(width() - cell, top, cell, chrome::actionHeight);
-    const int editorLeft = selectorLeft - cell;
+    const int saveLeft = selectorLeft - cell;
+    const int editorLeft = saveLeft - (editing || !saveAvailable || saveBelow ? 0 : cell);
     const int editLeft = editorLeft - (editing ? 0 : cell);
+    save->setGeometry(saveBelow ? width() - cell : saveLeft,
+                      saveBelow ? top + chrome::actionHeight + metrics::control::border : top,
+                      cell, chrome::actionHeight);
     edit->setGeometry(editLeft, top, cell, chrome::actionHeight);
     search->setGeometry(editorLeft, top, cell, chrome::actionHeight);
     submit->setGeometry(search->geometry());
@@ -474,6 +508,8 @@ void DictionaryPanel::arrange()
     headword->setGeometry(chrome::inset, top, wordWidth, chrome::actionHeight);
     headword->setText(ui::elideInterfaceText(word, headwordFont, wordWidth));
     int textTop = top + chrome::actionHeight + metrics::control::border;
+    if (saveBelow)
+        textTop += chrome::actionHeight;
     if (editing) {
         const int hintWidth = qMax(1, width() - 2 * chrome::inset);
         const int hintHeight = editHint->heightForWidth(hintWidth);

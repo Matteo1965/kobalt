@@ -16,12 +16,12 @@ const ThemeColors &themeColors(bool dark)
         ThemeColors colors;
         colors.paper = QColor(Qt::white);
         colors.ink = QColor(Qt::black);
-        colors.secondaryInk = QColor(0x333333);
-        colors.disabledInk = QColor(0x999999);
+        colors.secondaryInk = QColor(0x1a1a1a);
+        colors.disabledInk = QColor(0x808080);
         colors.divider = QColor(0xb8b8b8);
         colors.outline = QColor(0x666666);
         colors.pressedPaper = QColor(0xdddddd);
-        colors.swipeCaptionInk = QColor(0x666666);
+        colors.swipeCaptionInk = QColor(0x333333);
         colors.lightHintPaper = QColor(0xe6e6e6);
         colors.sleepPaper = QColor(Qt::white);
         colors.overviewPaper = QColor(0xf1f1f1);
@@ -36,12 +36,12 @@ const ThemeColors &themeColors(bool dark)
         ThemeColors colors;
         colors.paper = QColor(Qt::black);
         colors.ink = QColor(Qt::white);
-        colors.secondaryInk = QColor(0xcccccc);
-        colors.disabledInk = QColor(0x999999);
+        colors.secondaryInk = QColor(0xe6e6e6);
+        colors.disabledInk = QColor(0x808080);
         colors.divider = QColor(0x666666);
         colors.outline = QColor(0xbbbbbb);
         colors.pressedPaper = QColor(0x333333);
-        colors.swipeCaptionInk = QColor(0xaaaaaa);
+        colors.swipeCaptionInk = QColor(0xdddddd);
         colors.lightHintPaper = QColor(0x222222);
         colors.sleepPaper = QColor(0x202020);
         colors.overviewPaper = QColor(0x242424);
@@ -206,7 +206,7 @@ void readerStyle(QWidget *widget, const QString &source)
         style.replace(placeholders[1], escapedFamily(families[1]));
         style.replace(placeholders[2], "\"" + escapedFamily(families[2]) + "\"");
         style += " QPushButton:disabled,QPushButton:checked:disabled,QPushButton:pressed:disabled{"
-                 "color:palette(mid);background:palette(window);border-color:palette(midlight);}";
+                 "color:palette(mid);background:palette(window);border-color:palette(mid);}";
         style.replace("palette(window-text)", colors.ink.name());
         style.replace("palette(window)", colors.paper.name());
         style.replace("palette(midlight)", colors.pressedPaper.name());
@@ -230,6 +230,10 @@ QPalette readerPalette(QPalette colors, bool dark)
     for (const auto role :
          { QPalette::WindowText, QPalette::Text, QPalette::ButtonText, QPalette::Highlight })
         colors.setColor(role, theme.ink);
+    // Keep disabled labels at a predictable 50% gray instead of allowing
+    // Qt's platform palette to render them too faint on e-ink screens.
+    for (const auto role : { QPalette::WindowText, QPalette::Text, QPalette::ButtonText })
+        colors.setColor(QPalette::Disabled, role, theme.disabledInk);
     colors.setColor(QPalette::Mid, theme.disabledInk);
     colors.setColor(QPalette::Midlight, theme.pressedPaper);
     colors.setColor(QPalette::Light, theme.divider);

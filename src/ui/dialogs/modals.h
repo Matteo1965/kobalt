@@ -7,6 +7,7 @@
 #include <QRegion>
 #include <QPushButton>
 #include <QPointer>
+#include <QTimer>
 #include <functional>
 
 namespace kobalt::ui {
@@ -130,6 +131,23 @@ struct ModalAction
 };
 
 QPushButton *makeModalButton(QWidget *parent, const ModalAction &action, bool primary);
+
+// Brief confirmation anchored to the word-save action, without blocking reading.
+class ButtonFeedback final : public ModalOverlay
+{
+public:
+    explicit ButtonFeedback(QWidget *parent);
+    void showFor(QWidget *button, const QString &text);
+    void reposition();
+
+protected:
+    void hideEvent(QHideEvent *event) override;
+
+private:
+    QPointer<QWidget> target;
+    QLabel *label = nullptr;
+    QTimer hideTimer;
+};
 
 class NoticeModal : public ModalOverlay
 {

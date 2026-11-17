@@ -48,6 +48,7 @@ int main() {
         {U"cipősszekrény",5},{U"gyorsszolgálat",5},
         {U"gyorssztráda",5},{U"gyorssztrádákon",5},
         {U"okosszemüveg",4},{U"tánccsoport",4},
+        {U"habarcsszerű",7},{U"leggyorsabban",3},
     };
     int failed=0;
     for (const auto &c: compounds) {
@@ -94,6 +95,8 @@ int main() {
         {U"arccsont", 3, U"arc", U"csont"},
         {U"színnyomás", 4, U"szín", U"nyomás"},
         {U"okosszemüveg", 4, U"okos", U"szemüveg"},
+        {U"habarcsszerű", 7, U"habarcs", U"szerű"},
+        {U"leggyorsabban", 3, U"leg", U"gyorsabban"},
         {U"tánccsoport", 4, U"tánc", U"csoport"},
         {U"asszonnyal", 2, U"asz", U"szonnyal"},
         {U"könnyek", 3, U"köny", U"nyek"},
