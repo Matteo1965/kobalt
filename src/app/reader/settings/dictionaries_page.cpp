@@ -498,7 +498,9 @@ void DictionariesPage::redraw()
                 const bool active = id == transferId, installed = installedIds.contains(id);
                 failedId.clear();
                 if (localIds.contains(id)) {
-                    if (selectRequested)
+                    // Already selected: the button is visually muted but remains
+                    // enabled to avoid Qt5 applying another disabled opacity pass.
+                    if (selectedDictionary != id && selectRequested)
                         selectRequested(id);
                     return;
                 }
@@ -521,20 +523,24 @@ void DictionariesPage::redraw()
                 redraw();
             });
         }
-        // The style's width excludes the border, so a polished button keeps the
-        // same outer width as one that is not polished yet. Restyle only when
-        // the width changes; restyling polishes the button again.
-        if (action->property("action_width").toInt() != actionWidth) {
-            ui::readerStyle(
-                    action,
-                    ui::styles::outlined()
-                            + QString("QPushButton{font-size:%1px;min-height:%2px;max-height:%2px;min-width:%3px;max-width:%3px;padding:0;border:%4px solid palette(window-text);}")
-                                      .arg(int(chrome::labelText))
-                                      .arg(ui::px(66))
-                                      .arg(actionWidth - 2 * int(metrics::control::border))
-                                      .arg(int(metrics::control::border)));
+        // Render the selected local dictionary as an enabled, non-actionable
+        // button with explicit mid-gray ink and border. Qt5's native disabled
+        // painting fades both again, even when QSS specifies #808080.
+        const bool selectedLocal = local && selectedDictionary == entry.id;
+        if (action->property("action_width").toInt() != actionWidth
+            || action->property("dictionary_selected").toBool() != selectedLocal) {
+            auto style = ui::styles::outlined()
+                    + QString("QPushButton{font-size:%1px;min-height:%2px;max-height:%2px;min-width:%3px;max-width:%3px;padding:0;border:%4px solid palette(window-text);}")
+                              .arg(int(chrome::labelText))
+                              .arg(ui::px(66))
+                              .arg(actionWidth - 2 * int(metrics::control::border))
+                              .arg(int(metrics::control::border));
+            if (selectedLocal)
+                style += " QPushButton{color:palette(mid);border-color:palette(mid);}";
+            ui::readerStyle(action, style);
             action->setFixedSize(actionWidth, ui::px(66));
             action->setProperty("action_width", actionWidth);
+            action->setProperty("dictionary_selected", selectedLocal);
         }
         const bool download = !installed && !active;
         if (action->property("dictionary_download").toBool() != download) {
@@ -545,8 +551,7 @@ void DictionariesPage::redraw()
                 action->clearIconConfiguration();
         }
         action->setIconSize(QSize(ui::px(28), ui::px(28)));
-        action->setEnabled(local ? selectedDictionary != entry.id
-                                 : (installed || active || !working));
+        action->setEnabled(local || installed || active || !working);
         layout->activate();
         if (active) {
             const auto status = unpacking ? strings::get("dictionaries.installing")
