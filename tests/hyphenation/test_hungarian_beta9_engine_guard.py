@@ -39,6 +39,15 @@ class HungarianBeta9EngineGuard(unittest.TestCase):
         self.assertIn("int repairShortDropcapParagraphs(ldomDocument *doc)", source)
         self.assertIn("repairShortDropcapParagraphs(document);", source)
 
+    def test_idle_engine_steps_yield_to_user_requests(self):
+        worker_header = (ROOT / "src/engine/crengine/engine_worker.h").read_text()
+        worker_code = (ROOT / "src/engine/crengine/engine_worker.cpp").read_text()
+        self.assertIn("void scheduleEngineIdleSteps(", worker_header)
+        self.assertIn("QTimer::singleShot(delay, engineWorkerForIdle()", worker_code)
+        self.assertIn("engineWorkRequests() != task->requestGeneration", worker_code)
+        self.assertIn("queueIdleAttempt(task)", worker_code)
+        self.assertIn("const qint64 quiet = engineWorkQuietMilliseconds()", worker_code)
+
     def test_hybrid_cooperative_preemption_api(self):
         worker = (ROOT / "src/engine/crengine/engine_worker.h").read_text()
         self.assertIn("class EngineIdleCheckpoint", worker)
