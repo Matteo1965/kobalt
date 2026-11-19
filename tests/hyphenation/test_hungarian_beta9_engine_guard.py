@@ -39,6 +39,15 @@ class HungarianBeta9EngineGuard(unittest.TestCase):
         self.assertIn("int repairShortDropcapParagraphs(ldomDocument *doc)", source)
         self.assertIn("repairShortDropcapParagraphs(document);", source)
 
+    def test_engine_data_types_independent_of_crengine(self):
+        types = (ROOT / "src/engine/types.h").read_text()
+        document = (ROOT / "src/engine/crengine/engine_document.h").read_text()
+        self.assertIn('#include "engine/types.h"', document)
+        for declaration in ("enum class OpeningStage", "struct ChapterProgress",
+                            "struct SearchHit", "struct SearchBatch", "struct TextRange"):
+            self.assertIn(declaration, types)
+            self.assertNotIn(declaration, document)
+
     def test_idle_engine_steps_yield_to_user_requests(self):
         worker_header = (ROOT / "src/engine/crengine/engine_worker.h").read_text()
         worker_code = (ROOT / "src/engine/crengine/engine_worker.cpp").read_text()
