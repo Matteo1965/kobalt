@@ -2,6 +2,7 @@
 #include <atomic>
 #include <memory>
 #include <QtGlobal>
+#include <functional>
 
 class QObject;
 class QThread;
@@ -15,6 +16,12 @@ QObject *engineWorker();
 quint64 engineWorkRequests();
 qint64 engineWorkQuietMilliseconds();
 QObject *engineWorkerForIdle();
+
+// Queue one bounded background work step on the existing engine worker.
+// The callback returns true if more steps remain. User requests always win:
+// if another request arrives, the queued background chain is abandoned.
+// No caller uses this until hybrid pagination is enabled.
+void scheduleEngineIdleSteps(std::function<bool()> step, qint64 minimumQuietMilliseconds = 100);
 
 // A cooperative checkpoint for future hybrid pagination. Background jobs
 // capture the external-request generation before starting a short work step.
