@@ -1,5 +1,6 @@
 #pragma once
 #include "publication/opening_result.h"
+#include "engine/types.h"
 #include "reading/chapter.h"
 #include "assets/font_catalog.h"
 #include <QByteArray>
@@ -44,39 +45,6 @@ inline constexpr auto mathFontFace = "Noto Sans Math";
 inline constexpr auto fallbackFontFaces =
         "Noto Serif|Noto Naskh Arabic|Noto Serif Hebrew|Noto Serif Armenian|Noto Serif Georgian|Noto Serif Devanagari|Noto Serif Bengali|Noto Serif Tamil|Noto Serif Thai|Noto Sans Math|Noto Serif CJK JP";
 struct ReaderSource;
-enum class OpeningStage { Content, Text, Styles, Pages, Ready };
-using OpeningProgress = std::function<void(OpeningStage, int)>;
-
-struct ChapterProgress
-{
-    QString title;
-    int page = 0, pages = 0;
-};
-
-struct SearchHit
-{
-    QString start, end, before, text, after;
-    int page = -1;
-};
-
-struct SearchBatch
-{
-    QVector<SearchHit> hits;
-    int nextPage = 0;
-    bool done = false, limited = false;
-    // A restarted scan replaces results from the previous layout.
-    bool reset = false;
-};
-
-struct TextRange
-{
-    QString start, end, text;
-    QString chosenEnd = {};
-    QString chosenStart = {};
-    bool sentenceStartPolicy = false;
-    bool sentenceEndPolicy = false;
-};
-
 struct WordSelection
 {
     QString text, start, end;
