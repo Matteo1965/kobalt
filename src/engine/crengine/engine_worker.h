@@ -16,6 +16,30 @@ quint64 engineWorkRequests();
 qint64 engineWorkQuietMilliseconds();
 QObject *engineWorkerForIdle();
 
+// A cooperative checkpoint for future hybrid pagination. Background jobs
+// capture the external-request generation before starting a short work step.
+// They must yield when a user request arrives (even if it is already handled).
+// No application or engine layout behavior changes until callers opt in.
+class EngineIdleCheckpoint
+{
+public:
+    explicit EngineIdleCheckpoint(qint64 minimumQuietMilliseconds = 0)
+        : requestGeneration_(engineWorkRequests()), minimumQuiet_(minimumQuietMilliseconds)
+    {
+    }
+
+    bool interrupted() const { return engineWorkRequests() != requestGeneration_; }
+
+    bool canContinue() const
+    {
+        return !interrupted() && engineWorkQuietMilliseconds() >= minimumQuiet_;
+    }
+
+private:
+    quint64 requestGeneration_;
+    qint64 minimumQuiet_;
+};
+
 struct EngineWorker
 {
     QThread *thread = nullptr;
