@@ -12,8 +12,8 @@
 #include <QSet>
 #include "publication/resource_cache.h"
 #include "platform/api/position_codec.h"
-#include "reader_links.h"
-#include "reader_word_counts.h"
+#include "engine/links.h"
+#include "engine/word_counts.h"
 #include "reading/reading_density.h"
 #include "reading/appearance_settings.h"
 #include <QString>
