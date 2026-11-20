@@ -41,6 +41,22 @@ jobs:
             echo "Unresolved merge paths remain" >&2
             exit 1
           fi
+          # Beta 9 replaced the external CREngine with a vendored Blaze build.
+          # The legacy desktop/Kobo CMake recipes still reference deleted
+          # reader_styles.h.in, reader_hyphenation.h.in and html5.css.
+          # For this isolated compile diagnostic use upstream build wiring;
+          # retaining Hungarian patches is a separate explicit porting task.
+          for file in \
+            platforms/desktop/CMakeLists.txt \
+            platforms/kobo/CMakeLists.txt \
+            platforms/shared-inputs.cmake \
+            dependencies/cache.cmake \
+            dependencies/local-engine.cmake; do
+            git show "refs/remotes/upstream/beta9:$file" > "$file"
+          done
+          git add platforms/desktop/CMakeLists.txt platforms/kobo/CMakeLists.txt \
+            platforms/shared-inputs.cmake dependencies/cache.cmake \
+            dependencies/local-engine.cmake
           git show refs/remotes/upstream/beta9:assets/en.strings > /tmp/upstream-beta9-en.strings
           python3 - <<'PY'
           from pathlib import Path
