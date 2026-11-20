@@ -1,0 +1,64 @@
+name: Beta 9 Blaze experimental source integration
+
+on:
+  push:
+    branches: [hungarian-edition-beta9-integration]
+    paths: ['.github/workflows/beta9-blaze-experiment.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Build isolated experimental Blaze source branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Kobalt Blaze Integration"
+          git config user.email "kobalt-blaze@users.noreply.github.com"
+          git checkout -b hungarian-edition-beta9-blaze-experiment
+          git fetch --no-tags https://github.com/nicoverbruggen/kobalt.git \
+            refs/tags/v1.0-beta.9:refs/remotes/upstream/beta9
+          # This experiment intentionally does NOT push to main or the
+          # established Hungarian integration branch.
+          git merge --no-commit --no-ff refs/remotes/upstream/beta9 || true
+          # Preserve Hungarian-side files for merge conflicts as a FIRST
+          # COMPILATION DIAGNOSTIC, not as an accepted semantic resolution.
+          # Nonconflicting Beta 9 files (including Blaze) enter unchanged.
+          while IFS= read -r -d '' file; do
+            if git show ":2:$file" > /dev/null 2>&1; then
+              git checkout --ours -- "$file"
+              git add -- "$file"
+            else
+              git rm -f --ignore-unmatch -- "$file"
+            fi
+          done < <(git diff --name-only -z --diff-filter=U)
+          if test -n "$(git diff --name-only --diff-filter=U)"; then
+            echo "Unresolved merge paths remain" >&2
+            exit 1
+          fi
+          # Permit this intentionally unstable branch to run the existing
+          # Qt5 CI; never package it as a public Release.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path(".github/workflows/ci.yml")
+          src = p.read_text()
+          key = "hungarian-edition-beta9-integration"
+          assert key in src, "CI integration branch missing"
+          src = src.replace(key, key + ", hungarian-edition-beta9-blaze-experiment", 1)
+          p.write_text(src)
+          PY
+          git add .github/workflows/ci.yml
+          git commit -m "Experiment: merge upstream Blaze beta9 with Hungarian conflict baselines"
+          git push origin HEAD:refs/heads/hungarian-edition-beta9-blaze-experiment
+      - name: Clarify experimental status
+        run: |
+          echo "Experimental branch only; successful packaging would not imply working Hungarian hybrid pagination."
