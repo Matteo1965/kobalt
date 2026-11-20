@@ -39,6 +39,22 @@ class HungarianBeta9EngineGuard(unittest.TestCase):
         self.assertIn("int repairShortDropcapParagraphs(ldomDocument *doc)", source)
         self.assertIn("repairShortDropcapParagraphs(document);", source)
 
+    def test_shared_link_and_word_count_types(self):
+        shared_links = (ROOT / "src/engine/links.h").read_text()
+        shared_counts = (ROOT / "src/engine/word_counts.h").read_text()
+        document = (ROOT / "src/engine/crengine/engine_document.h").read_text()
+        for name in ("enum class LinkKind", "struct PageLink",
+                     "struct LinkHit", "struct LinkDetails"):
+            self.assertIn(name, shared_links)
+        for name in ("struct WordCountChapter", "struct DocumentWordCounts"):
+            self.assertIn(name, shared_counts)
+        self.assertIn('#include "engine/links.h"', document)
+        self.assertIn('#include "engine/word_counts.h"', document)
+        for old, new in (("reader_links.h", "links.h"),
+                         ("reader_word_counts.h", "word_counts.h")):
+            shim = (ROOT / "src/engine/crengine" / old).read_text()
+            self.assertIn('#include "engine/' + new + '"', shim)
+
     def test_engine_data_types_independent_of_crengine(self):
         types = (ROOT / "src/engine/types.h").read_text()
         document = (ROOT / "src/engine/crengine/engine_document.h").read_text()
