@@ -44,7 +44,10 @@ class HungarianBeta9EngineGuard(unittest.TestCase):
         document = (ROOT / "src/engine/crengine/engine_document.h").read_text()
         self.assertIn('#include "engine/types.h"', document)
         for declaration in ("enum class OpeningStage", "struct ChapterProgress",
-                            "struct SearchHit", "struct SearchBatch", "struct TextRange"):
+                            "struct SearchHit", "struct SearchBatch", "struct TextRange",
+                            "struct WordSelection", "struct SelectionEndpoint",
+                            "struct AnnotationGeometry", "struct AnnotationToken",
+                            "struct AnnotationPageEdges"):
             self.assertIn(declaration, types)
             self.assertNotIn(declaration, document)
 
