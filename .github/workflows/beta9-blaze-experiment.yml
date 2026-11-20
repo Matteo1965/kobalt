@@ -46,6 +46,56 @@ jobs:
             echo "Unresolved merge paths remain" >&2
             exit 1
           fi
+          # Keep the Hungarian-side translation values, but import new
+          # upstream English keys needed by Beta 9 UI (e.g. library.about).
+          # This does not install upstream StarDict or change the stable branch.
+          git show refs/remotes/upstream/beta9:assets/en.strings > /tmp/upstream-beta9-en.strings
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          local = Path("assets/en.strings")
+          upstream = Path("/tmp/upstream-beta9-en.strings")
+          key_line = re.compile(r'^\s*"([^"]+)"\s*=\s*"(?:\\.|[^"\\])*";\s*
+          # The experiment is intentionally kept on this runner: the GitHub App
+          # is not permitted to publish merged workflow changes.
+          echo "Blaze engine present: $(test -f src/engine/blaze/adapter/engine_document.cpp && echo yes || echo no)"
+          echo "Unresolved conflicts: $(git diff --name-only --diff-filter=U | wc -l)"
+      - name: Run source checks on merged Blaze tree
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -P platforms/checks/source-checks.cmake
+      - name: Try native compatibility build
+        shell: bash
+        run: bash platforms/ci/native-tests.sh
+      - name: Clarify experimental status
+        run: |
+          echo "Experimental branch only; successful packaging would not imply working Hungarian hybrid pagination."
+)
+          current = local.read_text()
+          upstream_lines = upstream.read_text().splitlines()
+          known = {m.group(1) for line in current.splitlines()
+                   if (m := key_line.match(line))}
+          imported = []
+          for index, line in enumerate(upstream_lines):
+              match = key_line.match(line)
+              if not match or match.group(1) in known:
+                  continue
+              if index and upstream_lines[index - 1].lstrip().startswith("/* Arguments:"):
+                  imported.append(upstream_lines[index - 1])
+              imported.append(line)
+              known.add(match.group(1))
+          if imported:
+              local.write_text(current.rstrip() +
+                               "\n\n/* Beta 9 upstream keys (English fallback) */\n" +
+                               "\n".join(imported) + "\n")
+          print(f"Imported {sum(bool(key_line.match(line)) for line in imported)} "
+                "missing Beta 9 UI keys without replacing existing translations")
+          assert '"library.about"' in local.read_text()
+          PY
+          git add assets/en.strings
           git commit -m "Experiment: merge upstream Blaze beta9 with Hungarian conflict baselines"
           # The experiment is intentionally kept on this runner: the GitHub App
           # is not permitted to publish merged workflow changes.
