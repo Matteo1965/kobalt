@@ -88,6 +88,37 @@ jobs:
           assert '"library.about"' in local.read_text()
           PY
           git add assets/en.strings
+          # Reconcile two known beta8/beta9 C++ API collisions in the
+          # disposable merged tree. Fail explicitly if upstream signatures
+          # change, rather than silently deleting an unrelated method.
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          header = Path("src/app/reader_window.h")
+          source = header.read_text()
+          method = re.compile(
+              r'\n[ \t]*virtual void physicalPageButton\(int key, int direction\)'
+              r'[ \t]*\n[ \t]*\{\s*(?:Q_UNUSED\(key\);\s*pageButton\(direction\);|pageButton\(direction\);\s*Q_UNUSED\(key\);)\s*\}',
+              re.MULTILINE)
+          found = list(method.finditer(source))
+          if len(found) != 2:
+              raise SystemExit(f"Expected two page-button fallback definitions, found {len(found)}")
+          source = source[:found[1].start()] + source[found[1].end():]
+          assert len(list(method.finditer(source))) == 1
+          header.write_text(source)
+
+          metrics = Path("src/ui/style/metrics.h")
+          source = metrics.read_text()
+          old = "inline constexpr int exitGuardMilliseconds = 400;"
+          if source.count(old) != 1 or "closeGuardMilliseconds" in source:
+              raise SystemExit("Unexpected guard constant definitions")
+          source = source.replace(
+              old, old + "\n// Beta 9 scenario player compatibility; same existing guard duration.\n"
+              + "inline constexpr int closeGuardMilliseconds = exitGuardMilliseconds;")
+          metrics.write_text(source)
+          print("Resolved duplicate physicalPageButton and legacy guard constant")
+          PY
+          git add src/app/reader_window.h src/ui/style/metrics.h
           git commit -m "Experiment: Blaze beta9 source with Hungarian conflict baselines and missing English keys"
           echo "Blaze source present: $(test -f src/engine/blaze/adapter/engine_document.cpp && echo yes || echo no)"
           echo "Unresolved conflicts: $(git diff --name-only --diff-filter=U | wc -l)"
