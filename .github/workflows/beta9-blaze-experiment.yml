@@ -33,6 +33,7 @@ jobs:
           # Preserve Hungarian-side files for merge conflicts as a FIRST
           # COMPILATION DIAGNOSTIC, not as an accepted semantic resolution.
           # Nonconflicting Beta 9 files (including Blaze) enter unchanged.
+          git diff --name-only -z --diff-filter=U > /tmp/kobalt-conflicts.list
           while IFS= read -r -d '' file; do
             if git show ":2:$file" > /dev/null 2>&1; then
               git checkout --ours -- "$file"
@@ -40,7 +41,7 @@ jobs:
             else
               git rm -f --ignore-unmatch -- "$file"
             fi
-          done < <(git diff --name-only -z --diff-filter=U)
+          done < /tmp/kobalt-conflicts.list
           if test -n "$(git diff --name-only --diff-filter=U)"; then
             echo "Unresolved merge paths remain" >&2
             exit 1
