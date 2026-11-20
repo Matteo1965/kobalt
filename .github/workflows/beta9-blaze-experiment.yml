@@ -17,8 +17,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: true
-      - name: Build isolated experimental Blaze source branch
+          persist-credentials: false
+      - name: Merge Beta 9 source locally for diagnostics
         shell: bash
         run: |
           set -euo pipefail
@@ -27,12 +27,7 @@ jobs:
           git checkout -b hungarian-edition-beta9-blaze-experiment
           git fetch --no-tags https://github.com/nicoverbruggen/kobalt.git \
             refs/tags/v1.0-beta.9:refs/remotes/upstream/beta9
-          # This experiment intentionally does NOT push to main or the
-          # established Hungarian integration branch.
           git merge --no-commit --no-ff refs/remotes/upstream/beta9 || true
-          # Preserve Hungarian-side files for merge conflicts as a FIRST
-          # COMPILATION DIAGNOSTIC, not as an accepted semantic resolution.
-          # Nonconflicting Beta 9 files (including Blaze) enter unchanged.
           git diff --name-only -z --diff-filter=U > /tmp/kobalt-conflicts.list
           while IFS= read -r -d '' file; do
             if git show ":2:$file" > /dev/null 2>&1; then
@@ -46,38 +41,20 @@ jobs:
             echo "Unresolved merge paths remain" >&2
             exit 1
           fi
-          # Keep the Hungarian-side translation values, but import new
-          # upstream English keys needed by Beta 9 UI (e.g. library.about).
-          # This does not install upstream StarDict or change the stable branch.
           git show refs/remotes/upstream/beta9:assets/en.strings > /tmp/upstream-beta9-en.strings
           python3 - <<'PY'
           from pathlib import Path
           import re
-
           local = Path("assets/en.strings")
           upstream = Path("/tmp/upstream-beta9-en.strings")
-          key_line = re.compile(r'^\s*"([^"]+)"\s*=\s*"(?:\\.|[^"\\])*";\s*
-          # The experiment is intentionally kept on this runner: the GitHub App
-          # is not permitted to publish merged workflow changes.
-          echo "Blaze engine present: $(test -f src/engine/blaze/adapter/engine_document.cpp && echo yes || echo no)"
-          echo "Unresolved conflicts: $(git diff --name-only --diff-filter=U | wc -l)"
-      - name: Run source checks on merged Blaze tree
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -euo pipefail
-          cmake -P platforms/checks/source-checks.cmake
-      - name: Try native compatibility build
-        shell: bash
-        run: bash platforms/ci/native-tests.sh
-      - name: Clarify experimental status
-        run: |
-          echo "Experimental branch only; successful packaging would not imply working Hungarian hybrid pagination."
-)
+          key_line = re.compile(r'^\s*"([^"]+)"\s*=')
           current = local.read_text()
           upstream_lines = upstream.read_text().splitlines()
-          known = {m.group(1) for line in current.splitlines()
-                   if (m := key_line.match(line))}
+          known = set()
+          for line in current.splitlines():
+              match = key_line.match(line)
+              if match:
+                  known.add(match.group(1))
           imported = []
           for index, line in enumerate(upstream_lines):
               match = key_line.match(line)
@@ -88,28 +65,21 @@ jobs:
               imported.append(line)
               known.add(match.group(1))
           if imported:
-              local.write_text(current.rstrip() +
-                               "\n\n/* Beta 9 upstream keys (English fallback) */\n" +
-                               "\n".join(imported) + "\n")
-          print(f"Imported {sum(bool(key_line.match(line)) for line in imported)} "
-                "missing Beta 9 UI keys without replacing existing translations")
+              with local.open("a") as output:
+                  output.write("\n/* Beta 9 upstream English fallback */\n")
+                  output.write("\n".join(imported) + "\n")
+          print("Imported missing upstream UI keys:", len([line for line in imported if key_line.match(line)]))
           assert '"library.about"' in local.read_text()
           PY
           git add assets/en.strings
-          git commit -m "Experiment: merge upstream Blaze beta9 with Hungarian conflict baselines"
-          # The experiment is intentionally kept on this runner: the GitHub App
-          # is not permitted to publish merged workflow changes.
-          echo "Blaze engine present: $(test -f src/engine/blaze/adapter/engine_document.cpp && echo yes || echo no)"
+          git commit -m "Experiment: Blaze beta9 source with Hungarian conflict baselines and missing English keys"
+          echo "Blaze source present: $(test -f src/engine/blaze/adapter/engine_document.cpp && echo yes || echo no)"
           echo "Unresolved conflicts: $(git diff --name-only --diff-filter=U | wc -l)"
-      - name: Run source checks on merged Blaze tree
+      - name: Check merged source conventions
         continue-on-error: true
-        shell: bash
-        run: |
-          set -euo pipefail
-          cmake -P platforms/checks/source-checks.cmake
-      - name: Try native compatibility build
-        shell: bash
+        run: cmake -P platforms/checks/source-checks.cmake
+      - name: Test native compilation of experimental Blaze source
         run: bash platforms/ci/native-tests.sh
-      - name: Clarify experimental status
-        run: |
-          echo "Experimental branch only; successful packaging would not imply working Hungarian hybrid pagination."
+      - name: Explain experimental status
+        if: always()
+        run: echo "Experiment only; no firmware was released or installed."
