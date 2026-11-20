@@ -1,0 +1,63 @@
+name: Beta 9 upstream integration probe
+
+on:
+  push:
+    branches: [hungarian-edition-beta9-integration]
+    paths:
+      - '.github/workflows/beta9-merge-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Attempt full upstream Beta 9 source merge without pushing
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/beta9-probe
+          git config user.name "Kobalt Integration Probe"
+          git config user.email "integration-probe@users.noreply.github.com"
+          git fetch --no-tags https://github.com/nicoverbruggen/kobalt.git \
+            refs/tags/v1.0-beta.9:refs/remotes/upstream/beta9
+          git rev-parse HEAD > build/beta9-probe/hungarian-head.txt
+          git rev-parse refs/remotes/upstream/beta9 > build/beta9-probe/upstream-tag-sha.txt
+          git merge-base HEAD refs/remotes/upstream/beta9 \
+            > build/beta9-probe/merge-base.txt || true
+          if git merge --no-commit --no-ff refs/remotes/upstream/beta9; then
+            echo "clean" > build/beta9-probe/merge-result.txt
+          else
+            echo "conflicts" > build/beta9-probe/merge-result.txt
+          fi
+          git diff --name-only --diff-filter=U \
+            > build/beta9-probe/conflicting-paths.txt
+          git diff --cached --name-only \
+            > build/beta9-probe/staged-paths.txt
+          git status --short \
+            > build/beta9-probe/status.txt
+          {
+            echo "# Beta 9 upstream merge probe"
+            echo
+            echo "This is a dry run. No code was pushed or installed."
+            echo "Result: $(cat build/beta9-probe/merge-result.txt)"
+            echo "Unresolved paths: $(wc -l < build/beta9-probe/conflicting-paths.txt)"
+            echo "Cleanly merged/staged paths: $(wc -l < build/beta9-probe/staged-paths.txt)"
+            echo
+            echo "## Conflicts"
+            cat build/beta9-probe/conflicting-paths.txt
+          } > build/beta9-probe/summary.md
+          cat build/beta9-probe/summary.md
+      - name: Archive migration conflict report
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta9-upstream-merge-probe
+          path: build/beta9-probe/
+          if-no-files-found: error
