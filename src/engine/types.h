@@ -3,6 +3,8 @@
 // Extracted without changing their fields or enum values, as the first
 // compatibility step toward the Beta 9 Blaze engine contract.
 #include <QString>
+#include <QPoint>
+#include <QRect>
 #include <QVector>
 #include <functional>
 
@@ -38,6 +40,44 @@ struct TextRange
     QString chosenStart = {};
     bool sentenceStartPolicy = false;
     bool sentenceEndPolicy = false;
+};
+
+struct WordSelection
+{
+    QString text, start, end;
+    QVector<QRect> rectangles;
+};
+
+struct SelectionEndpoint
+{
+    // True terminal edge span in viewport pixels, never a clipped range edge.
+    QPoint first, last;
+    // Axis unit normal pointing away from selected text. Caps point inward.
+    QPoint outward;
+    bool visible = false; // False for endpoints outside the current page/viewport.
+};
+
+struct AnnotationGeometry
+{
+    QVector<QRect> rectangles;
+    SelectionEndpoint start, end;
+    bool vertical = false; // Current page's writing axis, independent of range shape.
+};
+
+struct AnnotationToken : WordSelection
+{
+    // Source boundaries for automatic paired punctuation. No whitespace is included.
+    QString startBeforePunctuation, endAfterPunctuation;
+    bool punctuation = false;
+};
+
+struct AnnotationPageEdges
+{
+    AnnotationToken first, last;
+    SelectionEndpoint start, end;
+    int columns = 1;
+    bool vertical = false;
+    bool continuesBefore = false, continuesAfter = false;
 };
 
 } // namespace kobalt
