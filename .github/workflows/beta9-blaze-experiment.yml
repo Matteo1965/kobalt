@@ -119,6 +119,27 @@ jobs:
           print("Resolved duplicate physicalPageButton and legacy guard constant")
           PY
           git add src/app/reader_window.h src/ui/style/metrics.h
+          # Blaze supersedes the former engine implementation. Keeping the
+          # old C++ files causes missing internal headers and double objects.
+          # The Hungarian engine patches still need porting into Blaze before
+          # this experimental tree can be considered a release candidate.
+          git rm -r -f --ignore-unmatch src/engine/crengine
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("src/storage/reader_storage.h")
+          source = path.read_text()
+          declaration = "    QString previews() const;"
+          count = source.count(declaration)
+          if count != 2:
+              raise SystemExit(f"Expected exactly two previews declarations, got {count}")
+          first = source.find(declaration)
+          second = source.find(declaration, first + len(declaration))
+          source = source[:second] + source[second + len(declaration):]
+          assert source.count(declaration) == 1
+          path.write_text(source)
+          print("Removed duplicate storage preview declaration")
+          PY
+          git add src/storage/reader_storage.h
           git commit -m "Experiment: Blaze beta9 source with Hungarian conflict baselines and missing English keys"
           echo "Blaze source present: $(test -f src/engine/blaze/adapter/engine_document.cpp && echo yes || echo no)"
           echo "Unresolved conflicts: $(git diff --name-only --diff-filter=U | wc -l)"
