@@ -146,6 +146,88 @@ jobs:
           # complete upstream superset in this disposable merge tree.
           git show refs/remotes/upstream/beta9:src/engine/types.h > src/engine/types.h
           git add src/engine/types.h
+          # Port only Beta 9's user-supplied dictionary folder wrapper.
+          # Hungarian StarDict lookup and morphological handling remain
+          # intact. The extracted methods use the existing StarDict API.
+          git show refs/remotes/upstream/beta9:src/dictionaries/stardict.h \
+            > /tmp/beta9-stardict.h
+          git show refs/remotes/upstream/beta9:src/dictionaries/stardict.cpp \
+            > /tmp/beta9-stardict.cpp
+          python3 - <<'PY'
+          from pathlib import Path
+          header = Path("src/dictionaries/stardict.h")
+          ours = header.read_text()
+          upstream = Path("/tmp/beta9-stardict.h").read_text()
+          marker = "// User-supplied StarDict files"
+          assert "FolderDictionaries" not in ours
+          cls = upstream[upstream.index(marker):upstream.rindex("} // namespace kobalt")]
+          assert "class FolderDictionaries" in cls
+          assert ours.rstrip().endswith("}")
+          ours = ours.rstrip()[:-1] + "\n" + cls + "} // namespace kobalt\n"
+          ours = ours.replace("#include <memory>", "#include <memory>\n#include <QHash>")
+          header.write_text(ours)
+          upstream_cpp = Path("/tmp/beta9-stardict.cpp").read_text()
+          start = upstream_cpp.index("void FolderDictionaries::prepare(")
+          body = upstream_cpp[start:upstream_cpp.rindex("} // namespace kobalt")]
+          body = body.replace('return fail(error, "This dictionary is not available.");',
+                              'if (error) *error = "This dictionary is not available.";\n'
+                              '    return false;')
+          assert body.count("FolderDictionaries::") == 5
+          helper = Path("src/dictionaries/folder_dictionaries.cpp")
+          helper.write_text(
+              '#include "stardict.h"\n'
+              '#include "support/main_thread.h"\n'
+              '#include <QDir>\n#include <QDirIterator>\n#include <QFile>\n'
+              '#include <QFileInfo>\n#include <QSaveFile>\n'
+              '#include <algorithm>\n'
+              'namespace kobalt {\n' + body + '} // namespace kobalt\n')
+          print("Preserved Hungarian StarDict; added Beta 9 folder dictionary wrapper")
+          PY
+          git add src/dictionaries/stardict.h src/dictionaries/folder_dictionaries.cpp
+          # Add only the missing preview cleanup API. No changes to
+          # Hungarian preview storage formats or the existing PreviewStore.
+          python3 - <<'PY'
+          from pathlib import Path
+          header = Path("src/storage/preview_store.h")
+          source = header.read_text()
+          needle = "namespace kobalt::storage {\n"
+          assert source.count(needle) == 1
+          assert "removePreviewFiles" not in source
+          header.write_text(source.replace(
+              needle,
+              needle + "// Delete only private hashed .preview files, including direct child folders.\n"
+              + "bool removePreviewFiles(const QString &directory);\n"))
+          file = Path("src/storage/preview_cleanup.cpp")
+          file.write_text(r'''#include "preview_store.h"
+          #include "support/main_thread.h"
+          #include <QDir>
+          #include <QFile>
+          #include <QFileInfo>
+          #include <QRegularExpression>
+          namespace kobalt::storage {
+          bool removePreviewFiles(const QString &directory)
+          {
+              mainthread::BlockingOperation operation("preview-remove");
+              if (directory.isEmpty())
+                  return false;
+              QStringList folders{ directory };
+              for (const auto &info : QDir(directory).entryInfoList(
+                       QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks))
+                  folders.append(info.absoluteFilePath());
+              const QRegularExpression hashed(QStringLiteral("^[0-9a-f]{64}\\.preview$"));
+              bool ok = true;
+              for (const auto &folder : folders)
+                  for (const auto &info : QDir(folder).entryInfoList(
+                           { QStringLiteral("*.preview") }, QDir::Files | QDir::NoSymLinks))
+                      if (hashed.match(info.fileName()).hasMatch())
+                          ok = QFile::remove(info.absoluteFilePath()) && ok;
+              return ok;
+          }
+          } // namespace kobalt::storage
+          '''.replace("\n          ", "\n"))
+          print("Added preview cleanup without replacing Hungarian preview store")
+          PY
+          git add src/storage/preview_store.h src/storage/preview_cleanup.cpp
           git commit -m "Experiment: Blaze beta9 source with Hungarian conflict baselines and missing English keys"
           echo "Blaze source present: $(test -f src/engine/blaze/adapter/engine_document.cpp && echo yes || echo no)"
           echo "Unresolved conflicts: $(git diff --name-only --diff-filter=U | wc -l)"
