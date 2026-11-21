@@ -3,6 +3,7 @@
 #include "ui/panel_timing.h"
 #include "reader_p.h"
 #include "reading/appearance_settings.h"
+#include "reading/features.h"
 #include "reading/page_navigation.h"
 #include "support/strings.h"
 #include "support/diagnostics.h"
