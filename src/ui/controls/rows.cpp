@@ -356,7 +356,7 @@ void ListRow::syncLabelStyles()
     for (auto *label : { title, detail, caption, leading, trailing }) {
         const QColor color = !isEnabled()   ? themeColors(this).disabledInk
                 : current || label == title ? ink
-                                            : noteColor(this);
+                                            : (darkTheme(this) ? noteColor(this) : ink);
         const QString style = labelStyles[index++] + "color:" + color.name() + ';';
         if (label->property("reader_style").toString() != style) {
             readerStyle(label, style);
