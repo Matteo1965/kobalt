@@ -853,9 +853,11 @@ bool Reader::eventFilter(QObject *watched, QEvent *event)
             || watched == finishDialog)) {
         book->pauseLocalPace();
     }
-    if (watched == menu && type == QEvent::Hide && fieldChooser) {
-        fieldChooser->hide();
-        headerFooterView->hide();
+    if (watched == menu && type == QEvent::Hide) {
+        if (fieldChooser)
+            fieldChooser->hide();
+        if (headerFooterView)
+            headerFooterView->hide();
     }
     if ((watched == brightnessNotice || watched == annotationModeNotice) && type == QEvent::Hide
         && isVisible() && !lifecycleHidden && !closing && !exportRunning && !exitPending
