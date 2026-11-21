@@ -140,6 +140,12 @@ jobs:
           print("Removed duplicate storage preview declaration")
           PY
           git add src/storage/reader_storage.h
+          # The Beta 9 engine contract extends, rather than replaces, the
+          # existing shared value types: SearchCursor, SearchScope, previews,
+          # text samples, chapter labels and annotation context. Adopt the
+          # complete upstream superset in this disposable merge tree.
+          git show refs/remotes/upstream/beta9:src/engine/types.h > src/engine/types.h
+          git add src/engine/types.h
           git commit -m "Experiment: Blaze beta9 source with Hungarian conflict baselines and missing English keys"
           echo "Blaze source present: $(test -f src/engine/blaze/adapter/engine_document.cpp && echo yes || echo no)"
           echo "Unresolved conflicts: $(git diff --name-only --diff-filter=U | wc -l)"
