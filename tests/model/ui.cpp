@@ -242,6 +242,18 @@ int main(int argc, char **argv)
     }
     checkPrivateInterfaceText(kobalt::test::readerAssets());
     {
+        // GUI control characters do not create missing glyph boxes or widths.
+        using namespace kobalt::ui;
+        const auto font = interfaceFont(24);
+        require(measurePrivateText(QStringLiteral("a\r"), font)
+                        == measurePrivateText(QStringLiteral("a"), font)
+                        && measurePrivateText(QStringLiteral("a\n"), font)
+                                == measurePrivateText(QStringLiteral("a"), font),
+                "Control characters unexpectedly occupied interface text width");
+        require(!renderPrivateText(QStringLiteral("a\rb"), font).missingGlyphs,
+                "A control character became a missing glyph");
+    }
+    {
         using namespace kobalt::ui;
         const auto &assets = kobalt::test::readerAssets();
         const QStringList files{ assets.file("fonts/IBMPlexSans-Regular.ttf") };
