@@ -776,10 +776,14 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     aboutRows->addLayout(build);
     // Keep the two-line Hungarian Edition identity legible on narrow Kobo displays.
     const auto release = inputs.release;
-    const auto editionMatch = QRegularExpression(
-            QStringLiteral("^v?([0-9]+\\.[0-9]+\\.[0-9]+-beta[0-9]+)(?:-HU.*)?$")).match(release);
-    const auto editionVersion = editionMatch.hasMatch() ? editionMatch.captured(1) + QStringLiteral("-HU")
-                                                        : release;
+    // Use the actual packaged release rather than a hard-coded earlier Beta.
+    // The optional CI build number distinguishes successive Hungarian builds.
+    QString editionVersion = release;
+    if (editionVersion.startsWith(QLatin1Char('v')))
+        editionVersion.remove(0, 1);
+#ifdef KOBALT_BUILD_NUMBER
+    editionVersion += QStringLiteral(" · Build #") + QStringLiteral(KOBALT_BUILD_NUMBER);
+#endif
     auto *editionTitle = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition"), aboutPage);
     editionTitle->setObjectName("rrAboutHungarianEditionTitle");
     editionTitle->setAlignment(Qt::AlignCenter);
