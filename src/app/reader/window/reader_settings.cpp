@@ -313,6 +313,7 @@ void Reader::openSettings()
         if (!session->fontFaces().contains(*face))
             face->clear();
     showSettingsFonts();
+    timing.stage("fonts");
     settingsPages->setCurrentIndex(int(SettingsPage::Display));
     resetDefaults->setText(strings::get("reader.restore_appearance_defaults"));
     resetDefaults->setEnabled(true);
@@ -376,9 +377,14 @@ void Reader::openSettings()
         automaticOpeningOption->setChecked(services.automaticBookOpening());
     screenRefreshMode = kobalt::screenRefresh(preferences.value("screen_refresh").toString());
     showScreenRefresh();
+    timing.stage("controls");
     fitSettings();
     general->show();
     general->raise();
+    // Wrapped setting descriptions can change height on first show.
+    // Refit once after the panel becomes visible, before painting.
+    fitSettings();
+    timing.stage("fit");
     refresh();
     timing.finish(general);
 }
