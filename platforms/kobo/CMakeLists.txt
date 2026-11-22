@@ -118,6 +118,13 @@ foreach(target kobalt-code kobalt)
         KOBALT_LAYOUT_POLICY="${layout_policy}")
 endforeach()
 
+# A CI artifact's About screen identifies its exact workflow build.
+# Local builds without this environment variable retain the release version.
+if(DEFINED ENV{GITHUB_RUN_NUMBER} AND "$ENV{GITHUB_RUN_NUMBER}" MATCHES "^[0-9]+$")
+    target_compile_definitions(kobalt-code PRIVATE
+        KOBALT_BUILD_NUMBER="\"$ENV{GITHUB_RUN_NUMBER}\"")
+endif()
+
 set(engine "${CMAKE_CURRENT_BINARY_DIR}/libcrengine-reader.a")
 add_custom_command(OUTPUT "${engine}"
     COMMAND "${CMAKE_OBJCOPY}" --redefine-sym FT_Load_Glyph=kobalt_font_load_glyph
