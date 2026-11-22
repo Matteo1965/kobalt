@@ -838,7 +838,9 @@ static PrivateText layoutPrivateText(const QString &input, const QFont &font, in
             }
             for (int i = 0; i < clusterSize; ++i) {
                 const auto character = cluster[i];
-                if (character != '\t' && QChar::category(character) != QChar::Other_Format
+                // Controls and format characters have no glyph to look up.
+                const auto category = QChar::category(character);
+                if (category != QChar::Other_Control && category != QChar::Other_Format
                     && !FT_Get_Char_Index(face, character)) {
                     return false;
                 }
@@ -1004,6 +1006,11 @@ static PrivateText layoutPrivateText(const QString &input, const QFont &font, in
         const auto *info = hb_buffer_get_glyph_infos(buffer, &glyphCount);
         const auto *positions = hb_buffer_get_glyph_positions(buffer, &glyphCount);
         for (unsigned i = 0; i < glyphCount; ++i) {
+            // Tabs keep their explicit spacing below; other control characters
+            // have zero width and no visible glyph.
+            if (info[i].cluster < uint(count) && characters[int(info[i].cluster)] != '\t'
+                && QChar::category(characters[int(info[i].cluster)]) == QChar::Other_Control)
+                continue;
             if (previousCluster != uint(-1) && previousCluster != info[i].cluster
                 && runFont.letterSpacingType() == QFont::AbsoluteSpacing) {
                 pen += qRound64(runFont.letterSpacing() * 64);
