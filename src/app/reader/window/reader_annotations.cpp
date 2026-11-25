@@ -1164,6 +1164,8 @@ void Reader::syncAnnotationControls()
     page->setAnnotationHandles(draftHighlightGeometry);
     annotationPopover->setInputExclusions(page->annotationHandleHitRegion().translated(
             page->mapTo(this, QPoint()) - annotationPopover->pos()));
+    // Reconcile shortcuts when the annotation selection or handles change.
+    syncPinnedBookmarks();
 }
 
 void Reader::syncMarkupRequest()
