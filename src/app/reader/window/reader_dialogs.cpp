@@ -753,8 +753,16 @@ void Reader::syncPinnedBookmarks()
         const int aPage = bookmarks->pageOf(a.position), bPage = bookmarks->pageOf(b.position);
         return (aPage < 0 ? INT_MAX : aPage) < (bPage < 0 ? INT_MAX : bPage);
     });
+    // Annotation mode by itself must not hide quick bookmark navigation.
+    // An active selection or handle drag still owns the reader's touch input.
+    const bool selecting = annotationMode
+            && (annotationDragging || annotationDragPending || annotationHandleDragging
+                || !annotationStart.isEmpty() || !annotationEnd.isEmpty()
+                || !annotationEditing.isEmpty() || annotationSaving
+                || annotationShowActionsPending
+                || (annotationPopover && annotationPopover->isVisible()));
     const bool visible = !pins.isEmpty() && topControls->isVisible() && !session->busy()
-            && !lifecycleHidden && !closing && !services.suspended() && !annotationMode && !seekOpen
+            && !lifecycleHidden && !closing && !services.suspended() && !selecting && !seekOpen
             && !appearanceEdit.panelOpen() && !general->isVisible() && !menu->isVisible()
             && !choices->isVisible() && !chapterGraph->isVisible() && !lightPopup->isVisible()
             && !bookmarkList->isVisible() && !acknowledgments->isVisible()
