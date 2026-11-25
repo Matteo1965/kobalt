@@ -782,7 +782,7 @@ SettingsPanel::SettingsPanel(QWidget *parent, const SettingsPanelInputs &inputs)
     if (editionVersion.startsWith(QLatin1Char('v')))
         editionVersion.remove(0, 1);
 #ifdef KOBALT_BUILD_NUMBER
-    editionVersion += QStringLiteral(" · Build #") + QStringLiteral(KOBALT_BUILD_NUMBER);
+    editionVersion += QStringLiteral(" · Build #") + QString::number(KOBALT_BUILD_NUMBER);
 #endif
     auto *editionTitle = new ui::InterfaceLabel(QStringLiteral("Hungarian Edition"), aboutPage);
     editionTitle->setObjectName("rrAboutHungarianEditionTitle");
