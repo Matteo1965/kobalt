@@ -2223,6 +2223,11 @@ void checkPinnedBookmarks(int preset, bool dark)
                 QVERIFY(fixture.press("rrPage"));
             QVERIFY(fixture.press("rrAnnotate"));
             QTRY_VERIFY(!qobject_cast<QAbstractButton *>(fixture.widget("rrAnnotate"))->isChecked());
+            // Leaving annotation mode dismisses the toolbar. Restore the
+            // prior open-toolbar state for the existing shortcut assertions.
+            if (!fixture.visible("rrControlsTop"))
+                QVERIFY(fixture.press("rrPage"));
+            QTRY_VERIFY(fixture.visible("rrPinnedBookmarks"));
         }
         const int navigationTop =
                 fixture.widget("rrNavText")->mapTo(fixture.window.readerWindow(), QPoint()).y();
