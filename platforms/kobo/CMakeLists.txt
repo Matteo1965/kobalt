@@ -122,7 +122,7 @@ endforeach()
 # Local builds without this environment variable retain the release version.
 if(DEFINED ENV{GITHUB_RUN_NUMBER} AND "$ENV{GITHUB_RUN_NUMBER}" MATCHES "^[0-9]+$")
     target_compile_definitions(kobalt-code PRIVATE
-        KOBALT_BUILD_NUMBER="\"$ENV{GITHUB_RUN_NUMBER}\"")
+        KOBALT_BUILD_NUMBER=$ENV{GITHUB_RUN_NUMBER})
 endif()
 
 set(engine "${CMAKE_CURRENT_BINARY_DIR}/libcrengine-reader.a")
