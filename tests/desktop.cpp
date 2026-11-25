@@ -2208,6 +2208,21 @@ void checkPinnedBookmarks(int preset, bool dark)
             QVERIFY(!fixture.visible("rrPinnedBookmarks"));
             QVERIFY(fixture.press("rrNavStats"));
             QTRY_VERIFY(fixture.visible("rrPinnedBookmarks"));
+            // Annotation mode should permit quick bookmark navigation when
+            // there is no active text selection. The editor owns gestures only
+            // while a selection is being made.
+            QVERIFY(fixture.press("rrAnnotate"));
+            QTRY_VERIFY(!fixture.visible("rrPinnedBookmarks"));
+            QVERIFY(fixture.press("rrPage"));
+            QTRY_VERIFY(fixture.visible("rrPinnedBookmarks"));
+            QVERIFY(qobject_cast<QAbstractButton *>(fixture.widget("rrAnnotate"))->isChecked());
+            QVERIFY(fixture.press("rrPinnedBookmark0"));
+            QTRY_VERIFY(!fixture.state().value("busy").toBool());
+            QVERIFY(qobject_cast<QAbstractButton *>(fixture.widget("rrAnnotate"))->isChecked());
+            if (!fixture.visible("rrAnnotate"))
+                QVERIFY(fixture.press("rrPage"));
+            QVERIFY(fixture.press("rrAnnotate"));
+            QTRY_VERIFY(!qobject_cast<QAbstractButton *>(fixture.widget("rrAnnotate"))->isChecked());
         }
         const int navigationTop =
                 fixture.widget("rrNavText")->mapTo(fixture.window.readerWindow(), QPoint()).y();
